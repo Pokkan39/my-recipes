@@ -165,3 +165,18 @@
 - `app.js`：更新默认站点文案，并增强列表与详情渲染所需的卡片信息。
 - `progress.md`：追加本轮 UI 改造、验证结果和回滚方式。
 - 回滚方式：恢复本轮修改前的 `index.html`、`styles.css`、`app.js` 和 `progress.md`。
+
+## 2026-07-06 - Task: 修复多人编辑云端同步提示
+### What was done
+- 将新增、删除和导入菜谱改为等待 Firebase 写入完成后再提示结果。
+- 云端同步失败时会明确提示“只保存在当前浏览器”，避免用户误以为别人也能看到。
+- 本地仍保留 localStorage 缓存，网络异常时不丢失当前浏览器的数据。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过，JavaScript 无语法错误。
+- 通过 Firestore REST 接口检查共享文档当前存在 3 条菜谱，说明朋友此前新增内容未写入云端。
+
+### Notes
+- `app.js`：增强 `saveToLocalStorage` 返回同步状态，并让保存、删除、导入流程等待云端写入结果。
+- `progress.md`：追加本轮同步问题修复、验证结果和回滚方式。
+- 回滚方式：恢复本轮修改前的 `app.js` 和 `progress.md`。

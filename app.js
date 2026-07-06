@@ -273,17 +273,23 @@ async function loadRecipes() {
 }
 
 async function saveToLocalStorage() {
-  // 有 Firestore 时同步到云端
-  if (db) {
-    try {
-      const [col, doc] = FIRESTORE_DOC.split("/");
-      await db.collection(col).doc(doc).set({ list: recipes });
-      return;
-    } catch (e) {
-      console.warn("Firestore 写入失败，已保存到本地。", e);
-    }
-  }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
+
+  if (!db) {
+    return { ok: false, mode: "local", message: "Firebase 未连接，内容只保存在当前浏览器。" };
+  }
+
+  try {
+    const [col, doc] = FIRESTORE_DOC.split("/");
+    await db.collection(col).doc(doc).set({
+      list: recipes,
+      updatedAt: new Date().toISOString()
+    });
+    return { ok: true, mode: "cloud" };
+  } catch (e) {
+    console.warn("Firestore 写入失败，已保存到本地。", e);
+    return { ok: false, mode: "local", message: e.message || "云端写入失败。" };
+  }
 }
 
 function bindEvents() {
@@ -1375,7 +1381,7 @@ function closeEditor() {
   editorPanel.classList.remove("is-open");
 }
 
-function saveRecipe(event) {
+async function saveRecipe(event) {
   event.preventDefault();
 
   const stepsRaw = fields.steps.value.split("\n").map((step) => step.trim()).filter(Boolean);
@@ -1409,12 +1415,15 @@ function saveRecipe(event) {
   }
 
   selectedId = recipe.id;
-  saveToLocalStorage();
+  const saveResult = await saveToLocalStorage();
   closeEditor();
   render();
+  if (!saveResult.ok) {
+    alert(`菜谱已暂存在当前浏览器，但没有同步到共享库：${saveResult.message}\n\n请检查网络或 Firebase 权限，否则别人看不到这次修改。`);
+  }
 }
 
-function deleteCurrentRecipe() {
+async function deleteCurrentRecipe() {
   const id = fields.id.value;
   const recipe = recipes.find((item) => item.id === id);
   if (!recipe) return;
@@ -1423,9 +1432,12 @@ function deleteCurrentRecipe() {
 
   recipes = recipes.filter((item) => item.id !== id);
   selectedId = recipes[0]?.id || "";
-  saveToLocalStorage();
+  const saveResult = await saveToLocalStorage();
   closeEditor();
   render();
+  if (!saveResult.ok) {
+    alert(`删除只暂存在当前浏览器，没有同步到共享库：${saveResult.message}\n\n别人刷新后可能仍会看到这道菜。`);
+  }
 }
 
 function exportRecipes() {
@@ -1443,15 +1455,17 @@ function importRecipes(event) {
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     try {
       const nextRecipes = normalizeRecipes(JSON.parse(reader.result));
       recipes = nextRecipes;
       selectedId = recipes[0]?.id || "";
-      saveToLocalStorage();
+      const saveResult = await saveToLocalStorage();
       closeEditor();
       render();
-      alert("导入成功。当前浏览器中的菜谱已更新。");
+      alert(saveResult.ok
+        ? "导入成功，已同步到共享菜谱库。"
+        : `导入成功，但只保存在当前浏览器，没有同步到共享库：${saveResult.message}`);
     } catch (error) {
       alert("导入失败，请确认文件是从本站导出的 JSON 菜谱备份。");
     } finally {
