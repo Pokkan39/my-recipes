@@ -10,25 +10,47 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <header class="hero">
-    <div>
+  <header class="hero food-hero">
+    <div class="hero-copy">
       <p id="siteEyebrow" class="eyebrow">Personal Recipe Book</p>
-      <h1 id="siteTitle">我的自用食谱</h1>
-      <p id="siteDescription" class="hero-text">记录菜名、配图、做法、视频链接、成本、适合时间和制作耗时。所有编辑内容会优先保存在当前浏览器中。</p>
+      <h1 id="siteTitle">今天想吃点什么？</h1>
+      <p id="siteDescription" class="hero-text">把家常菜、朋友拿手菜和刷到的视频灵感收进来。粘贴做菜视频，AI 帮你整理；大家一起补菜谱，慢慢做成自己的美食库。</p>
+      <div class="hero-actions">
+        <button id="videoHelperButton" class="primary-button hero-main-action" type="button">AI 生成菜谱</button>
+        <button id="newRecipeButton" class="secondary-button">新增菜谱</button>
+        <button id="whatToEatButton" class="secondary-button" type="button">今天吃什么</button>
+        <button id="shoppingListButton" class="secondary-button" type="button">购物清单</button>
+        <button id="customizeButton" class="text-button" type="button">调整网站</button>
+        <button id="exportButton" class="text-button">导出备份</button>
+        <label class="text-button file-button">
+          导入备份
+          <input id="importInput" type="file" accept="application/json,.json">
+        </label>
+      </div>
     </div>
-    <div class="hero-actions">
-      <button id="customizeButton" class="secondary-button" type="button">调整网站</button>
-      <button id="videoHelperButton" class="primary-button" type="button">视频总结</button>
-      <button id="newRecipeButton" class="secondary-button">新增菜谱</button>
-      <button id="whatToEatButton" class="primary-button" type="button">今天吃什么</button>
-      <button id="shoppingListButton" class="secondary-button" type="button">今日购物清单</button>
-      <button id="exportButton" class="secondary-button">导出备份</button>
-      <label class="secondary-button file-button">
-        导入备份
-        <input id="importInput" type="file" accept="application/json,.json">
-      </label>
+
+    <div class="hero-plate" aria-hidden="true">
+      <div class="plate-card plate-card-main">
+        <span class="plate-emoji">🍳</span>
+        <strong>视频变菜谱</strong>
+        <small>粘贴字幕或链接，让 AI 先整理一版</small>
+      </div>
+      <div class="plate-card plate-card-side">
+        <span>🥘 今日灵感</span>
+        <strong>家常快手菜</strong>
+        <small>15-30 分钟上桌</small>
+      </div>
+      <div class="steam steam-one"></div>
+      <div class="steam steam-two"></div>
     </div>
   </header>
+
+  <section class="feature-strip" aria-label="网站功能亮点">
+    <article><span>🎬</span><strong>视频生成菜谱</strong><small>看到好吃的，先让 AI 帮忙整理</small></article>
+    <article><span>👨‍👩‍👧‍👦</span><strong>朋友共同填写</strong><small>家常菜和拿手菜一起补进去</small></article>
+    <article><span>🍽️</span><strong>今天吃什么</strong><small>按时间、场景随机推荐</small></article>
+    <article><span>🛒</span><strong>自动购物清单</strong><small>选好菜，一键汇总食材</small></article>
+  </section>
 
   <section id="whatToEatPanel" class="panel what-to-eat-panel" aria-labelledby="whatToEatTitle">
     <div class="panel-heading">

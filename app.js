@@ -19,9 +19,9 @@ const FIRESTORE_DOC = "shared/recipes"; // 所有菜谱存在这一个文档里
 let db = null; // Firestore 实例，初始化成功后赋值
 
 const DEFAULT_APPEARANCE = {
-  title: "我的自用食谱",
+  title: "今天想吃点什么？",
   eyebrow: "Personal Recipe Book",
-  description: "记录菜名、配图、做法、视频链接、成本、适合时间和制作耗时。所有编辑内容会优先保存在当前浏览器中。",
+  description: "把家常菜、朋友拿手菜和刷到的视频灵感收进来。粘贴做菜视频，AI 帮你整理；大家一起补菜谱，慢慢做成自己的美食库。",
   brandColor: "#d95f28",
   backgroundColor: "#fff8ef",
   panelRadius: 28,
@@ -1161,11 +1161,23 @@ function renderList() {
   groups.forEach((group) => {
     const card = document.createElement("article");
     const isActiveGroup = group.recipes.some((recipe) => recipe.id === selectedId);
+    const coverRecipe = group.recipes[0];
+    const coverMarkup = coverRecipe.image
+      ? `<img src="${escapeAttr(coverRecipe.image)}" alt="${escapeAttr(group.name)}">`
+      : `<span class="recipe-thumb-placeholder">🍲</span>`;
     card.className = `recipe-group-card${isActiveGroup ? " is-active" : ""}`;
     card.innerHTML = `
       <button class="recipe-group-main" type="button">
-        <span>${escapeHtml(group.name)}</span>
-        <small>${group.recipes.length} 个做法版本</small>
+        <span class="recipe-thumb">${coverMarkup}</span>
+        <span class="recipe-group-copy">
+          <strong>${escapeHtml(group.name)}</strong>
+          <small>${group.recipes.length} 个做法版本</small>
+          <span class="recipe-card-tags">
+            ${coverRecipe.time ? `<em>${escapeHtml(coverRecipe.time)}</em>` : ""}
+            ${coverRecipe.cost ? `<em>${escapeHtml(coverRecipe.cost)}</em>` : ""}
+            ${coverRecipe.occasion ? `<em>${escapeHtml(coverRecipe.occasion.split(/[／/、]/)[0].trim())}</em>` : ""}
+          </span>
+        </span>
       </button>
       <div class="version-list">
         ${group.recipes.map((recipe) => `
@@ -1207,7 +1219,7 @@ function renderDetail() {
   const sameDishRecipes = getSameDishRecipes(recipe);
   const imageMarkup = recipe.image
     ? `<img class="recipe-image" src="${escapeAttr(recipe.image)}" alt="${escapeAttr(recipe.name)}">`
-    : '<div class="image-placeholder">暂无配图</div>';
+    : '<div class="image-placeholder"><span>🍽️</span><strong>等待一道好菜</strong><small>给它补一张诱人的图片吧</small></div>';
 
   // 食材清单 HTML
   const ingredients = recipe.ingredients || [];
@@ -1264,9 +1276,9 @@ function renderDetail() {
     ${imageMarkup}
     <div class="detail-header">
       <div>
-        <p class="eyebrow">Recipe</p>
+        <p class="eyebrow">Recipe of the Day</p>
         <h2 id="detailTitle">${escapeHtml(recipe.name)}</h2>
-        <p>${escapeHtml(recipe.description)}</p>
+        <p class="detail-description">${escapeHtml(recipe.description)}</p>
       </div>
       <button class="secondary-button" type="button" id="editRecipeButton">编辑当前做法</button>
     </div>
@@ -1286,11 +1298,11 @@ function renderDetail() {
     </div>
 
     <div class="meta-grid">
-      <div class="meta-item"><span>厨师/来源</span><strong>${escapeHtml(recipe.source)}</strong></div>
-      <div class="meta-item"><span>做法版本</span><strong>${escapeHtml(recipe.variant)}</strong></div>
-      <div class="meta-item"><span>大概成本</span><strong>${escapeHtml(recipe.cost)}</strong></div>
-      <div class="meta-item"><span>适合时间</span><strong>${escapeHtml(recipe.occasion)}</strong></div>
-      <div class="meta-item"><span>大概耗时</span><strong>${escapeHtml(recipe.time)}</strong></div>
+      <div class="meta-item"><span>👨‍🍳 厨师/来源</span><strong>${escapeHtml(recipe.source)}</strong></div>
+      <div class="meta-item"><span>✨ 做法版本</span><strong>${escapeHtml(recipe.variant)}</strong></div>
+      <div class="meta-item"><span>💰 大概成本</span><strong>${escapeHtml(recipe.cost)}</strong></div>
+      <div class="meta-item"><span>🍚 适合时间</span><strong>${escapeHtml(recipe.occasion)}</strong></div>
+      <div class="meta-item"><span>⏱️ 大概耗时</span><strong>${escapeHtml(recipe.time)}</strong></div>
     </div>
 
     ${ingredientsHtml}
