@@ -1655,7 +1655,7 @@ function floatAiStart() {
   floatAiDraft = null;
   document.querySelector("#floatAiFillBar").hidden = true;
   document.querySelector("#floatAiMessages").innerHTML = "";
-  floatAiAppend("assistant", "你好！我是这个菜谱网站的 AI 助手 ✦\n\n你可以：\n• **记录菜谱** — 告诉我菜名，或粘贴视频字幕让我整理\n• **问烹饪问题** — 比如"茄子怎么炒不吸油"\n• **推荐菜** — 比如"给我推荐一道 15 分钟能做好的菜"");
+  floatAiAppend("assistant", `你好！我是这个菜谱网站的 AI 助手 ✦\n\n你可以：\n• **记录菜谱** — 告诉我菜名，或粘贴视频字幕让我整理\n• **问烹饪问题** — 比如“茄子怎么炒不吸油”\n• **推荐菜** — 比如“给我推荐一道 15 分钟能做好的菜”`);
 }
 
 function floatAiAppend(role, content) {
@@ -1697,7 +1697,7 @@ async function floatAiSend() {
     document.querySelector("#floatAiSettings").hidden = false;
     floatAiSettingsVisible = true;
     floatAiFillConfig();
-    floatAiAppend("assistant", "⚙️ 请先填写 API Key 并点击"保存配置"。");
+    floatAiAppend("assistant", "⚙️ 请先填写 API Key 并点击“保存配置”。");
     return;
   }
 
