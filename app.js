@@ -285,6 +285,8 @@ async function saveToLocalStorage() {
   }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
 }
+
+function bindEvents() {
   document.querySelector("#customizeButton").addEventListener("click", toggleCustomizePanel);
   document.querySelector("#closeCustomizeButton").addEventListener("click", toggleCustomizePanel);
   document.querySelector("#resetAppearanceButton").addEventListener("click", resetAppearance);
