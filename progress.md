@@ -609,3 +609,19 @@
 - `styles.css`：第 55 行 html scroll-behavior smooth → auto。
 - `app.js`：scrollPanelIntoView 用 behavior auto。
 - 回滚方式：`git checkout 40c60eb -- app.js styles.css`。
+
+## 2026-07-07 - Task: 第4阶段备份恢复 - 新增云端备份与云端恢复功能
+### What was done
+- 计划书第4阶段"备份恢复"已实现：新增"☁️ 云端备份"（直接从阿里云拉取当前数据下载为带时间戳 JSON 文件）和"☁️ 云端恢复"（选一个备份文件直接写回阿里云并刷新页面），与现有"导出备份/导入备份"（本地浏览器）并列。
+- 云端恢复支持两种文件格式（{list:[...]} 或直接数组），有二次确认弹窗防误操作，恢复失败时给出明确提示。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过，JavaScript 无语法错误。
+- 功能逻辑核查：cloudBackup 调用已有 fetchCloudRecipes、cloudRestore 走 PUT 接口并 normalizeRecipes 归一化，与现有架构一致。
+- 未做真机端对端验证：需配好阿里云 API 后手动测试备份下载和恢复上传流程。
+
+### Notes
+- `app.js`：bindEvents 新增两个事件绑定；新增 cloudBackup、cloudRestore 两个 async 函数（在 exportRecipes 之前）。
+- `index.html`：顶部按钮区新增"☁️ 云端备份"按钮和"☁️ 云端恢复"文件选择标签。
+- `progress.md`：追加本轮记录。
+- 回滚方式：`git checkout a9798df -- app.js index.html`。

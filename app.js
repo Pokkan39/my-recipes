@@ -387,6 +387,8 @@ function bindEvents() {
   document.querySelector("#newRecipeButton").addEventListener("click", openNewEditor);
   document.querySelector("#cancelEditButton").addEventListener("click", closeEditor);
   document.querySelector("#exportButton").addEventListener("click", exportRecipes);
+  document.querySelector("#cloudBackupButton").addEventListener("click", cloudBackup);
+  document.querySelector("#cloudRestoreInput").addEventListener("change", cloudRestore);
   document.querySelector("#shoppingListButton").addEventListener("click", toggleShoppingListPanel);
   document.querySelector("#closeShoppingListButton").addEventListener("click", toggleShoppingListPanel);
   document.querySelector("#copyShoppingListButton").addEventListener("click", copyShoppingList);
@@ -2147,6 +2149,90 @@ async function deleteCurrentRecipe() {
   if (!saveResult.ok) {
     alert(`删除只暂存在当前浏览器，没有同步到阿里云共享库：${saveResult.message}\n\n别人刷新后可能仍会看到这道菜。`);
   }
+}
+
+async function cloudBackup() {
+  if (!isAliyunApiConfigured()) {
+    alert("阿里云 API 未配置，无法备份云端数据。");
+    return;
+  }
+  try {
+    updateSyncStatus("checking", "正在从云端拉取数据…");
+    const result = await fetchCloudRecipes();
+    if (!result.ok) {
+      alert("云端备份失败：" + result.message);
+      return;
+    }
+    const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    const blob = new Blob([JSON.stringify({ list: result.list, backupAt: new Date().toISOString() }, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `cloud-backup-${ts}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    updateSyncStatus("cloud", "阿里云共享库已连接");
+    alert(`云端备份成功，共 ${result.list.length} 道菜谱，已下载到本地。`);
+  } catch (e) {
+    alert("云端备份失败：" + e.message);
+    updateSyncStatus("local", "云端备份失败");
+  }
+}
+
+async function cloudRestore(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (!isAliyunApiConfigured()) {
+    alert("阿里云 API 未配置，无法恢复云端数据。");
+    event.target.value = "";
+    return;
+  }
+
+  if (!confirm(`确定用「${file.name}」恢复云端数据吗？\n\n这会覆盖云端当前所有菜谱，操作不可撤销。`)) {
+    event.target.value = "";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      const data = JSON.parse(reader.result);
+      // 支持两种备份格式：{list:[...]} 或直接的 [...] 数组
+      const raw = Array.isArray(data) ? data : (data.list || []);
+      const normalized = normalizeRecipes(raw);
+      if (normalized.length === 0) {
+        alert("备份文件中没有菜谱数据，请确认文件格式正确。");
+        return;
+      }
+
+      updateSyncStatus("checking", "正在恢复云端数据…");
+      const baseUrl = ALIYUN_API_BASE_URL.trim().replace(/\/+$/, "");
+      const res = await fetch(`${baseUrl}/${ALIYUN_RECIPES_PATH}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ list: normalized, updatedAt: new Date().toISOString() })
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      // 恢复成功后同步到本地
+      recipes = normalized;
+      selectedId = recipes[0]?.id || "";
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
+      lastCloudSignature = JSON.stringify(recipes);
+      updateSyncStatus("cloud", "云端数据已恢复");
+      closeEditor();
+      render();
+      alert(`云端恢复成功！已恢复 ${normalized.length} 道菜谱，页面已刷新。`);
+    } catch (e) {
+      alert("云端恢复失败：" + e.message);
+      updateSyncStatus("local", "云端恢复失败");
+    } finally {
+      event.target.value = "";
+    }
+  };
+  reader.readAsText(file, "UTF-8");
 }
 
 function exportRecipes() {
