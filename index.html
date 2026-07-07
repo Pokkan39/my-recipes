@@ -18,6 +18,7 @@
         <button id="whatToEatButton" class="secondary-button" type="button">今天吃什么</button>
         <button id="mealPlanButton" class="secondary-button" type="button">配一桌菜</button>
         <button id="byIngredientButton" class="secondary-button" type="button">我有什么食材</button>
+        <button id="myToolsButton" class="secondary-button" type="button">我有什么工具</button>
         <button id="shoppingListButton" class="secondary-button" type="button">购物清单</button>
         <button id="customizeButton" class="text-button" type="button">调整网站</button>
         <button id="exportButton" class="text-button">导出备份</button>
@@ -119,6 +120,23 @@
       <button id="searchByIngredientButton" class="primary-button" type="button">查菜</button>
     </div>
     <div id="byIngredientResult" class="by-ingredient-result"></div>
+  </section>
+
+  <section id="myToolsPanel" class="panel my-tools-panel" aria-labelledby="myToolsTitle">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">My Tools</p>
+        <h2 id="myToolsTitle">我有什么工具</h2>
+        <p>勾选你厨房里有的工具，看看能做哪些菜。</p>
+      </div>
+      <button id="closeMyToolsButton" class="text-button" type="button">收起</button>
+    </div>
+    <div id="myToolsChips" class="my-tools-chips"></div>
+    <div class="my-tools-actions">
+      <button id="applyToolsFilterButton" class="primary-button" type="button">看看能做什么</button>
+      <button id="clearToolsButton" class="text-button" type="button">清空勾选</button>
+    </div>
+    <div id="myToolsResult" class="my-tools-result"></div>
   </section>
 
   <section id="shoppingListPanel" class="panel shopping-panel" aria-labelledby="shoppingListTitle">
@@ -403,6 +421,11 @@
         <label>
           具体做法 <span class="optional-label">（选填，有视频时可留空）</span>
           <textarea id="recipeSteps" rows="7" placeholder="每行写一个步骤，例如：&#10;1. 鸡蛋打散加少许盐。&#10;2. 番茄切块。"></textarea>
+        </label>
+
+        <label>
+          所需工具 <span class="optional-label">（选填，空格分隔，如：炒锅 烤箱）</span>
+          <input id="recipeTools" type="text" placeholder="炒锅 汤锅 烤箱…">
         </label>
 
         <div class="form-actions">

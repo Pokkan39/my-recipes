@@ -404,3 +404,26 @@
 - `docs/product-plan.md`：新增 9.5 图片上传方案章节；阶段排期新增图片上传规划条目。
 - `progress.md`：追加本轮记录。
 - 回滚方式：恢复本轮修改前的 `docs/product-plan.md` 和 `progress.md`。
+
+## 2026-07-07 - Task: 按工具筛选菜谱（勾选手头工具看能做什么）
+### What was done
+- 新增「我有什么工具」功能：用户勾选自己厨房里有的设备类工具，一键筛出当前能做的菜。
+- 筛选结果分两档展示：所需工具齐全（或无需特殊工具）的标「可以做」，只差 1 到 2 件的标「差一点」并高亮缺失工具；缺 3 件及以上的自动隐藏，减少干扰。能做的菜整卡点击进详情，差一点的菜「进详情」与「问 AI 怎么替代」分开互不干扰。
+- 「问 AI 怎么替代」复用右下角 AI 助手：自动打开面板并就缺失工具向 AI 询问替代方案，未配置 API Key 时给出提示。
+- 编辑表单新增「所需工具」输入（空格分隔），菜谱详情页在基础信息下方展示「所需工具」标签；用户勾选的工具清单存本地浏览器。
+- 同步更新使用说明，新增「按工具筛选菜谱」章节并在记录内容里补充所需工具字段。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过，JavaScript 无语法错误（改动全程校验 2 次均通过）。
+- CSS 花括号配平检查：通过（开合各 372）。
+- HTML 新增元素 ID 与 app.js `querySelector` 引用一致性核对：通过（myToolsButton/closeMyToolsButton/applyToolsFilterButton/clearToolsButton/myToolsPanel/myToolsChips/myToolsResult/recipeTools 均一一对应）。
+- 新增 6 个函数定义存在性核对：通过（toggleMyToolsPanel、renderMyToolsChips、renderMyToolsResult、askToolAlternative、loadMyTools、saveMyTools）。
+- 未做浏览器端联调与真实 AI 接口调用验证：缺少可用运行环境与 API Key，属本次验证缺口；逻辑正确性以代码审阅与语法/一致性检查为准。
+
+### Notes
+- `index.html`：顶部操作区在「我有什么食材」后新增「我有什么工具」按钮；`#byIngredientPanel` 后新增 `#myToolsPanel` 面板；编辑表单在「具体做法」后新增「所需工具」输入框 `#recipeTools`。
+- `app.js`：新增常量 `ALL_TOOLS`、`MY_TOOLS_KEY` 与全局变量 `myTools`；新增函数 `loadMyTools`、`saveMyTools`、`toggleMyToolsPanel`、`renderMyToolsChips`、`renderMyToolsResult`、`askToolAlternative`；`bindEvents` 新增 4 处工具面板事件绑定；`openNewEditor`/`openEditEditor` 增加对 `#recipeTools` 的清空/回填；`renderDetail` 在 meta-grid 后增加所需工具标签区。数据读取（saveRecipe、normalizeRecipes 的 tools 字段）为既有能力，未改动。
+- `styles.css`：`.my-tools-panel` 纳入面板显隐规则；新增 `.my-tools-chips`、`.tool-chip`、`.my-tools-actions`、`.my-tools-grid`、`.my-tools-card` 及结果卡片子元素、`.tool-tags`/`.tool-tag` 等样式，风格与既有 `.by-ingredient-*`、`.filter-chip` 一致。
+- `docs/usage.md`：记录内容补充「所需工具」字段；新增「按工具筛选菜谱」章节。
+- 未改动云端接口和其它功能。
+- 回滚方式：`git reset --hard d873793`（d873793 为本轮改动前提交）可回到施工前状态。

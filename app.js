@@ -136,6 +136,11 @@ const CATEGORY_TABS = [
   { label: "健身餐", keywords: ["健身", "减脂", "低脂"] },
   { label: "下饭菜", keywords: ["下饭", "米饭配菜"] }
 ];
+
+const ALL_TOOLS = ["炒锅", "汤锅", "蒸锅", "平底锅", "油炸锅", "烤箱", "微波炉", "空气炸锅", "电饭煲", "搅拌机", "打蛋器", "摇酒壶"];
+const MY_TOOLS_KEY = "my-recipe-my-tools";
+let myTools = loadMyTools();
+
 let aiChatHistory = [];
 let aiDraft = null;
 
@@ -393,6 +398,15 @@ function bindEvents() {
   document.querySelector("#byIngredientButton").addEventListener("click", toggleByIngredientPanel);
   document.querySelector("#closeByIngredientButton").addEventListener("click", toggleByIngredientPanel);
   document.querySelector("#searchByIngredientButton").addEventListener("click", searchByIngredient);
+  document.querySelector("#myToolsButton").addEventListener("click", toggleMyToolsPanel);
+  document.querySelector("#closeMyToolsButton").addEventListener("click", toggleMyToolsPanel);
+  document.querySelector("#applyToolsFilterButton").addEventListener("click", renderMyToolsResult);
+  document.querySelector("#clearToolsButton").addEventListener("click", () => {
+    myTools = [];
+    saveMyTools();
+    renderMyToolsChips();
+    renderMyToolsResult();
+  });
   ingredientQueryInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); searchByIngredient(); }
   });
@@ -949,6 +963,152 @@ function searchByIngredient() {
   });
 }
 
+function toggleMyToolsPanel() {
+  const panel = document.querySelector("#myToolsPanel");
+  const isOpen = panel.classList.toggle("is-open");
+  if (isOpen) renderMyToolsChips();
+}
+
+function renderMyToolsChips() {
+  const container = document.querySelector("#myToolsChips");
+  if (!container) return;
+
+  container.innerHTML = ALL_TOOLS.map((tool) => {
+    const active = myTools.includes(tool);
+    return `<button class="tool-chip${active ? " is-active" : ""}" type="button" data-tool="${escapeAttr(tool)}">${escapeHtml(tool)}</button>`;
+  }).join("");
+
+  container.querySelectorAll(".tool-chip").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const tool = btn.dataset.tool;
+      const idx = myTools.indexOf(tool);
+      if (idx >= 0) myTools.splice(idx, 1);
+      else myTools.push(tool);
+      saveMyTools();
+      renderMyToolsChips();
+    });
+  });
+}
+
+function renderMyToolsResult() {
+  const container = document.querySelector("#myToolsResult");
+  if (!container) return;
+
+  if (myTools.length === 0) {
+    container.innerHTML = '<p class="my-tools-empty">请先勾选你有的工具。</p>';
+    return;
+  }
+
+  // 每组菜取第一个做法作为代表，按缺失工具数量归类
+  const ready = [];
+  const partial = [];
+  getRecipeGroups(recipes).forEach((group) => {
+    const recipe = group.recipes[0];
+    const tools = recipe.tools || [];
+    const missing = tools.filter((t) => !myTools.includes(t));
+    if (missing.length === 0) {
+      ready.push({ recipe, tools, missing });
+    } else if (missing.length <= 2) {
+      partial.push({ recipe, tools, missing });
+    }
+    // 缺 3 个及以上不显示，避免噪声
+  });
+
+  if (ready.length === 0 && partial.length === 0) {
+    container.innerHTML = '<p class="my-tools-empty">还没有匹配的菜，勾选更多工具再看看。</p>';
+    return;
+  }
+
+  const readyHtml = ready.map((item) => `
+    <button class="my-tools-card mt-card--ready" type="button" data-id="${escapeAttr(item.recipe.id)}">
+      <span class="mtc-head">
+        <span class="mtc-name">${escapeHtml(item.recipe.name)}</span>
+        <span class="mtc-badge mtc-badge--ready">可以做</span>
+      </span>
+      ${item.tools.length
+        ? `<span class="mtc-tools">${item.tools.map((t) => `<em class="mtc-tool">${escapeHtml(t)}</em>`).join("")}</span>`
+        : `<span class="mtc-tools mtc-tools--none">无需特殊工具</span>`}
+    </button>
+  `).join("");
+
+  const partialHtml = partial.map((item) => `
+    <div class="my-tools-card mt-card--partial" data-id="${escapeAttr(item.recipe.id)}">
+      <span class="mtc-head">
+        <span class="mtc-name">${escapeHtml(item.recipe.name)}</span>
+        <span class="mtc-badge mtc-badge--partial">差一点</span>
+      </span>
+      <span class="mtc-missing">还缺：${item.missing.map((t) => escapeHtml(t)).join("、")}</span>
+      <span class="mtc-actions">
+        <button class="text-button mt-detail-btn" type="button" data-id="${escapeAttr(item.recipe.id)}">进详情</button>
+        <button class="secondary-button mt-ai-btn" type="button" data-id="${escapeAttr(item.recipe.id)}">问 AI 怎么替代</button>
+      </span>
+    </div>
+  `).join("");
+
+  container.innerHTML = `
+    <p class="my-tools-count">能做 <strong>${ready.length}</strong> 道，差一点 <strong>${partial.length}</strong> 道</p>
+    <div class="my-tools-grid">
+      ${readyHtml}
+      ${partialHtml}
+    </div>
+  `;
+
+  const goDetail = (id) => {
+    selectedId = id;
+    document.querySelector("#myToolsPanel").classList.remove("is-open");
+    render();
+    document.querySelector("#recipeDetail").scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  container.querySelectorAll(".mt-card--ready").forEach((btn) => {
+    btn.addEventListener("click", () => goDetail(btn.dataset.id));
+  });
+  container.querySelectorAll(".mt-detail-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      goDetail(btn.dataset.id);
+    });
+  });
+  container.querySelectorAll(".mt-ai-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const rec = recipes.find((r) => r.id === btn.dataset.id);
+      if (!rec) return;
+      const missing = (rec.tools || []).filter((t) => !myTools.includes(t));
+      askToolAlternative(rec.name, missing);
+    });
+  });
+}
+
+function askToolAlternative(recipeName, missingTools) {
+  const cfg = floatAiLoadConfig();
+  if (!cfg.key) {
+    alert("请先在右下角 AI 助手里配置 API Key。");
+    return;
+  }
+
+  // 打开 AI 悬浮面板（参考 initFloatAi 里的 openPanel）
+  const widget = document.querySelector("#floatAiWidget");
+  const panel = document.querySelector("#floatAiPanel");
+  const toggle = document.querySelector("#floatAiToggle");
+  if (widget) widget.classList.add("is-open");
+  if (panel) panel.hidden = false;
+  if (toggle) toggle.setAttribute("aria-expanded", "true");
+  if (floatAiHistory.length === 0) floatAiStart();
+
+  // 确保走普通问答而非批量整理，并隐藏快捷入口
+  floatAiBatchMode = false;
+  const shortcuts = document.querySelector("#floatAiShortcuts");
+  if (shortcuts) shortcuts.hidden = true;
+
+  const missing = missingTools || [];
+  const input = document.querySelector("#floatAiInput");
+  if (input) {
+    input.value = `我想做「${recipeName}」，但我没有${missing.join("、")}，可以用什么替代？`;
+  }
+  floatAiSend();
+}
+
 function toggleShoppingListPanel() {
   const isOpen = shoppingListPanel.classList.toggle("is-open");
   if (isOpen) renderShoppingListPanel();
@@ -1315,6 +1475,21 @@ function loadWorldCategories() {
 
 function saveWorldCategories() {
   localStorage.setItem(WORLD_CATEGORY_KEY, JSON.stringify(worldCategories));
+}
+
+function loadMyTools() {
+  try {
+    const stored = localStorage.getItem(MY_TOOLS_KEY);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveMyTools() {
+  localStorage.setItem(MY_TOOLS_KEY, JSON.stringify(myTools));
 }
 
 function renderWorldTabs() {
@@ -1719,6 +1894,8 @@ function renderDetail() {
       ${recipe.updatedAt ? `<div class="meta-item"><span>🕐 最近更新</span><strong>${formatDateTime(recipe.updatedAt)}</strong></div>` : ""}
     </div>
 
+    ${(recipe.tools && recipe.tools.length > 0) ? `<div class="detail-section detail-tools"><h3>所需工具</h3><div class="tool-tags">${recipe.tools.map((t) => `<span class="tool-tag">${escapeHtml(t)}</span>`).join("")}</div></div>` : ""}
+
     ${ingredientsHtml}
     ${stepsHtml}
 
@@ -1759,6 +1936,8 @@ function openNewEditor() {
   populateWorldSelect();
   const worldSel = document.querySelector("#recipeWorld");
   if (worldSel) worldSel.value = activeWorld !== "全部" ? activeWorld : "现实中的饭";
+  const t = document.querySelector("#recipeTools");
+  if (t) t.value = "";
   resetIngredientEditor([]);
   fields.name.focus();
   render();
@@ -1783,6 +1962,9 @@ function openEditEditor(id) {
   populateWorldSelect();
   const worldSel = document.querySelector("#recipeWorld");
   if (worldSel) worldSel.value = recipe.world || "现实中的饭";
+
+  const toolsInput = document.querySelector("#recipeTools");
+  if (toolsInput) toolsInput.value = (recipe.tools || []).join(" ");
 
   resetIngredientEditor(recipe.ingredients || []);
 
@@ -1821,6 +2003,7 @@ async function saveRecipe(event) {
     world: document.querySelector("#recipeWorld")?.value || "现实中的饭",
     ingredients: editingIngredients.filter((ing) => ing.name.trim()),
     steps: stepsRaw,
+    tools: (document.querySelector("#recipeTools")?.value || "").split(/[\s,，、；;]+/).map((t) => t.trim()).filter(Boolean),
     updatedAt: new Date().toISOString(),
     author: localStorage.getItem("my-recipe-author-name") || "匿名"
   };
@@ -1917,6 +2100,7 @@ function normalizeRecipes(rawRecipes) {
         })).filter((ing) => ing.name.trim())
       : [],
     steps: Array.isArray(recipe.steps) ? recipe.steps.map(String) : String(recipe.steps || "").split("\n").filter(Boolean),
+    tools: Array.isArray(recipe.tools) ? recipe.tools.map(String).filter(Boolean) : [],
     updatedAt: String(recipe.updatedAt || ""),
     author: String(recipe.author || "匿名")
   }));
