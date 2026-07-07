@@ -489,3 +489,26 @@
 - `index.html`：hero 内新增 `<div class="hero-glow">`；功能亮点条 4 张卡片与 list-panel 加 data-reveal（部分带 d1/d2/d3）；未触碰任何 id/name/按钮/表单结构。
 - `app.js`：仅在文件末尾追加 initScrollFx() 独立 IIFE（滚动渐显 + hero 视差 + 卡片景深 + 步骤进入 + 双端降级），未改动任何已有函数。
 - 回滚方式：git reset 到本轮提交前，或将 styles.css、index.html、app.js 三个文件还原到 HEAD~1。
+
+## 2026-07-07 - Task: 全站 UI 改造为深色 Apple 风（文档更新）
+### What was done
+- 配合全站 UI 深色 Apple 风改造，更新 README 和产品计划书。
+- README 新增「界面风格」章节，说明深色视觉和滚动联动动效、三档响应式、无障碍降级。
+- 产品计划书阶段排期新增「第 3.5 阶段：深色 Apple 风 UI 二次改版 ✅ 已完成」。
+- UI 改造本体（styles.css 全量重写、index.html 加动效标记、app.js 追加 initScrollFx 滚动联动）由前一提交完成，纯换皮，保留全部功能 DOM 钩子。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过。
+- 关键 id 核查：14 个功能面板/容器 id 全部保留，各 1 处；id 总数、button 数量无增删。
+- app.js 相对回滚点为 130 insertions / 0 deletions（纯追加，IIFE 隔离，零侵入业务逻辑）。
+- CSS 花括号 419/419 配平。
+- 滚动动效选择器（hero-copy、recipe-group-card、steps li、data-reveal、step-in）均与真实 DOM 和 CSS 对应。
+- 未做真机像素级渲染验证：当前环境无浏览器截图能力，需在浏览器手动确认视觉效果。
+
+### Notes
+- `README.md`：新增界面风格章节。
+- `docs/product-plan.md`：阶段排期新增第 3.5 阶段。
+- `progress.md`：追加本轮记录。
+- `showcase.html`：Apple 风样板预览页（回滚点提交），可保留作设计参考。
+- 已知取舍：深色风下"调整网站"改主色时，纯色块跟随变化，但大字/光晕橙金渐变固定不跟随，改背景色对深色底不生效——为保深色不被冲垮的合理权衡。
+- 回滚方式：`git reset --hard f12244e`（UI 改造前的样板回滚点），或 `git revert` 对应提交。
