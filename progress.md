@@ -373,3 +373,20 @@
 - `backups/`：导入前云端快照，仅本地保留。
 - 回滚方式：用 `backups/cloud-backup-before-foreign-*.json` 通过 PUT 写回云端可移除这批外国菜；本地恢复 `app.js`、`README.md`、`docs/product-plan.md` 修改前版本，删除 `aliyun/foreign-raw.json` 和 `aliyun/foreign-part1.json`。
 - 待办：外国菜剩余 88 道分批翻译导入。
+
+## 2026-07-07 - Task: AI 批量整理菜谱功能
+### What was done
+- 在 AI 悬浮助手里新增「批量整理菜谱」快捷入口：用户粘贴一大段含多道菜的文字，AI 一次性拆分整理成多道结构化菜谱。
+- 拆分结果以可勾选的预览卡片列表展示（默认全选，显示菜名、场景、耗时、食材数、步骤数，可点开看详情），底部支持全选/全不选与实时统计的保存按钮。
+- 用户确认后，选中的菜按当前世界大类、本地昵称、当前时间补全字段并归一化，一次性加入菜谱库并触发本地保存与云端同步、刷新列表。
+- 复用现有 AI 配置、AI 调用模式、normalizeRecipes、saveToLocalStorage、render、escapeHtml 等既有能力，未改动云端接口和其它功能。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过，JavaScript 无语法错误（改动全程共校验 3 次，均通过）。
+- 未做浏览器端联调与真实 AI 接口调用验证：缺少可用 API Key 与运行环境，属本次验证缺口；逻辑正确性以代码审阅与语法检查为准。
+
+### Notes
+- `index.html`：在 `#floatAiShortcuts` 快捷入口区新增第 5 个按钮 `data-action="batch"`（批量整理菜谱入口）。
+- `app.js`：新增批量整理系统提示词常量 `BATCH_AI_SYSTEM_PROMPT`；新增全局变量 `floatAiBatchMode`、`batchDraftList`；新增函数 `openBatchMode`、`handleBatchParse`、`parseBatchReply`、`renderBatchPreview`、`saveBatchSelected`；改造 `floatAiSend` 开头加入批量模式分支；快捷入口监听增加 batch 分支并在切换/新对话时复位批量状态。
+- `styles.css`：新增 `.batch-preview` 及其子元素样式（预览卡片列表、复选框、meta、详情、底部操作条），风格与既有 `.draft-card`、`.float-ai-shortcut-btn` 一致。
+- 回滚方式：`git revert 08592d1` 或 `git reset --hard dd530b2`（dd530b2 为本轮改动前提交）可回到施工前状态。
