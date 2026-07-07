@@ -427,3 +427,23 @@
 - `docs/usage.md`：记录内容补充「所需工具」字段；新增「按工具筛选菜谱」章节。
 - 未改动云端接口和其它功能。
 - 回滚方式：`git reset --hard d873793`（d873793 为本轮改动前提交）可回到施工前状态。
+
+## 2026-07-07 - Task: 工具字段数据层与老菜工具推断回填
+### What was done
+- 为菜谱新增"所需工具"（tools）字段的数据层支持：normalizeRecipes 和 saveRecipe 已兼容 tools 字段。
+- 编写工具推断脚本，用规则从每道菜的步骤/菜名/描述自动推断所需设备类工具（炒→炒锅、烤→烤箱、炸→油炸锅、蒸→蒸锅等），只标有区分度的设备，不标家家都有的案板菜刀。
+- 对云端 74 道菜运行推断并回填 tools 字段，64 道成功标注；回填前已备份云端。
+- 界面层（编辑表单工具输入、详情页工具标签、"我有什么工具"筛选面板、缺工具问 AI 替代）由配套提交完成。
+- 更新 README 和产品计划书，补充工具筛选能力和字段。
+
+### Testing
+- `node aliyun/infer-tools.mjs --dry`：预览推断质量，优化规则去掉案板菜刀噪声后，番茄炒蛋→仅炒锅、糖醋里脊→炒锅+汤锅+油炸锅，合理。
+- 正式回填：云端 74 道全部写入 tools 字段，验证通过。
+- `node --check E:/recipe-site/app.js`：通过。
+
+### Notes
+- `aliyun/infer-tools.mjs`：新增工具推断回填脚本，支持 --dry 预览，不覆盖已有非空 tools。
+- `app.js`：normalizeRecipes、saveRecipe 增加 tools 字段（界面层函数由配套提交完成）。
+- `README.md`、`docs/product-plan.md`：补充工具筛选能力。
+- `backups/`：回填前云端快照。
+- 回滚方式：用 `backups/cloud-backup-before-tools-*.json` 通过 PUT 写回云端可清除 tools 字段；本地 git reset 到本轮前提交。
