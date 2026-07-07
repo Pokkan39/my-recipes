@@ -8,6 +8,7 @@
 </head>
 <body>
   <header class="hero food-hero">
+    <div class="hero-glow" aria-hidden="true"></div>
     <div class="hero-copy">
       <p id="siteEyebrow" class="eyebrow">Personal Recipe Book</p>
       <h1 id="siteTitle">今天想吃点什么？</h1>
@@ -54,10 +55,10 @@
   </header>
 
   <section class="feature-strip" aria-label="网站功能亮点">
-    <article><span>🎬</span><strong>视频生成菜谱</strong><small>看到好吃的，先让 AI 帮忙整理</small></article>
-    <article><span>👨‍👩‍👧‍👦</span><strong>朋友共同填写</strong><small>家常菜和拿手菜一起补进去</small></article>
-    <article><span>🍽️</span><strong>今天吃什么</strong><small>按时间、场景随机推荐</small></article>
-    <article><span>🛒</span><strong>自动购物清单</strong><small>选好菜，一键汇总食材</small></article>
+    <article data-reveal><span>🎬</span><strong>视频生成菜谱</strong><small>看到好吃的，先让 AI 帮忙整理</small></article>
+    <article data-reveal class="d1"><span>👨‍👩‍👧‍👦</span><strong>朋友共同填写</strong><small>家常菜和拿手菜一起补进去</small></article>
+    <article data-reveal class="d2"><span>🍽️</span><strong>今天吃什么</strong><small>按时间、场景随机推荐</small></article>
+    <article data-reveal class="d3"><span>🛒</span><strong>自动购物清单</strong><small>选好菜，一键汇总食材</small></article>
   </section>
 
   <section id="whatToEatPanel" class="panel what-to-eat-panel" aria-labelledby="whatToEatTitle">
@@ -221,7 +222,7 @@
   </section>
 
   <main class="layout">
-    <section class="panel list-panel" aria-labelledby="recipeListTitle">
+    <section class="panel list-panel" aria-labelledby="recipeListTitle" data-reveal>
       <div class="panel-heading">
         <div>
           <h2 id="recipeListTitle">菜谱列表</h2>

@@ -466,3 +466,26 @@
 - `app.js`：顶部新增 recipeModal/recipeModalBody 引用；renderDetail 增加 target 参数并把事件绑定指向 target；新增 openRecipeModal/closeRecipeModal；render() 去掉 renderDetail 调用；renderList 两处点击与 5 处结果跳转改为 openRecipeModal；bindEvents 绑定返回按钮与 ESC 关闭。
 - `styles.css`：.layout 改单栏；.detail-panel 改为 display:none；新增 .recipe-modal / .recipe-modal-bar / .recipe-modal-back / .recipe-modal-body 样式（z-index:900，低于 AI 悬浮助手 9999）。
 - 回滚方式：git reset 到本轮提交前，或还原上述三文件到 HEAD~1。
+
+## 2026-07-07 - Task: 全站 UI 改造为深色 Apple 风 + 滚动联动动效
+### What was done
+- 以同目录 showcase.html 为设计基准，把正式站整套视觉从奶油白风改成深色美食杂志风（深色底 + 暖橙金渐变 + 毛玻璃 + Apple 缓动），这是纯换皮，不改任何业务功能。
+- styles.css 全量重写：统一深色配色变量、按钮组、hero 首屏（光晕呼吸 + 标题渐变进场）、功能亮点条、主布局与面板、世界/场景 tab、菜谱列表卡片、全屏做法页与详情各区块、编辑器与所有表单控件、10 个功能面板及其结果卡片、AI 悬浮助手整套、同步状态、各类 chip/badge，并覆盖平板/手机/超小屏三档响应式。
+- 深色表单适配：输入框/文本域/下拉一律深色半透明底 + 浅色字 + 聚焦品牌色描边，placeholder 用弱化色，select 选项深色，复选框与滑块用品牌 accent-color，无图占位改深色渐变不露白。
+- index.html 只加视觉标记：hero 内新增光晕层、给功能亮点条与列表面板加 data-reveal 滚动渐显（含 d1/d2/d3 延迟），未改动任何 id/name/按钮。
+- app.js 末尾新增独立 initScrollFx()：滚动渐显、hero 视差、列表卡片景深联动、全屏做法页步骤逐条进入；通过 MutationObserver 监听动态渲染的列表与做法页，无需改 renderList/openRecipeModal 即可对动态元素生效；手机与 prefers-reduced-motion 自动降级。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过。
+- 关键 id 核查：recipeList、recipeModal、editorPanel、floatAiPanel、worldTabs、categoryTabs、recipeForm、whatToEatPanel、mealPlanPanel、byIngredientPanel、myToolsPanel、shoppingListPanel、customizePanel、nicknamePanel 全部存在。
+- 结构完整性：index.html 的 id 总数 148→148 无增删、name 属性无变化、button 标签 53→53 无删除；git diff 确认只新增 hero-glow 与 data-reveal 标记。
+- CSS 花括号配平 419/419；styles.css 无残留浅色硬编码背景块。
+- 兼容性核查：applyAppearance() 会用内联样式覆盖 --brand/--brand-dark/--soft/--page-bg 等 7 个变量，故新 CSS 主视觉背景改用固定的 --bg/--card/--brand-soft，完全不引用会被覆盖成浅色的 --soft 与 --page-bg（grep 确认零引用），可视化调整功能所依赖的 7 个变量名均保留定义。
+- app.js 为纯末尾追加（130 insertions / 0 deletions），零侵入现有业务函数。
+- 说明：无自动化 UI 测试入口，未做浏览器像素级渲染验证，仅静态语法、结构、变量依赖与选择器覆盖核对。
+
+### Notes
+- `styles.css`：全量重写为深色 Apple 风（本轮唯一主体改动，覆盖全部现有组件选择器）。
+- `index.html`：hero 内新增 `<div class="hero-glow">`；功能亮点条 4 张卡片与 list-panel 加 data-reveal（部分带 d1/d2/d3）；未触碰任何 id/name/按钮/表单结构。
+- `app.js`：仅在文件末尾追加 initScrollFx() 独立 IIFE（滚动渐显 + hero 视差 + 卡片景深 + 步骤进入 + 双端降级），未改动任何已有函数。
+- 回滚方式：git reset 到本轮提交前，或将 styles.css、index.html、app.js 三个文件还原到 HEAD~1。

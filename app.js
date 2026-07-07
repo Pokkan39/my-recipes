@@ -3001,3 +3001,133 @@ function floatAiFillToForm() {
 
   fields.name.focus();
 }
+
+/* =========================================================================
+   滚动联动动效（深色 Apple 风）
+   —— 纯视觉增强，独立 IIFE，零侵入上面的任何业务函数。
+   通过 MutationObserver 监听动态渲染的列表与全屏做法页，
+   因此不需要修改 renderList / openRecipeModal 就能对动态元素生效。
+   ========================================================================= */
+(function initScrollFx() {
+  var prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var mqMobile = window.matchMedia("(max-width: 768px)");
+
+  // 1) 滚动渐显：所有设备都要运行，否则 [data-reveal] 元素会永远保持隐藏
+  if ("IntersectionObserver" in window) {
+    var revealIO = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("revealed");
+          revealIO.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
+    document.querySelectorAll("[data-reveal]").forEach(function (el) {
+      revealIO.observe(el);
+    });
+  } else {
+    document.querySelectorAll("[data-reveal]").forEach(function (el) {
+      el.classList.add("revealed");
+    });
+  }
+
+  // 2) 全屏做法页步骤逐条进入：监听内容变化，仅对展开的步骤加动画（避免折叠态闪烁）
+  var modalBody = document.getElementById("recipeModalBody");
+  if (modalBody && "MutationObserver" in window && !prefersReduced) {
+    var stepObserver = new MutationObserver(function () {
+      var list = modalBody.querySelector(".steps");
+      if (!list || list.classList.contains("is-collapsed")) return;
+      var items = list.querySelectorAll("li:not(.step-in)");
+      items.forEach(function (li, i) {
+        li.style.animationDelay = (i * 0.07) + "s";
+        li.classList.add("step-in");
+      });
+    });
+    stepObserver.observe(modalBody, { childList: true, subtree: true });
+  }
+
+  // 手机 / 减弱动效：不做 hero 视差与卡片景深，保持流畅清晰
+  if (prefersReduced) return;
+
+  // 3) hero 视差 + 4) 列表卡片景深联动
+  var heroCopy = document.querySelector(".hero-copy");
+  var heroEl = document.querySelector(".hero");
+  var recipeListEl = document.getElementById("recipeList");
+  var cards = [];
+
+  function collectCards() {
+    cards = recipeListEl
+      ? Array.prototype.slice.call(recipeListEl.querySelectorAll(".recipe-group-card"))
+      : [];
+  }
+  collectCards();
+
+  // 列表是动态渲染的：监听子节点变化，重新收集卡片（替代在 renderList 内手动调用）
+  if (recipeListEl && "MutationObserver" in window) {
+    var listObserver = new MutationObserver(function () {
+      collectCards();
+      onScroll();
+    });
+    listObserver.observe(recipeListEl, { childList: true });
+  }
+
+  var ticking = false;
+  function onScroll() {
+    if (!ticking) {
+      window.requestAnimationFrame(update);
+      ticking = true;
+    }
+  }
+
+  function update() {
+    ticking = false;
+    var isMobile = mqMobile.matches;
+    var vh = window.innerHeight;
+    var y = window.scrollY || window.pageYOffset || 0;
+
+    // hero 视差：标题区随滚动缓慢上移并淡出
+    if (heroCopy && heroEl) {
+      var heroH = heroEl.offsetHeight || vh;
+      if (y < heroH) {
+        var p = y / heroH;
+        heroCopy.style.transform = "translateY(" + (y * 0.28).toFixed(2) + "px)";
+        heroCopy.style.opacity = Math.max(0, 1 - p * 1.25).toFixed(3);
+      }
+    }
+
+    if (isMobile) return; // 手机只保留 hero 轻视差，卡片景深关闭
+
+    // 卡片景深：据卡片中心相对视口中心的位置做轻微位移 + 缩放 + 透明度（含蓄，不干扰阅读）
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      var rect = card.getBoundingClientRect();
+      if (rect.bottom < -80 || rect.top > vh + 80) continue; // 视口外跳过，省算力
+      var center = rect.top + rect.height / 2;
+      var dist = (center - vh / 2) / (vh / 2 + rect.height / 2);
+      var clamped = Math.max(-1, Math.min(1, dist));
+      var translate = clamped * 10;
+      var scale = 1 - Math.abs(clamped) * 0.02;
+      var opacity = 1 - Math.abs(clamped) * 0.22;
+      card.style.transform = "translateY(" + translate.toFixed(2) + "px) scale(" + scale.toFixed(4) + ")";
+      card.style.opacity = Math.max(0.7, opacity).toFixed(3);
+    }
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll, { passive: true });
+
+  // 桌面/手机切换时清理卡片内联样式，避免残留态
+  if (mqMobile.addEventListener) {
+    mqMobile.addEventListener("change", function () {
+      if (mqMobile.matches) {
+        cards.forEach(function (c) {
+          c.style.transform = "";
+          c.style.opacity = "";
+        });
+      }
+      onScroll();
+    });
+  }
+
+  update();
+})();
