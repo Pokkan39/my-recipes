@@ -1359,6 +1359,7 @@ function renderIngredientRows() {
 }
 
 function openVideoHelper() {
+  populateWorldSelect();
   editorPanel.classList.add("is-open");
   editorTitle.textContent = "新增菜谱";
   deleteRecipeButton.style.display = "none";
@@ -2187,11 +2188,11 @@ function renderLogPanel() {
     container.innerHTML = '<p class="log-empty">还没有操作记录。</p>';
     return;
   }
-  container.innerHTML = log.map((entry) => {
+  container.innerHTML = log.map((entry, i) => {
     const d = new Date(entry.ts);
     const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
     const actionClass = entry.action === "新增" ? "log-action--add" : entry.action === "删除" ? "log-action--del" : "log-action--edit";
-    return `<div class="log-entry">
+    return `<div class="log-entry" style="animation-delay:${i * 30}ms">
       <span class="log-action ${actionClass}">${entry.action}</span>
       <span class="log-name">${escapeHtml(entry.name)}</span>
       <span class="log-meta">${escapeHtml(entry.author)} · ${dateStr}</span>
@@ -2217,7 +2218,9 @@ async function cloudBackup() {
     const link = document.createElement("a");
     link.href = url;
     link.download = `cloud-backup-${ts}.json`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
     updateSyncStatus("cloud", "阿里云共享库已连接");
     alert(`云端备份成功，共 ${result.list.length} 道菜谱，已下载到本地。`);
@@ -2289,7 +2292,9 @@ function exportRecipes() {
   const link = document.createElement("a");
   link.href = url;
   link.download = `my-recipes-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(link);
   link.click();
+  document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
 
@@ -2304,6 +2309,7 @@ function importRecipes(event) {
       recipes = nextRecipes;
       selectedId = recipes[0]?.id || "";
       const saveResult = await saveToLocalStorage();
+      appendLog("导入", `共 ${nextRecipes.length} 道菜谱`);
       closeEditor();
       render();
       alert(saveResult.ok
@@ -3009,6 +3015,7 @@ async function saveBatchSelected(wrap) {
   render();
 
   const count = normalized.length;
+  appendLog("批量导入", `共 ${count} 道菜谱`);
   floatAiAppend("assistant", `✅ 已保存 ${count} 道菜到菜谱库${ok ? "，已同步云端" : "（仅本地）"}`);
 
   // 清理批量状态与预览区

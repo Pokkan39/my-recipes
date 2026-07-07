@@ -329,6 +329,63 @@ h3 {
   padding-inline: 26px;
 }
 
+/* ── 按钮分组 ────────────────────────────────────────────────── */
+.hero-actions {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.action-group--primary {
+  gap: 10px;
+}
+
+.action-group--tools {
+  padding: 6px 0;
+  border-top: 1px solid rgba(255,220,180,0.1);
+  border-bottom: 1px solid rgba(255,220,180,0.1);
+}
+
+.action-group--settings {
+  opacity: 0.7;
+}
+
+.action-group--settings:hover {
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+/* 工具功能按钮：介于 secondary 和 text 之间 */
+.tool-button {
+  padding: 9px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,220,180,0.18);
+  background: rgba(255,220,180,0.06);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, transform 0.12s;
+  white-space: nowrap;
+}
+
+.tool-button:hover {
+  background: rgba(255,220,180,0.14);
+  border-color: rgba(255,220,180,0.35);
+  transform: translateY(-1px);
+}
+
+.tool-button:active {
+  transform: scale(0.97);
+}
+
 .sync-status {
   display: inline-flex;
   align-items: center;
@@ -519,6 +576,7 @@ h3 {
 
 .editor-panel.is-open {
   display: block;
+  animation: panelSlideIn 0.28s var(--ease) both;
 }
 
 .panel-heading {
@@ -665,6 +723,16 @@ h3 {
 @keyframes cardIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes panelSlideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes logEntryIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 @media (hover: hover) {
@@ -1698,6 +1766,7 @@ h3 {
 .shopping-panel.is-open,
 .customize-panel.is-open {
   display: block;
+  animation: panelSlideIn 0.28s var(--ease) both;
 }
 
 /* 今天吃什么 */
@@ -2977,7 +3046,8 @@ h3 {
   .by-ingredient-panel,
   .my-tools-panel,
   .shopping-panel,
-  .customize-panel {
+  .customize-panel,
+  .activity-log-panel {
     margin-inline: 18px;
     padding: 18px;
   }
@@ -2986,6 +3056,22 @@ h3 {
   .hero-actions .secondary-button {
     flex: 1 1 calc(50% - 6px);
     justify-content: center;
+  }
+
+  .action-group--tools {
+    padding: 6px 0;
+  }
+
+  .tool-button {
+    flex: 1 1 calc(50% - 4px);
+    justify-content: center;
+    text-align: center;
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  .action-group--settings {
+    opacity: 1;
   }
 
   .recipe-group-main {
@@ -3102,9 +3188,10 @@ h3 {
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 220, 180, 0.05);
   border-radius: 10px;
   font-size: 14px;
+  animation: logEntryIn 0.22s var(--ease) both;
 }
 
 .log-action {
@@ -3116,13 +3203,13 @@ h3 {
   white-space: nowrap;
 }
 
-.log-action--add  { background: rgba(72,199,120,0.18); color: #48c778; }
-.log-action--edit { background: rgba(255,183,77,0.18);  color: #ffb74d; }
-.log-action--del  { background: rgba(255,99,99,0.18);   color: #ff6363; }
+.log-action--add  { background: rgba(147,212,114,0.18); color: var(--leaf); }
+.log-action--edit { background: rgba(255,179,71,0.18);  color: var(--brand-2); }
+.log-action--del  { background: rgba(255,107,94,0.18);  color: var(--danger); }
 
 .log-name {
   flex: 1;
-  color: var(--text-main, #f0ece4);
+  color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3130,12 +3217,12 @@ h3 {
 
 .log-meta {
   font-size: 12px;
-  color: var(--text-dim, #8a7e6e);
+  color: var(--muted);
   white-space: nowrap;
 }
 
 .log-empty {
-  color: var(--text-dim, #8a7e6e);
+  color: var(--muted);
   font-size: 14px;
   padding: 8px 0;
 }
