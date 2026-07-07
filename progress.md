@@ -580,3 +580,17 @@
 - `README.md`：更新适配机型说明。
 - `progress.md`：追加本轮记录。
 - 回滚方式：`git checkout 7236855 -- app.js styles.css README.md`。
+
+## 2026-07-07 - Task: 修复顶部功能按钮点击后不滚动到面板
+### What was done
+- 修复用户反馈：点顶部"今天吃什么/配一桌菜/我有什么食材/我有什么工具/购物清单/调整网站"，面板其实已打开但页面不滚动过去，停在首屏看着像"没反应"。
+- 新增 scrollPanelIntoView() 工具函数，6 个功能面板打开时平滑滚动到面板位置；新增菜谱编辑器同样加上，体验统一。关闭时不滚动。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过。
+- 无头浏览器实测（430px 手机视口）：点"今天吃什么"后 scrollY 0 → 1069，面板打开且顶部定位到视口顶部，确认滚动生效。
+
+### Notes
+- `app.js`：新增 scrollPanelIntoView；toggleWhatToEatPanel/toggleMealPlanPanel/toggleByIngredientPanel/toggleMyToolsPanel/toggleShoppingListPanel/toggleCustomizePanel 及 openNewEditor 打开时调用。
+- `progress.md`：追加本轮记录。
+- 回滚方式：`git checkout 4164383 -- app.js`。

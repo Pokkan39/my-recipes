@@ -661,7 +661,15 @@ function aiFillForm() {
 
 function toggleWhatToEatPanel() {
   const isOpen = whatToEatPanel.classList.toggle("is-open");
-  if (isOpen) renderWhatToEatPanel();
+  if (isOpen) { renderWhatToEatPanel(); scrollPanelIntoView(whatToEatPanel); }
+}
+
+// 打开面板后平滑滚动到它，避免用户以为"点了没反应"
+function scrollPanelIntoView(panel) {
+  if (!panel) return;
+  requestAnimationFrame(() => {
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 }
 
 function renderWhatToEatPanel() {
@@ -779,7 +787,8 @@ function clearWhatToEatFilters() {
 
 // ===== 配一桌菜 =====
 function toggleMealPlanPanel() {
-  mealPlanPanel.classList.toggle("is-open");
+  const isOpen = mealPlanPanel.classList.toggle("is-open");
+  if (isOpen) scrollPanelIntoView(mealPlanPanel);
 }
 
 const MEAL_STAPLE_KEYWORDS = ["主食", "面", "饭", "饺", "包", "馒头", "粥", "汤", "饼", "粉", "馄饨", "米线"];
@@ -884,7 +893,8 @@ function generateMealPlan() {
 
 // ===== 我有什么食材 =====
 function toggleByIngredientPanel() {
-  byIngredientPanel.classList.toggle("is-open");
+  const isOpen = byIngredientPanel.classList.toggle("is-open");
+  if (isOpen) scrollPanelIntoView(byIngredientPanel);
 }
 
 function searchByIngredient() {
@@ -964,7 +974,7 @@ function searchByIngredient() {
 function toggleMyToolsPanel() {
   const panel = document.querySelector("#myToolsPanel");
   const isOpen = panel.classList.toggle("is-open");
-  if (isOpen) renderMyToolsChips();
+  if (isOpen) { renderMyToolsChips(); scrollPanelIntoView(panel); }
 }
 
 function renderMyToolsChips() {
@@ -1107,7 +1117,7 @@ function askToolAlternative(recipeName, missingTools) {
 
 function toggleShoppingListPanel() {
   const isOpen = shoppingListPanel.classList.toggle("is-open");
-  if (isOpen) renderShoppingListPanel();
+  if (isOpen) { renderShoppingListPanel(); scrollPanelIntoView(shoppingListPanel); }
 }
 
 function renderShoppingListPanel() {
@@ -1249,7 +1259,8 @@ async function copyShoppingList() {
 }
 
 function toggleCustomizePanel() {
-  customizePanel.classList.toggle("is-open");
+  const isOpen = customizePanel.classList.toggle("is-open");
+  if (isOpen) scrollPanelIntoView(customizePanel);
 }
 
 function toggleParseArea() {
@@ -2035,6 +2046,7 @@ function openNewEditor() {
   const t = document.querySelector("#recipeTools");
   if (t) t.value = "";
   resetIngredientEditor([]);
+  scrollPanelIntoView(editorPanel);
   fields.name.focus();
   render();
 }
