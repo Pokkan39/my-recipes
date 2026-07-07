@@ -772,6 +772,111 @@ h3 {
   padding: 10px 0;
 }
 
+/* ===== 首页世界大类横向滚动行（Netflix 式）===== */
+.home-row {
+  margin-bottom: 26px;
+}
+
+.home-row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.home-row-head h3 {
+  font-size: 19px;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.home-row-count {
+  flex: 0 0 auto;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.home-row-track {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 2px 12px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.home-row-track::-webkit-scrollbar {
+  height: 6px;
+}
+
+.home-row-track::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.home-row-track::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
+}
+
+/* 横向行内的卡片：固定宽度 + 竖版布局（封面在上、信息在下），更适合横滑 */
+.home-row-track > .recipe-group-card {
+  flex: 0 0 260px;
+  width: 260px;
+  scroll-snap-align: start;
+  animation: none; /* 横向行内不做纵向进场动画，避免与横滑冲突 */
+}
+
+.home-row-track .recipe-group-main {
+  grid-template-columns: 1fr;
+  gap: 10px;
+  padding: 0 0 10px;
+}
+
+.home-row-track .recipe-thumb {
+  width: 100%;
+  height: 140px;
+}
+
+.home-row-track .recipe-group-copy strong {
+  font-size: 17px;
+}
+
+/* 查看全部卡片 */
+.home-row-more {
+  flex: 0 0 260px;
+  width: 260px;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 22px;
+  background: rgba(255, 220, 180, 0.03);
+  color: var(--gold);
+  font-size: 15px;
+  cursor: pointer;
+  transition: border-color 0.4s var(--ease), background 0.4s var(--ease), color 0.4s var(--ease);
+}
+
+.home-row-more-arrow {
+  font-size: 30px;
+  line-height: 1;
+}
+
+@media (hover: hover) {
+  .home-row-more:hover {
+    border-color: var(--brand-line);
+    background: var(--brand-soft);
+    color: var(--brand-2);
+  }
+}
+
 /* ===== 全屏做法页 ===== */
 .recipe-modal {
   position: fixed;
@@ -2860,6 +2965,21 @@ h3 {
   .recipe-group-card {
     transform: none !important;
     opacity: 1 !important;
+  }
+
+  /* 手机端首页横向行：卡片略缩、标题字号适配 */
+  .home-row-head h3 {
+    font-size: 17px;
+  }
+
+  .home-row-track > .recipe-group-card,
+  .home-row-more {
+    flex-basis: 200px;
+    width: 200px;
+  }
+
+  .home-row-track .recipe-thumb {
+    height: 118px;
   }
 
   .float-ai-panel {

@@ -1729,10 +1729,18 @@ function renderList() {
     }
   }
 
-  const groups = getRecipeGroups(visibleRecipes);
-
   recipeCount.textContent = `${getRecipeGroups(recipes).length} 道菜 / ${recipes.length} 个做法`;
   recipeList.innerHTML = "";
+
+  // 首页默认态（无搜索、无世界筛选、无场景筛选）：按世界大类横向滚动分组，控制页面高度
+  const isHomeDefault = activeWorld === "全部" && activeCategoryTab === "全部" && keyword === "";
+  if (isHomeDefault) {
+    renderHomeRows(visibleRecipes);
+    return;
+  }
+
+  // 搜索/筛选态：保留原纵向列表
+  const groups = getRecipeGroups(visibleRecipes);
 
   if (groups.length === 0) {
     recipeList.innerHTML = '<p class="empty-list">没有找到匹配的菜谱。</p>';
@@ -1740,48 +1748,114 @@ function renderList() {
   }
 
   groups.forEach((group) => {
-    const card = document.createElement("article");
-    const isActiveGroup = group.recipes.some((recipe) => recipe.id === selectedId);
-    const coverRecipe = group.recipes[0];
-    const coverMarkup = coverRecipe.image
-      ? `<img src="${escapeAttr(coverRecipe.image)}" alt="${escapeAttr(group.name)}">`
-      : `<span class="recipe-thumb-placeholder">🍲</span>`;
-    card.className = `recipe-group-card${isActiveGroup ? " is-active" : ""}`;
-    card.innerHTML = `
-      <button class="recipe-group-main" type="button">
-        <span class="recipe-thumb">${coverMarkup}</span>
-        <span class="recipe-group-copy">
-          <strong>${escapeHtml(group.name)}</strong>
-          <small>${group.recipes.length} 个做法版本</small>
-          <span class="recipe-card-tags">
-            ${coverRecipe.time ? `<em>${escapeHtml(coverRecipe.time)}</em>` : ""}
-            ${coverRecipe.cost ? `<em>${escapeHtml(coverRecipe.cost)}</em>` : ""}
-            ${coverRecipe.occasion ? `<em>${escapeHtml(coverRecipe.occasion.split(/[／/、]/)[0].trim())}</em>` : ""}
-          </span>
+    recipeList.appendChild(createRecipeCard(group));
+  });
+}
+
+// 生成一张菜谱分组卡片（含事件绑定），首页横向行与纵向列表共用
+function createRecipeCard(group) {
+  const card = document.createElement("article");
+  const isActiveGroup = group.recipes.some((recipe) => recipe.id === selectedId);
+  const coverRecipe = group.recipes[0];
+  const coverMarkup = coverRecipe.image
+    ? `<img src="${escapeAttr(coverRecipe.image)}" alt="${escapeAttr(group.name)}">`
+    : `<span class="recipe-thumb-placeholder">🍲</span>`;
+  card.className = `recipe-group-card${isActiveGroup ? " is-active" : ""}`;
+  card.innerHTML = `
+    <button class="recipe-group-main" type="button">
+      <span class="recipe-thumb">${coverMarkup}</span>
+      <span class="recipe-group-copy">
+        <strong>${escapeHtml(group.name)}</strong>
+        <small>${group.recipes.length} 个做法版本</small>
+        <span class="recipe-card-tags">
+          ${coverRecipe.time ? `<em>${escapeHtml(coverRecipe.time)}</em>` : ""}
+          ${coverRecipe.cost ? `<em>${escapeHtml(coverRecipe.cost)}</em>` : ""}
+          ${coverRecipe.occasion ? `<em>${escapeHtml(coverRecipe.occasion.split(/[／/、]/)[0].trim())}</em>` : ""}
         </span>
-      </button>
-      <div class="version-list">
-        ${group.recipes.map((recipe) => `
-          <button class="version-pill${recipe.id === selectedId ? " is-active" : ""}" type="button" data-id="${escapeAttr(recipe.id)}">
-            ${escapeHtml(recipe.source)} · ${escapeHtml(recipe.variant)}
-          </button>
-        `).join("")}
-      </div>
-    `;
+      </span>
+    </button>
+    <div class="version-list">
+      ${group.recipes.map((recipe) => `
+        <button class="version-pill${recipe.id === selectedId ? " is-active" : ""}" type="button" data-id="${escapeAttr(recipe.id)}">
+          ${escapeHtml(recipe.source)} · ${escapeHtml(recipe.variant)}
+        </button>
+      `).join("")}
+    </div>
+  `;
 
-    card.querySelector(".recipe-group-main").addEventListener("click", () => {
+  card.querySelector(".recipe-group-main").addEventListener("click", () => {
+    closeEditor();
+    openRecipeModal(group.recipes[0].id);
+  });
+
+  card.querySelectorAll(".version-pill").forEach((button) => {
+    button.addEventListener("click", () => {
       closeEditor();
-      openRecipeModal(group.recipes[0].id);
+      openRecipeModal(button.dataset.id);
+    });
+  });
+
+  return card;
+}
+
+// 首页横向分组：每个世界大类一排横向滚动卡片
+function renderHomeRows(visibleRecipes) {
+  const MAX_PER_ROW = 12;
+  const assigned = new Set();
+  const rows = [];
+
+  // 按 worldCategories 顺序生成各大类的行
+  worldCategories.forEach((world) => {
+    const listForWorld = visibleRecipes.filter((recipe) => (recipe.world || "现实中的饭") === world);
+    listForWorld.forEach((recipe) => assigned.add(recipe));
+    if (listForWorld.length > 0) {
+      rows.push({ world, groups: getRecipeGroups(listForWorld), canViewAll: true });
+    }
+  });
+
+  // 未归入任何现存大类的菜（world 指向已删除的自定义大类等）归到其它行
+  const others = visibleRecipes.filter((recipe) => !assigned.has(recipe));
+  if (others.length > 0) {
+    rows.push({ world: "其它", groups: getRecipeGroups(others), canViewAll: false });
+  }
+
+  if (rows.length === 0) {
+    recipeList.innerHTML = '<p class="empty-list">没有找到匹配的菜谱。</p>';
+    return;
+  }
+
+  rows.forEach((row) => {
+    const section = document.createElement("section");
+    section.className = "home-row";
+
+    const head = document.createElement("div");
+    head.className = "home-row-head";
+    head.innerHTML = `<h3>${escapeHtml(row.world)}</h3><span class="home-row-count">${row.groups.length} 道</span>`;
+    section.appendChild(head);
+
+    const track = document.createElement("div");
+    track.className = "home-row-track";
+
+    row.groups.slice(0, MAX_PER_ROW).forEach((group) => {
+      track.appendChild(createRecipeCard(group));
     });
 
-    card.querySelectorAll(".version-pill").forEach((button) => {
-      button.addEventListener("click", () => {
-        closeEditor();
-        openRecipeModal(button.dataset.id);
+    // 超过上限且能切到该大类完整列表时，末尾放一张查看全部卡片
+    if (row.canViewAll && row.groups.length > MAX_PER_ROW) {
+      const more = document.createElement("button");
+      more.className = "home-row-more";
+      more.type = "button";
+      more.innerHTML = `<span class="home-row-more-arrow">→</span><span>查看全部 ${row.groups.length} 道</span>`;
+      more.addEventListener("click", () => {
+        activeWorld = row.world;
+        if (typeof renderWorldTabs === "function") renderWorldTabs();
+        renderList();
       });
-    });
+      track.appendChild(more);
+    }
 
-    recipeList.appendChild(card);
+    section.appendChild(track);
+    recipeList.appendChild(section);
   });
 }
 
@@ -3100,6 +3174,8 @@ function floatAiFillToForm() {
     // 卡片景深：据卡片中心相对视口中心的位置做轻微位移 + 缩放 + 透明度（含蓄，不干扰阅读）
     for (var i = 0; i < cards.length; i++) {
       var card = cards[i];
+      // 首页横向行内的卡片不做景深联动：transform 会干扰横向滚动
+      if (card.closest(".home-row-track")) continue;
       var rect = card.getBoundingClientRect();
       if (rect.bottom < -80 || rect.top > vh + 80) continue; // 视口外跳过，省算力
       var center = rect.top + rect.height / 2;

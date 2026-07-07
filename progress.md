@@ -512,3 +512,25 @@
 - `showcase.html`：Apple 风样板预览页（回滚点提交），可保留作设计参考。
 - 已知取舍：深色风下"调整网站"改主色时，纯色块跟随变化，但大字/光晕橙金渐变固定不跟随，改背景色对深色底不生效——为保深色不被冲垮的合理权衡。
 - 回滚方式：`git reset --hard f12244e`（UI 改造前的样板回滚点），或 `git revert` 对应提交。
+
+## 2026-07-07 - Task: 首页改为世界大类横向滚动展示，解决手机超长列表
+
+### What was done
+- 解决"手机首页被 74 道菜撑成无限长纵向列表"的问题，首页默认态改为 Netflix 式：每个世界大类一排横向滚动卡片，页面高度受控。
+- renderList 拆成两种模式：首页默认态（无搜索、无世界筛选、无场景筛选）走横向分组；用户一旦搜索或筛选则回落到原纵向列表，空状态文案保留。
+- 抽出 createRecipeCard 复用函数生成单张分组卡片（含封面、做法数、标签、版本切换及点击事件），两种模式共用，卡片交互与原逻辑完全一致。
+- 新增 renderHomeRows：按 worldCategories 顺序为每个有菜的大类渲染一行，每行最多前 12 道，超出时末尾放"查看全部 N 道"卡片（点击切到该大类纵向完整列表并高亮世界标签）；world 指向已删除大类的菜归入末尾"其它"行。
+- 滚动景深联动兼容：initScrollFx 卡片景深循环内跳过 .home-row-track 内的卡片，避免 transform 干扰横向滚动。
+- 补充深色 Apple 风横向行样式：行标题+计数、横向滚动容器（scroll-snap、细滚动条）、行内竖版固定宽度卡片、查看全部卡片，并在手机端缩小卡片宽度、适配标题字号。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过（SYNTAX_OK）。
+- grep 核查：#recipeList、recipe-group-card、openRecipeModal、createRecipeCard、renderHomeRows、home-row-track 均在位，卡片事件绑定（recipe-group-main / version-pill → closeEditor + openRecipeModal）完整保留。
+- 人工核对新增两段 CSS 花括号配平、媒体查询归属 max-width:600px 段（与 JS 768px 逻辑各自独立，手机端卡片景深本就被现有 !important 关闭）。
+- 未做真机像素级渲染验证：当前环境无浏览器，横滑手感、snap 效果、查看全部跳转需浏览器手动确认。
+
+### Notes
+- `app.js`：renderList 拆分为模式判断 + 复用 createRecipeCard + 新增 renderHomeRows；initScrollFx 景深循环加一行 .home-row-track 跳过判断。业务接口（getRecipeGroups、openRecipeModal、closeEditor、renderWorldTabs、activeWorld/activeCategoryTab）均复用未改逻辑。
+- `styles.css`：新增首页横向行样式块（.home-row / .home-row-head / .home-row-track / 行内卡片竖版覆盖 / .home-row-more），移动端媒体查询追加横向行卡片缩宽与标题字号适配。
+- `index.html`：未改动（#recipeList 容器已存在，直接复用）。
+- 回滚方式：`git checkout 06dffe9 -- app.js styles.css` 恢复本轮改动前版本，或 `git revert` 本次提交。
