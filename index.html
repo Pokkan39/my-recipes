@@ -33,6 +33,7 @@
           <input id="cloudRestoreInput" type="file" accept="application/json,.json">
         </label>
         <button id="nicknameButton" class="text-button" type="button">我的昵称</button>
+        <button id="activityLogButton" class="text-button" type="button">📋 操作日志</button>
       </div>
 
       <div id="nicknamePanel" class="nickname-panel" style="display:none">
@@ -242,6 +243,18 @@
 
     <section class="panel detail-panel" aria-labelledby="detailTitle">
       <div id="recipeDetail" class="recipe-detail"></div>
+    </section>
+
+    <section id="activityLogPanel" class="panel activity-log-panel" aria-labelledby="activityLogTitle" style="display:none">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Activity Log</p>
+          <h2 id="activityLogTitle">操作日志</h2>
+          <p>记录本浏览器中的新增、修改和删除操作。</p>
+        </div>
+        <button id="closeActivityLogButton" class="text-button" type="button">收起</button>
+      </div>
+      <div id="activityLogList" class="activity-log-list"></div>
     </section>
 
     <section id="editorPanel" class="panel editor-panel" aria-labelledby="editorTitle">
