@@ -350,3 +350,26 @@
 - `styles.css`：新增两个面板及结果卡片样式。
 - `progress.md`：追加本轮改动记录。
 - 回滚方式：恢复本轮修改前的 `app.js`、`index.html`、`styles.css` 和 `progress.md`。
+
+## 2026-07-07 - Task: 新增"外国菜"大类并导入首批外国菜谱
+### What was done
+- 世界大类新增"外国菜"，并让大类加载逻辑自动为老用户补齐新增的默认大类（保留用户自定义大类），避免老浏览器看不到新分类。
+- 从开源项目 json-cookbook（CC / 公共领域授权，作者已做版权甄别）下载 100 道外国菜谱原始数据。
+- 亲自翻译首批 12 道（11 道经典鸡尾酒 + 1 道美式焗饭）为中文，含单位换算（盎司→ml、华氏度→摄氏度）、保留英文原名、标注来源链接，归到"外国菜"大类，安全去重追加到云端。
+- 云端菜谱由 62 道增加到 74 道。
+- 更新 README 和产品计划书：补充世界大类、场景标签、配一桌菜、食材反查、昵称、开源数据来源等已完成能力，并在阶段排期标注各阶段完成状态。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过，JavaScript 无语法错误。
+- `python -m json.tool aliyun/foreign-part1.json`：通过，翻译数据 JSON 有效，12 道。
+- 导入脚本执行：云端由 62 道变为 74 道，去重正常。
+- 导入前已备份云端数据到 `backups/`。
+
+### Notes
+- `app.js`：`DEFAULT_WORLD_CATEGORIES` 增加"外国菜"；`loadWorldCategories` 增加默认大类补齐逻辑。
+- `aliyun/foreign-raw.json`：新增，json-cookbook 100 道原始英文数据。
+- `aliyun/foreign-part1.json`：新增，首批 12 道中文翻译成品。
+- `README.md`、`docs/product-plan.md`：更新已完成能力和阶段状态。
+- `backups/`：导入前云端快照，仅本地保留。
+- 回滚方式：用 `backups/cloud-backup-before-foreign-*.json` 通过 PUT 写回云端可移除这批外国菜；本地恢复 `app.js`、`README.md`、`docs/product-plan.md` 修改前版本，删除 `aliyun/foreign-raw.json` 和 `aliyun/foreign-part1.json`。
+- 待办：外国菜剩余 88 道分批翻译导入。

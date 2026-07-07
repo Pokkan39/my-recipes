@@ -1,0 +1,313 @@
+[
+  {
+    "id": "foreign-0",
+    "name": "汤姆柯林斯（Tom Collins）",
+    "image": "",
+    "source": "Bevvy",
+    "variant": "外国菜谱",
+    "world": "外国菜",
+    "description": "经典夏日高球鸡尾酒，以金酒、柠檬汁、糖浆和苏打水调成，清爽微酸，最早出现在 1876 年美国调酒师 Jerry Thomas 的调酒手册中。（来源：https://bevvy.co/cocktail/tom-collins/rdl）",
+    "cost": "",
+    "occasion": "饮品",
+    "time": "约 5 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "金酒", "amount": "2 盎司（约 60ml）", "category": "主料", "note": "" },
+      { "name": "柠檬汁", "amount": "1 盎司（约 30ml）", "category": "主料", "note": "" },
+      { "name": "糖浆", "amount": "0.25 盎司（约 7ml）", "category": "调味料", "note": "" },
+      { "name": "苏打水", "amount": "适量", "category": "辅料", "note": "" },
+      { "name": "腌渍樱桃和柠檬片", "amount": "少许", "category": "辅料", "note": "装饰用" }
+    ],
+    "steps": [
+      "在装满冰块的柯林斯杯中加入金酒、柠檬汁和糖浆。",
+      "搅拌均匀。",
+      "杯子剩余部分用苏打水填满。",
+      "用一颗樱桃和一片柠檬装饰即可饮用。"
+    ]
+  },
+  {
+    "id": "foreign-1",
+    "name": "迷你瓦帕图（Mini Wapatui）",
+    "image": "",
+    "source": "CityGirl",
+    "variant": "外国菜谱",
+    "world": "外国菜",
+    "description": "一款热带风味的派对混合酒，用伏特加、朗姆、金酒混合大量果汁和热带水果，盛在挖空的西瓜里，适合聚会畅饮。（来源：https://bevvy.co/cocktail/mini-wapatui/iisy）",
+    "cost": "",
+    "occasion": "饮品",
+    "time": "约 5 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "伏特加", "amount": "1 小瓶（50ml）", "category": "主料", "note": "航空小瓶装" },
+      { "name": "朗姆酒", "amount": "1 小瓶（50ml）", "category": "主料", "note": "" },
+      { "name": "金酒", "amount": "1 小瓶（50ml）", "category": "主料", "note": "" },
+      { "name": "果汁", "amount": "3 瓶", "category": "辅料", "note": "选果味浓的最好" },
+      { "name": "什锦热带水果", "amount": "适量", "category": "辅料", "note": "务必加西瓜球" },
+      { "name": "黑啤", "amount": "半瓶", "category": "辅料", "note": "" }
+    ],
+    "steps": [
+      "把挖空的半个西瓜当作调酒盆，将所有材料倒进去混合均匀，静置约一小时后再享用风味更佳。"
+    ]
+  },
+  {
+    "id": "foreign-2",
+    "name": "飓风（Hurricane）",
+    "image": "",
+    "source": "Bevvy",
+    "variant": "外国菜谱",
+    "world": "外国菜",
+    "description": "新奥尔良经典热带鸡尾酒，混合白朗姆、黑朗姆与百香果、柠檬、橙汁，酸甜浓郁，色泽艳丽。（来源：https://bevvy.co/cocktail/hurricane/slq）",
+    "cost": "",
+    "occasion": "饮品",
+    "time": "约 5 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "白朗姆酒", "amount": "2 盎司（约 60ml）", "category": "主料", "note": "" },
+      { "name": "黑朗姆酒", "amount": "2 盎司（约 60ml）", "category": "主料", "note": "" },
+      { "name": "新鲜青柠汁", "amount": "1 盎司（约 30ml）", "category": "主料", "note": "" },
+      { "name": "鲜橙汁", "amount": "1 盎司（约 30ml）", "category": "主料", "note": "" },
+      { "name": "百香果汁", "amount": "2 盎司（约 60ml）", "category": "主料", "note": "" },
+      { "name": "糖浆", "amount": "0.5 盎司（约 15ml）", "category": "调味料", "note": "" },
+      { "name": "红石榴糖浆", "amount": "0.5 盎司（约 15ml）", "category": "调味料", "note": "" },
+      { "name": "橙角、青柠角、腌渍樱桃", "amount": "少许", "category": "辅料", "note": "装饰用" }
+    ],
+    "steps": [
+      "将所有材料（装饰除外）加入带冰的调酒壶，摇晃至冰凉。",
+      "滤入装有新鲜冰块的飓风杯。",
+      "按喜好装饰后即可饮用。"
+    ]
+  },
+  {
+    "id": "foreign-3",
+    "name": "新加坡司令（Singapore Sling）",
+    "image": "",
+    "source": "Bevvy",
+    "variant": "外国菜谱",
+    "world": "外国菜",
+    "description": "诞生于新加坡莱佛士酒店的经典鸡尾酒，以金酒为基底，加入樱桃利口酒和廊酒，口感层次丰富、果香浓郁。（来源：https://bevvy.co/cocktail/singapore-sling/eeo）",
+    "cost": "",
+    "occasion": "饮品",
+    "time": "约 5 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "金酒", "amount": "1 盎司（约 30ml）", "category": "主料", "note": "" },
+      { "name": "希零樱桃利口酒", "amount": "1 盎司（约 30ml）", "category": "主料", "note": "Cherry Heering" },
+      { "name": "廊酒", "amount": "1 盎司（约 30ml）", "category": "主料", "note": "Bénédictine" },
+      { "name": "新鲜青柠汁", "amount": "1 盎司（约 30ml）", "category": "主料", "note": "" },
+      { "name": "安高天娜苦精", "amount": "1 抖振", "category": "调味料", "note": "" },
+      { "name": "苏打水", "amount": "2 盎司（约 60ml）", "category": "辅料", "note": "" },
+      { "name": "青柠皮或樱桃", "amount": "少许", "category": "辅料", "note": "装饰用，可选" }
+    ],
+    "steps": [
+      "把苏打水以外的所有材料加入装冰的高球杯或柯林斯杯，轻轻搅拌。",
+      "顶部加苏打水，搅拌一下即可饮用。",
+      "可选择用青柠皮或樱桃装饰。"
+    ]
+  },
+  {
+    "id": "foreign-4",
+    "name": "椰林飘香（Piña Colada）",
+    "image": "",
+    "source": "Bevvy",
+    "variant": "外国菜谱",
+    "world": "外国菜",
+    "description": "波多黎各国民鸡尾酒，朗姆酒混合椰浆和菠萝汁打成绵密沙冰，热带风情十足，甜润顺口。（来源：https://bevvy.co/cocktail/pina-colada/ijua）",
+    "cost": "",
+    "occasion": "饮品",
+    "time": "约 5 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "朗姆酒", "amount": "2.5 盎司（约 75ml）", "category": "主料", "note": "" },
+      { "name": "椰浆", "amount": "1.5 盎司（约 45ml）", "category": "主料", "note": "" },
+      { "name": "鲜菠萝汁", "amount": "3 盎司（约 90ml）", "category": "主料", "note": "" }
+    ],
+    "steps": [
+      "将所有材料连同 2 杯碎冰放入电动搅拌机。",
+      "高速搅打短暂时间。",
+      "滤入飓风杯或柯林斯杯，插吸管享用。"
+    ]
+  },
+  {
+    "id": "foreign-5",
+    "name": "蝎子盆（Scorpion Bowl）",
+    "image": "",
+    "source": "CityGirl",
+    "variant": "外国菜谱",
+    "world": "外国菜",
+    "description": "夏威夷提基风格的分享型鸡尾酒，朗姆与白兰地混合橙汁、柠檬汁和杏仁糖浆，果香浓烈，适合多人共饮。（来源：https://bevvy.co/cocktail/scorpion-bowl/jisy）",
+    "cost": "",
+    "occasion": "饮品",
+    "time": "约 5 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "淡朗姆酒", "amount": "2 盎司（约 60ml）", "category": "主料", "note": "" },
+      { "name": "白兰地", "amount": "1 盎司（约 30ml）", "category": "主料", "note": "" },
+      { "name": "杏仁糖浆", "amount": "0.5 盎司（约 15ml）", "category": "调味料", "note": "orgeat" },
+      { "name": "鲜榨橙汁", "amount": "2 盎司（约 60ml）", "category": "主料", "note": "" },
+      { "name": "鲜榨柠檬汁", "amount": "1.5 盎司（约 45ml）", "category": "主料", "note": "" },
+      { "name": "橙片、腌渍樱桃、薄荷", "amount": "少许", "category": "辅料", "note": "装饰用" }
+    ],
+    "steps": [
+      "将所有材料连冰加入搅拌机，搅打约 10 秒。",
+      "倒入红酒杯、飓风杯、提基杯或高球杯。",
+      "用橙角、腌渍樱桃和一小把拍香的薄荷装饰后享用。"
+    ]
+  },
+  {
+    "id": "foreign-6",
+    "name": "马天尼（Martini）",
+    "image": "",
+    "source": "Bevvy",
+    "variant": "外国菜谱",
+    "world": "外国菜",
+    "description": "鸡尾酒中的经典之王，金酒与干味美思搅匀，冰凉纯净，以橄榄或柠檬皮点缀，气质优雅。（来源：https://bevvy.co/cocktail/martini/oyea）",
+    "cost": "",
+    "occasion": "饮品",
+    "time": "约 5 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "金酒", "amount": "2 盎司（约 60ml）", "category": "主料", "note": "" },
+      { "name": "干味美思", "amount": "0.5 盎司（约 15ml）", "category": "主料", "note": "dry vermouth" },
+      { "name": "橄榄或柠檬皮", "amount": "少许", "category": "辅料", "note": "装饰用" }
+    ],
+    "steps": [
+      "把金酒和味美思加入装冰的调酒杯，搅拌至非常冰凉。",
+      "滤入冰镇过的马天尼杯。",
+      "用一颗橄榄或一段柠檬皮装饰。"
+    ]
+  },
+  {
+    "id": "foreign-7",
+    "name": "众神之蜜（Néctar de Dioses）",
+    "image": "",
+    "source": "Tiny's Cantina",
+    "variant": "外国菜谱",
+    "world": "外国菜",
+    "description": "墨西哥风格创意鸡尾酒，融合梅斯卡尔、普逵酒和白朗姆，带龙舌兰与安丘辣椒的独特风味，风味复杂。（来源：https://bevvy.co/cocktail/nectar-de-dioses/nyiy）",
+    "cost": "",
+    "occasion": "饮品",
+    "time": "约 5 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "白朗姆酒", "amount": "1 吧匙", "category": "主料", "note": "Paranubes" },
+      { "name": "柠檬皮", "amount": "1 块", "category": "辅料", "note": "" },
+      { "name": "普逵酒", "amount": "1 盎司（约 30ml）", "category": "主料", "note": "pulque，龙舌兰发酵酒" },
+      { "name": "梅斯卡尔", "amount": "1 盎司（约 30ml）", "category": "主料", "note": "mezcal" },
+      { "name": "安丘雷耶斯青椒利口酒", "amount": "0.5 盎司（约 15ml）", "category": "主料", "note": "Ancho Reyes Verde" },
+      { "name": "龙舌兰糖浆", "amount": "0.25 盎司（约 7ml）", "category": "调味料", "note": "" },
+      { "name": "菠萝叶", "amount": "1 片", "category": "辅料", "note": "装饰用" }
+    ],
+    "steps": [
+      "在摇酒壶中用一吧匙白朗姆酒捣压柠檬皮出味。",
+      "加入普逵酒，先不加冰干摇。",
+      "再加梅斯卡尔、安丘雷耶斯青椒利口酒和龙舌兰糖浆，加冰摇匀至冰凉。",
+      "滤入盛有大冰块的杯中，用一片菠萝叶装饰。"
+    ]
+  },
+  {
+    "id": "foreign-8",
+    "name": "古典鸡尾酒（Old-Fashioned）",
+    "image": "",
+    "source": "Jay Hung",
+    "variant": "外国菜谱",
+    "world": "外国菜",
+    "description": "威士忌鸡尾酒的鼻祖，波本或黑麦威士忌加苦精和方糖调成，醇厚微苦回甘，以橙皮增香。（来源：https://bevvy.co/cocktail/old-fashioned/zbua）",
+    "cost": "",
+    "occasion": "饮品",
+    "time": "约 5 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "波本或黑麦威士忌", "amount": "2 盎司（约 60ml）", "category": "主料", "note": "" },
+      { "name": "安高天娜苦精", "amount": "2 抖振", "category": "调味料", "note": "" },
+      { "name": "方糖", "amount": "1 块", "category": "调味料", "note": "或用 0.25 盎司糖浆代替" },
+      { "name": "橙皮", "amount": "少许", "category": "辅料", "note": "装饰用" }
+    ],
+    "steps": [
+      "在古典杯底放入方糖、苦精，可加几滴温水，捣压至糖溶化（或直接用糖浆加苦精）。",
+      "倒入威士忌。",
+      "加一块大冰块，轻轻搅拌。",
+      "用一段橙皮装饰后享用。"
+    ]
+  },
+  {
+    "id": "foreign-9",
+    "name": "得其利（Daiquiri）",
+    "image": "",
+    "source": "Jennings S. Cox（约 1900 年）",
+    "variant": "外国菜谱",
+    "world": "外国菜",
+    "description": "源自古巴的经典酸味鸡尾酒，白朗姆、青柠汁和糖浆三样摇匀，清爽平衡，是朗姆酒鸡尾酒的标杆。（来源：https://bevvy.co/cocktail/daiquiri/wbi）",
+    "cost": "",
+    "occasion": "饮品",
+    "time": "约 5 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "白朗姆酒", "amount": "2 盎司（约 60ml）", "category": "主料", "note": "" },
+      { "name": "青柠汁", "amount": "1 盎司（约 30ml）", "category": "主料", "note": "" },
+      { "name": "糖浆", "amount": "0.75 盎司（约 22ml）", "category": "调味料", "note": "" }
+    ],
+    "steps": [
+      "将所有材料加入带冰的摇酒壶，摇晃至冰凉。",
+      "双重过滤滤入冰镇过的鸡尾酒杯，即可享用。"
+    ]
+  },
+  {
+    "id": "foreign-10",
+    "name": "迈泰（Mai Tai）",
+    "image": "",
+    "source": "Bevvy",
+    "variant": "外国菜谱",
+    "world": "外国菜",
+    "description": "提基文化的代表性鸡尾酒，黑朗姆搭配橙皮利口酒、青柠和杏仁糖浆，热带果香浓郁，酸甜适口。（来源：https://bevvy.co/cocktail/mai-tai/ymj）",
+    "cost": "",
+    "occasion": "饮品",
+    "time": "约 5 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "黑朗姆酒", "amount": "2 盎司（约 60ml）", "category": "主料", "note": "" },
+      { "name": "青柠汁", "amount": "0.75 盎司（约 22ml）", "category": "主料", "note": "" },
+      { "name": "橙皮利口酒", "amount": "0.5 盎司（约 15ml）", "category": "主料", "note": "或用君度代替" },
+      { "name": "杏仁糖浆", "amount": "0.25 盎司（约 7ml）", "category": "调味料", "note": "orgeat" },
+      { "name": "冰糖糖浆", "amount": "0.25 盎司（约 7ml）", "category": "调味料", "note": "2:1 浓糖浆" },
+      { "name": "薄荷", "amount": "少许", "category": "辅料", "note": "装饰用" }
+    ],
+    "steps": [
+      "把薄荷以外的所有材料加入带冰的摇酒壶，摇晃至冰凉。",
+      "滤入装有新鲜冰块的古典杯。",
+      "用一小把薄荷和半个挤过汁的青柠装饰。"
+    ]
+  },
+  {
+    "id": "foreign-11",
+    "name": "白汁鸡肉意式方饺焗饭（Chicken Alfredo Ravioli Bake）",
+    "image": "",
+    "source": "Lauren（美式）",
+    "variant": "外国菜谱",
+    "world": "外国菜",
+    "description": "美式家庭焗菜，冷冻意式方饺铺上鸡肉、白汁和马苏里拉芝士层层叠放后烤制，浓郁拉丝，方便饱腹。（来源：https://www.midgetmomma.com/chicken-alfredo-ravioli-bake/）",
+    "cost": "",
+    "occasion": "午餐/晚餐",
+    "time": "约 40 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "冷冻意式方饺", "amount": "24 盎司（约 680g）", "category": "主料", "note": "ravioli" },
+      { "name": "白汁酱", "amount": "2 杯（约 480ml）", "category": "主料", "note": "Alfredo sauce" },
+      { "name": "熟鸡肉", "amount": "3 杯", "category": "主料", "note": "切丁或撕丝" },
+      { "name": "马苏里拉芝士碎", "amount": "8 盎司（约 227g）", "category": "主料", "note": "" }
+    ],
+    "steps": [
+      "如果自制白汁酱，可在按喜好烹熟鸡肉的同时准备。",
+      "鸡肉煮熟后切块备用。",
+      "大烤盘喷上防粘喷雾。",
+      "在盘底铺一层薄薄的白汁酱。",
+      "铺一层冷冻意式方饺。",
+      "加一层熟鸡肉。",
+      "撒一层马苏里拉芝士。",
+      "再淋一些白汁酱。",
+      "如此层层叠放，直到白汁、鸡肉和方饺用完。",
+      "顶部撒上剩余的马苏里拉芝士。",
+      "用锡纸盖住烤盘。",
+      "180°C（350°F）烤 30 分钟，揭开锡纸再烤 5 分钟。"
+    ]
+  }
+]

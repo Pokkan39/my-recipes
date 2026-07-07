@@ -122,7 +122,7 @@ let activeTimeFilters = new Set();
 let activeCategoryTab = "全部";
 
 const WORLD_CATEGORY_KEY = "my-recipe-world-categories";
-const DEFAULT_WORLD_CATEGORIES = ["现实中的饭", "二次元中的饭", "黑暗料理", "存在于幻想中的饭"];
+const DEFAULT_WORLD_CATEGORIES = ["现实中的饭", "二次元中的饭", "黑暗料理", "存在于幻想中的饭", "外国菜"];
 let activeWorld = "全部";
 let worldCategories = loadWorldCategories();
 
@@ -1300,7 +1300,12 @@ function loadWorldCategories() {
     if (!stored) return [...DEFAULT_WORLD_CATEGORIES];
     const parsed = JSON.parse(stored);
     if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed.map(String);
+      const list = parsed.map(String);
+      // 补齐用户本地缺失的默认大类（如新版本新增的"外国菜"），保留用户自定义的大类
+      DEFAULT_WORLD_CATEGORIES.forEach((cat) => {
+        if (!list.includes(cat)) list.push(cat);
+      });
+      return list;
     }
     return [...DEFAULT_WORLD_CATEGORIES];
   } catch (error) {
