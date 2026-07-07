@@ -644,3 +644,28 @@
 - `index.html`：顶部按钮区新增「📋 操作日志」按钮；editorPanel 前新增 #activityLogPanel 面板 section。
 - `styles.css`：末尾新增操作日志面板各元素样式（log-entry、log-action 三色变体、log-name、log-meta、log-empty）。
 - 回滚方式：`git checkout e455344^ -- app.js index.html styles.css`，或 `git revert e455344`。
+
+## 2026-07-07 - Task: 自查bug修复 + UI动画升级
+
+### What was done
+- **Bug修复（6项）**：
+  1. `#activityLogPanel` 位置错误（在 `<main>` grid 内会挤成一列）→ 移到 `<main>` 之前，与其他面板同级。
+  2. CSS 变量 `--text-main`/`--text-dim` 未定义 → 改为已有的 `var(--text)`/`var(--muted)`；日志条目背景改为暖色调 `rgba(255,220,180,0.05)`；三色标签改用 `var(--leaf)`/`var(--brand-2)`/`var(--danger)`。
+  3. `link.click()` 未挂载到 DOM 导致 Firefox 下载失败 → cloudBackup 和 exportRecipes 均补 `appendChild` + `removeChild`。
+  4. `importRecipes` 和 `saveBatchSelected` 批量操作未记录操作日志 → 补调 `appendLog`。
+  5. `openVideoHelper()` 缺 `populateWorldSelect()` → 补调，AI生成菜谱入口打开时世界大类下拉不再为空。
+- **UI/动画升级（3项）**：
+  1. hero-actions 按钮按"主操作 / 工具功能 / 设置"三组分层，中间组改用新 `.tool-button` 样式（圆角胶囊，带边框，有 hover 上浮微交互），设置组默认半透明悬停恢复。
+  2. 新增 `@keyframes panelSlideIn` 和 `@keyframes logEntryIn`，所有 `.is-open` 面板和编辑器打开时触发滑入动效，操作日志条目逐条错落出现（30ms 步进）。
+  3. 移动端适配：`.activity-log-panel` 纳入边距规则，`.tool-button` 手机端按 50% 宽自动换行。
+
+### Testing
+- `node --check app.js`：SYNTAX_OK。
+- CSS 花括号配平：482 open / 482 close。
+- 未做浏览器联调：按钮分组视觉、面板动效、日志条目动画需手动验证。
+
+### Notes
+- `app.js`：openVideoHelper 补 populateWorldSelect；importRecipes/saveBatchSelected 补 appendLog；cloudBackup/exportRecipes link.click 补 DOM 挂载；renderLogPanel 加 animation-delay 错落。
+- `index.html`：#activityLogPanel 移到 `<main>` 之前；hero-actions 改为三分组（action-group--primary/tools/settings），工具按钮改 tool-button。
+- `styles.css`：修正日志面板 CSS 变量和颜色；新增 panelSlideIn/logEntryIn keyframe；.is-open 面板和 editor-panel.is-open 加 panelSlideIn 动画；.log-entry 加 logEntryIn 动画；新增 action-group/tool-button 样式和手机端响应式。
+- 回滚方式：`git checkout 815a970 -- app.js index.html styles.css`，或 `git revert 1898658`。
