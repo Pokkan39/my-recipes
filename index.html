@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>我的自用食谱</title>
   <link rel="stylesheet" href="styles.css">
-  <!-- Firebase SDK (compat) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
   <header class="hero food-hero">
@@ -27,6 +24,7 @@
           <input id="importInput" type="file" accept="application/json,.json">
         </label>
       </div>
+      <p id="syncStatus" class="sync-status sync-status--checking">正在检查云端同步状态…</p>
     </div>
 
     <div class="hero-plate" aria-hidden="true">

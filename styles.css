@@ -117,6 +117,30 @@ h2 {
   align-items: center;
 }
 
+.sync-status {
+  display: inline-flex;
+  align-items: center;
+  margin: 14px 0 0;
+  padding: 8px 12px;
+  border: 1px solid rgba(234, 219, 200, 0.88);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.sync-status--cloud {
+  border-color: rgba(111, 159, 69, 0.35);
+  color: #4f7b2c;
+  background: rgba(236, 248, 226, 0.82);
+}
+
+.sync-status--local {
+  border-color: rgba(217, 95, 40, 0.3);
+  color: var(--brand-dark);
+  background: rgba(255, 240, 223, 0.86);
+}
+
 .hero-main-action {
   padding-inline: 24px;
   background: linear-gradient(135deg, var(--tomato), var(--brand));

@@ -1,0 +1,13 @@
+{
+  "name": "recipe-site-aliyun-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "阿里云函数计算菜谱共享 API",
+  "main": "index.js",
+  "scripts": {
+    "check": "node --check index.js"
+  },
+  "dependencies": {
+    "ali-oss": "^6.23.0"
+  }
+}

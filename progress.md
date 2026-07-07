@@ -180,3 +180,44 @@
 - `app.js`：增强 `saveToLocalStorage` 返回同步状态，并让保存、删除、导入流程等待云端写入结果。
 - `progress.md`：追加本轮同步问题修复、验证结果和回滚方式。
 - 回滚方式：恢复本轮修改前的 `app.js` 和 `progress.md`。
+
+## 2026-07-06 - Task: 将共享同步迁移到阿里云
+### What was done
+- 移除前端 Firebase SDK 和 Firestore 读写逻辑，改为通过阿里云 API 读取、保存共享菜谱。
+- 保留浏览器本地缓存降级；阿里云未配置或请求失败时，页面会明确提示当前仅本地保存。
+- 增加阿里云函数计算后端示例，用 OSS 中的 JSON 文件保存共享菜谱数据。
+- 更新使用文档和产品计划，补充阿里云部署、环境变量、跨域和回滚说明。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过，前端 JavaScript 无语法错误。
+- `node --check E:/recipe-site/aliyun/recipe-api/index.js`：通过，阿里云函数 JavaScript 无语法错误。
+- 云端联调未执行：需要先在阿里云创建 OSS Bucket、函数计算 HTTP 触发器，并把公网 API 地址填入 `ALIYUN_API_BASE_URL`。
+
+### Notes
+- `app.js`：将云端同步从 Firebase Firestore 改为阿里云 HTTP API，并增加 15 秒轮询和同步状态提示。
+- `index.html`：移除 Firebase SDK 引用，增加云端同步状态展示节点。
+- `styles.css`：新增同步状态标签的云端/本地样式。
+- `aliyun/recipe-api/index.js`：新增函数计算菜谱 API，支持 `GET /recipes`、`PUT /recipes` 和 `OPTIONS`。
+- `aliyun/recipe-api/package.json`：新增阿里云函数依赖配置。
+- `README.md`：更新当前能力、限制和技术栈，说明阿里云同步路线。
+- `docs/product-plan.md`：将当前架构和阶段目标改为阿里云函数计算 + OSS。
+- `docs/usage.md`：补充阿里云同步状态、本地降级和上线说明。
+- `docs/aliyun-setup.md`：新增阿里云部署配置说明。
+- `progress.md`：追加本轮迁移记录、验证结果和回滚方式。
+- 回滚方式：恢复本轮修改前的 `app.js`、`index.html`、`styles.css`、`README.md`、`docs/product-plan.md`、`docs/usage.md` 和 `progress.md`，并删除 `aliyun/recipe-api/` 与 `docs/aliyun-setup.md`。
+
+## 2026-07-06 - Task: 修复阿里云函数接口无响应
+### What was done
+- 将阿里云菜谱 API 的函数入口改为同时兼容 Promise 返回和 callback 返回，避免部分 Node.js 运行时等待不到响应导致页面显示 `ERR_INVALID_RESPONSE`。
+- 在阿里云配置说明中补充 `ERR_INVALID_RESPONSE` 排查点，强调应使用事件函数 + HTTP 触发器，并保持入口为 `index.handler`。
+
+### Testing
+- `node --check E:/recipe-site/aliyun/recipe-api/index.js`：通过，阿里云函数 JavaScript 无语法错误。
+- 本地模拟 `OPTIONS /recipes` 的 Promise 返回：通过，返回 `204`。
+- `curl -vk --max-time 8 https://recipe-api-uymdkfbhbi.cn-hangzhou.fcapp.run/recipes`：当前线上地址仍超时且没有返回内容，说明线上函数尚未重新部署本轮修复代码，或函数类型/触发器配置仍需在阿里云控制台调整。
+
+### Notes
+- `aliyun/recipe-api/index.js`：调整函数入口兼容方式，保留原有 `GET /recipes`、`PUT /recipes` 和 `OPTIONS` 行为。
+- `docs/aliyun-setup.md`：补充接口无响应时的部署配置排查说明。
+- `progress.md`：追加本轮修复、验证结果和回滚方式。
+- 回滚方式：恢复本轮修改前的 `aliyun/recipe-api/index.js`、`docs/aliyun-setup.md` 和 `progress.md`。

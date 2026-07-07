@@ -2,21 +2,17 @@ const STORAGE_KEY = "my-recipe-site-data";
 const APPEARANCE_KEY = "my-recipe-site-appearance";
 const INGREDIENT_CATEGORIES = ["主料", "辅料", "调味料"];
 
-// ── Firebase 配置 ──────────────────────────────────────────
-// 在 Firebase 控制台创建项目后，把下方的值替换成你自己的配置。
-// 替换完成前网站仍可正常使用本地存储模式。
-const FIREBASE_CONFIG = {
-  apiKey:            "AIzaSyARVFPwhXBk3LCvyheHmrFzLnQ5aYd9RvE",
-  authDomain:        "my-recipes-a00ac.firebaseapp.com",
-  projectId:         "my-recipes-a00ac",
-  storageBucket:     "my-recipes-a00ac.firebasestorage.app",
-  messagingSenderId: "952405161007",
-  appId:             "1:952405161007:web:a60a1b560876a21ba542da"
-};
-const FIRESTORE_DOC = "shared/recipes"; // 所有菜谱存在这一个文档里
+// ── 阿里云同步配置 ──────────────────────────────────────────
+// 部署 aliyun/recipe-api 后，把函数计算 HTTP 触发器公网地址填到这里。
+// 未配置前网站仍可正常使用本地存储模式。
+const ALIYUN_API_BASE_URL = "https://recipe-api-uymdkfbhbi.cn-hangzhou.fcapp.run";
+const ALIYUN_RECIPES_PATH = "recipes";
+const CLOUD_SYNC_INTERVAL = 15000;
 // ───────────────────────────────────────────────────────────
 
-let db = null; // Firestore 实例，初始化成功后赋值
+let syncTimer = null;
+let isSavingToCloud = false;
+let lastCloudSignature = "";
 
 const DEFAULT_APPEARANCE = {
   title: "今天想吃点什么？",
@@ -129,6 +125,7 @@ let aiDraft = null;
 const recipeList = document.querySelector("#recipeList");
 const recipeDetail = document.querySelector("#recipeDetail");
 const recipeCount = document.querySelector("#recipeCount");
+const syncStatus = document.querySelector("#syncStatus");
 const searchInput = document.querySelector("#searchInput");
 const editorPanel = document.querySelector("#editorPanel");
 const editorTitle = document.querySelector("#editorTitle");
@@ -198,63 +195,76 @@ init();
 async function init() {
   applyAppearance();
   fillAppearanceForm();
-  initFirebase();
+  updateSyncStatus("checking", "正在连接阿里云共享库…");
   recipes = await loadRecipes();
   selectedId = recipes[0]?.id || "";
   bindEvents();
   render();
   initFloatAi();
-  if (db) subscribeFirestore();
+  startCloudPolling();
 }
 
-/** 初始化 Firebase，配置未填写时静默跳过 */
-function initFirebase() {
-  if (FIREBASE_CONFIG.apiKey === "YOUR_API_KEY") return;
-  try {
-    const app = firebase.apps.length
-      ? firebase.app()
-      : firebase.initializeApp(FIREBASE_CONFIG);
-    db = firebase.firestore(app);
-  } catch (e) {
-    console.warn("Firebase 初始化失败，使用本地存储模式。", e);
-    db = null;
+function isAliyunApiConfigured() {
+  return Boolean(ALIYUN_API_BASE_URL.trim());
+}
+
+function getAliyunRecipesUrl() {
+  const baseUrl = ALIYUN_API_BASE_URL.trim().replace(/\/+$/, "");
+  const path = ALIYUN_RECIPES_PATH.replace(/^\/+/, "");
+  return `${baseUrl}/${path}`;
+}
+
+function updateSyncStatus(status, message) {
+  if (!syncStatus) return;
+  syncStatus.className = `sync-status sync-status--${status}`;
+  syncStatus.textContent = message;
+}
+
+function normalizeCloudPayload(payload) {
+  const list = Array.isArray(payload) ? payload : payload?.list;
+  return normalizeRecipes(list || []);
+}
+
+async function fetchCloudRecipes() {
+  if (!isAliyunApiConfigured()) {
+    updateSyncStatus("local", "阿里云 API 未配置，当前仅本地保存");
+    return { ok: false, list: [], message: "阿里云 API 未配置。" };
   }
-}
 
-/** 实时监听 Firestore，有人改动时自动刷新页面 */
-function subscribeFirestore() {
-  const [col, doc] = FIRESTORE_DOC.split("/");
-  db.collection(col).doc(doc).onSnapshot((snap) => {
-    if (!snap.exists) return;
-    const remote = normalizeRecipes(snap.data().list || []);
-    // 只有数据真正变化时才重渲，避免自己保存后闪烁
-    if (JSON.stringify(remote) === JSON.stringify(recipes)) return;
-    recipes = remote;
-    const stillExists = recipes.find((r) => r.id === selectedId);
-    if (!stillExists) selectedId = recipes[0]?.id || "";
-    render();
-  }, (err) => {
-    console.warn("Firestore 监听失败：", err);
+  const response = await fetch(getAliyunRecipesUrl(), {
+    method: "GET",
+    headers: { "Accept": "application/json" }
   });
+
+  if (!response.ok) {
+    throw new Error(`阿里云读取失败（HTTP ${response.status}）`);
+  }
+
+  const payload = await response.json();
+  const list = normalizeCloudPayload(payload);
+  updateSyncStatus("cloud", "阿里云共享库已连接");
+  return { ok: true, list };
 }
 
 async function loadRecipes() {
-  // 优先从 Firestore 加载
-  if (db) {
-    try {
-      const [col, doc] = FIRESTORE_DOC.split("/");
-      const snap = await db.collection(col).doc(doc).get();
-      if (snap.exists) {
-        const list = normalizeRecipes(snap.data().list || []);
-        if (list.length > 0) return list;
-      }
-      // Firestore 里还没有数据，把默认数据写进去
-      const defaults = normalizeRecipes(DEFAULT_RECIPES);
-      await db.collection(col).doc(doc).set({ list: defaults });
-      return defaults;
-    } catch (e) {
-      console.warn("Firestore 读取失败，降级到本地存储。", e);
+  // 优先从阿里云共享库加载
+  try {
+    const result = await fetchCloudRecipes();
+    if (result.ok && result.list.length > 0) {
+      lastCloudSignature = JSON.stringify(result.list);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(result.list));
+      return result.list;
     }
+
+    if (result.ok) {
+      const defaults = normalizeRecipes(DEFAULT_RECIPES);
+      recipes = defaults;
+      await saveToLocalStorage();
+      return defaults;
+    }
+  } catch (e) {
+    console.warn("阿里云读取失败，降级到本地存储。", e);
+    updateSyncStatus("local", `阿里云同步失败，当前仅本地缓存：${e.message}`);
   }
 
   // 降级：本地 localStorage
@@ -275,20 +285,63 @@ async function loadRecipes() {
 async function saveToLocalStorage() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
 
-  if (!db) {
-    return { ok: false, mode: "local", message: "Firebase 未连接，内容只保存在当前浏览器。" };
+  if (!isAliyunApiConfigured()) {
+    updateSyncStatus("local", "阿里云 API 未配置，当前仅本地保存");
+    return { ok: false, mode: "local", message: "阿里云 API 未配置，内容只保存在当前浏览器。" };
   }
 
+  isSavingToCloud = true;
   try {
-    const [col, doc] = FIRESTORE_DOC.split("/");
-    await db.collection(col).doc(doc).set({
-      list: recipes,
-      updatedAt: new Date().toISOString()
+    const response = await fetch(getAliyunRecipesUrl(), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        list: recipes,
+        updatedAt: new Date().toISOString()
+      })
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    lastCloudSignature = JSON.stringify(recipes);
+    updateSyncStatus("cloud", "阿里云共享库已同步");
     return { ok: true, mode: "cloud" };
   } catch (e) {
-    console.warn("Firestore 写入失败，已保存到本地。", e);
-    return { ok: false, mode: "local", message: e.message || "云端写入失败。" };
+    console.warn("阿里云写入失败，已保存到本地。", e);
+    updateSyncStatus("local", `阿里云同步失败，当前仅本地缓存：${e.message}`);
+    return { ok: false, mode: "local", message: e.message || "阿里云写入失败。" };
+  } finally {
+    isSavingToCloud = false;
+  }
+}
+
+function startCloudPolling() {
+  if (!isAliyunApiConfigured()) return;
+  if (syncTimer) clearInterval(syncTimer);
+  syncTimer = setInterval(refreshFromCloud, CLOUD_SYNC_INTERVAL);
+}
+
+async function refreshFromCloud() {
+  if (isSavingToCloud || !isAliyunApiConfigured()) return;
+
+  try {
+    const result = await fetchCloudRecipes();
+    if (!result.ok) return;
+
+    const remoteSignature = JSON.stringify(result.list);
+    if (remoteSignature === lastCloudSignature || remoteSignature === JSON.stringify(recipes)) return;
+
+    recipes = result.list;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
+    lastCloudSignature = remoteSignature;
+    const stillExists = recipes.find((r) => r.id === selectedId);
+    if (!stillExists) selectedId = recipes[0]?.id || "";
+    render();
+  } catch (e) {
+    console.warn("阿里云轮询失败：", e);
+    updateSyncStatus("local", `阿里云同步失败，当前仅本地缓存：${e.message}`);
   }
 }
 
@@ -1419,7 +1472,7 @@ async function saveRecipe(event) {
   closeEditor();
   render();
   if (!saveResult.ok) {
-    alert(`菜谱已暂存在当前浏览器，但没有同步到共享库：${saveResult.message}\n\n请检查网络或 Firebase 权限，否则别人看不到这次修改。`);
+    alert(`菜谱已暂存在当前浏览器，但没有同步到阿里云共享库：${saveResult.message}\n\n请检查网络或阿里云函数配置，否则别人看不到这次修改。`);
   }
 }
 
@@ -1436,7 +1489,7 @@ async function deleteCurrentRecipe() {
   closeEditor();
   render();
   if (!saveResult.ok) {
-    alert(`删除只暂存在当前浏览器，没有同步到共享库：${saveResult.message}\n\n别人刷新后可能仍会看到这道菜。`);
+    alert(`删除只暂存在当前浏览器，没有同步到阿里云共享库：${saveResult.message}\n\n别人刷新后可能仍会看到这道菜。`);
   }
 }
 
@@ -1464,8 +1517,8 @@ function importRecipes(event) {
       closeEditor();
       render();
       alert(saveResult.ok
-        ? "导入成功，已同步到共享菜谱库。"
-        : `导入成功，但只保存在当前浏览器，没有同步到共享库：${saveResult.message}`);
+        ? "导入成功，已同步到阿里云共享菜谱库。"
+        : `导入成功，但只保存在当前浏览器，没有同步到阿里云共享库：${saveResult.message}`);
     } catch (error) {
       alert("导入失败，请确认文件是从本站导出的 JSON 菜谱备份。");
     } finally {
