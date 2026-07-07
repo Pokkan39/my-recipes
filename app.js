@@ -121,6 +121,11 @@ let activeOccasionFilters = new Set();
 let activeTimeFilters = new Set();
 let activeCategoryTab = "全部";
 
+const WORLD_CATEGORY_KEY = "my-recipe-world-categories";
+const DEFAULT_WORLD_CATEGORIES = ["现实中的饭", "二次元中的饭", "黑暗料理", "存在于幻想中的饭"];
+let activeWorld = "全部";
+let worldCategories = loadWorldCategories();
+
 const CATEGORY_TABS = [
   { label: "全部",   keywords: [] },
   { label: "早餐",   keywords: ["早餐", "早上", "早饭"] },
@@ -211,6 +216,7 @@ async function init() {
   recipes = await loadRecipes();
   selectedId = recipes[0]?.id || "";
   bindEvents();
+  renderWorldTabs();
   renderCategoryTabs();
   render();
   initFloatAi();
@@ -1086,6 +1092,86 @@ function renderCategoryTabs() {
   });
 }
 
+function loadWorldCategories() {
+  try {
+    const stored = localStorage.getItem(WORLD_CATEGORY_KEY);
+    if (!stored) return [...DEFAULT_WORLD_CATEGORIES];
+    const parsed = JSON.parse(stored);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.map(String);
+    }
+    return [...DEFAULT_WORLD_CATEGORIES];
+  } catch (error) {
+    return [...DEFAULT_WORLD_CATEGORIES];
+  }
+}
+
+function saveWorldCategories() {
+  localStorage.setItem(WORLD_CATEGORY_KEY, JSON.stringify(worldCategories));
+}
+
+function renderWorldTabs() {
+  const container = document.querySelector("#worldTabs");
+  if (!container) return;
+
+  const tabs = ["全部", ...worldCategories];
+  container.innerHTML = tabs
+    .map((label) =>
+      `<button class="world-tab-btn${activeWorld === label ? " is-active" : ""}" type="button" data-world="${escapeAttr(label)}">${escapeHtml(label)}</button>`
+    )
+    .join("") +
+    `<button class="world-tab-btn world-tab-manage" type="button" data-manage="1">＋管理</button>`;
+
+  container.querySelectorAll(".world-tab-btn").forEach((btn) => {
+    if (btn.dataset.manage) {
+      btn.addEventListener("click", () => openWorldManager());
+      return;
+    }
+    btn.addEventListener("click", () => {
+      activeWorld = btn.dataset.world;
+      renderWorldTabs();
+      renderList();
+    });
+  });
+}
+
+function openWorldManager() {
+  const action = prompt("管理大类：\n输入要新增的大类名称直接回车即可新增。\n如需删除，输入：删除 大类名\n如需重命名，输入：改名 旧名>新名", "");
+  if (action === null) return;
+  const text = action.trim();
+  if (!text) return;
+  if (text.startsWith("删除")) {
+    const name = text.replace(/^删除\s*/, "").trim();
+    if (DEFAULT_WORLD_CATEGORIES.includes(name)) { alert("默认大类不建议删除，可改名。"); return; }
+    worldCategories = worldCategories.filter((w) => w !== name);
+    if (activeWorld === name) activeWorld = "全部";
+  } else if (text.startsWith("改名")) {
+    const parts = text.replace(/^改名\s*/, "").split(">");
+    const oldName = (parts[0] || "").trim(); const newName = (parts[1] || "").trim();
+    if (!oldName || !newName) { alert("格式：改名 旧名>新名"); return; }
+    const idx = worldCategories.indexOf(oldName);
+    if (idx < 0) { alert("没找到大类：" + oldName); return; }
+    worldCategories[idx] = newName;
+    // 同步更新已有菜谱的 world 字段（仅改内存，不主动写云端，避免批量覆盖风险）
+    recipes.forEach((r) => { if (r.world === oldName) r.world = newName; });
+    if (activeWorld === oldName) activeWorld = newName;
+  } else {
+    if (worldCategories.includes(text)) { alert("已存在该大类。"); return; }
+    worldCategories.push(text);
+  }
+  saveWorldCategories();
+  renderWorldTabs();
+  renderList();
+}
+
+function populateWorldSelect() {
+  const select = document.querySelector("#recipeWorld");
+  if (!select) return;
+  select.innerHTML = worldCategories
+    .map((label) => `<option value="${escapeAttr(label)}">${escapeHtml(label)}</option>`)
+    .join("");
+}
+
 function generateDraftFromHelper() {
   const transcript = helperFields.transcript.value.trim();
   const title = helperFields.videoTitle.value.trim();
@@ -1253,6 +1339,10 @@ function renderList() {
     return `${recipe.name} ${recipe.source} ${recipe.variant} ${recipe.occasion} ${recipe.description}`.toLowerCase().includes(keyword);
   });
 
+  if (activeWorld !== "全部") {
+    visibleRecipes = visibleRecipes.filter((recipe) => (recipe.world || "现实中的饭") === activeWorld);
+  }
+
   if (activeCategoryTab !== "全部") {
     const cat = CATEGORY_TABS.find((c) => c.label === activeCategoryTab);
     if (cat) {
@@ -1412,6 +1502,7 @@ function renderDetail() {
     </div>
 
     <div class="meta-grid">
+      <div class="meta-item"><span>🌐 所属世界</span><strong>${escapeHtml(recipe.world || "现实中的饭")}</strong></div>
       <div class="meta-item"><span>👨‍🍳 厨师/来源</span><strong>${escapeHtml(recipe.source)}</strong></div>
       <div class="meta-item"><span>✨ 做法版本</span><strong>${escapeHtml(recipe.variant)}</strong></div>
       <div class="meta-item"><span>💰 大概成本</span><strong>${escapeHtml(recipe.cost)}</strong></div>
@@ -1458,6 +1549,9 @@ function openNewEditor() {
   editorTitle.textContent = "新增菜谱";
   deleteRecipeButton.style.display = "none";
   editorPanel.classList.add("is-open");
+  populateWorldSelect();
+  const worldSel = document.querySelector("#recipeWorld");
+  if (worldSel) worldSel.value = activeWorld !== "全部" ? activeWorld : "现实中的饭";
   resetIngredientEditor([]);
   fields.name.focus();
   render();
@@ -1478,6 +1572,10 @@ function openEditEditor(id) {
   fields.time.value = recipe.time;
   fields.video.value = recipe.video;
   fields.steps.value = recipe.steps.join("\n");
+
+  populateWorldSelect();
+  const worldSel = document.querySelector("#recipeWorld");
+  if (worldSel) worldSel.value = recipe.world || "现实中的饭";
 
   resetIngredientEditor(recipe.ingredients || []);
 
@@ -1513,6 +1611,7 @@ async function saveRecipe(event) {
     occasion: fields.occasion.value.trim(),
     time: fields.time.value.trim(),
     video: fields.video.value.trim(),
+    world: document.querySelector("#recipeWorld")?.value || "现实中的饭",
     ingredients: editingIngredients.filter((ing) => ing.name.trim()),
     steps: stepsRaw,
     updatedAt: new Date().toISOString(),
@@ -1601,6 +1700,7 @@ function normalizeRecipes(rawRecipes) {
     occasion: String(recipe.occasion || ""),
     time: String(recipe.time || ""),
     video: String(recipe.video || ""),
+    world: String(recipe.world || "现实中的饭"),
     ingredients: Array.isArray(recipe.ingredients)
       ? recipe.ingredients.map((ing) => ({
           name: String(ing.name || ""),

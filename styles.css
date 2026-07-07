@@ -1911,6 +1911,52 @@ h2 {
   font-weight: 600;
 }
 
+/* ===== 世界大类主导航 ===== */
+.world-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px 20px 8px;
+}
+
+.world-tab-btn {
+  flex-shrink: 0;
+  padding: 9px 20px;
+  border: 2px solid var(--line);
+  border-radius: 24px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+
+.world-tab-btn:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.world-tab-btn.is-active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.world-tab-manage {
+  border-style: dashed;
+  font-weight: 500;
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+.world-tab-manage:hover {
+  opacity: 1;
+}
+
 /* ===== 昵称面板 ===== */
 .nickname-panel {
   position: absolute;

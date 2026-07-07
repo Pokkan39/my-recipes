@@ -257,3 +257,22 @@
 - `styles.css`：新增分类标签、昵称面板样式。
 - `progress.md`：追加本轮改动记录。
 - 回滚方式：恢复本轮修改前的 `app.js`、`index.html`、`styles.css` 和 `progress.md`。
+
+## 2026-07-07 - Task: 新增菜谱世界大类系统（两层过滤 + 可增删改）
+### What was done
+- 在菜谱列表场景标签上方新增一排「世界大类」主导航，默认 4 个大类（现实中的饭、二次元中的饭、黑暗料理、存在于幻想中的饭），点击后与下方场景标签叠加过滤（先关键词、再世界大类、再场景标签）。
+- 大类列表可由用户增删改，通过导航最右侧「＋管理」按钮以 prompt 交互完成，列表保存在浏览器本地；改名会同步更新内存中已有菜谱的所属世界，但不主动写回云端，避免批量覆盖风险。
+- 每道菜新增所属世界字段，新增/编辑表单里以下拉选择，默认“现实中的饭”；老数据无该字段时按“现实中的饭”兜底。
+- 菜谱详情页 meta 区新增「🌐 所属世界」展示。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过，JavaScript 无语法错误。
+- 浏览器自动化未执行：当前环境缺少 Chrome/Chromium；需在浏览器手动验证大类切换与场景标签的两层过滤、＋管理的增删改、表单下拉与详情页所属世界显示。
+
+### Notes
+- `app.js`：新增 `WORLD_CATEGORY_KEY`、`DEFAULT_WORLD_CATEGORIES` 常量与 `activeWorld`、`worldCategories` 状态；新增 `loadWorldCategories`、`saveWorldCategories`、`renderWorldTabs`、`openWorldManager`、`populateWorldSelect` 函数；`renderList` 增加世界大类过滤；`saveRecipe`、`normalizeRecipes` 增加 `world` 字段；`openNewEditor`、`openEditEditor` 填充并选中世界下拉；`init` 调用 `renderWorldTabs`；`renderDetail` meta 区显示所属世界。
+- `index.html`：列表区 `#categoryTabs` 上方新增 `#worldTabs` 容器；编辑表单菜名下方新增「所属世界」`#recipeWorld` 下拉。
+- `styles.css`：新增 `.world-tabs`、`.world-tab-btn`、`.world-tab-manage` 主导航样式（比场景标签更大更醒目，激活态品牌色实心，管理按钮虚线弱化）。
+- `docs/usage.md`：记录内容清单补充“所属世界”，新增「世界大类导航」使用章节。
+- `progress.md`：追加本轮改动记录。
+- 回滚方式：恢复本轮修改前的 `app.js`、`index.html`、`styles.css`、`docs/usage.md` 和 `progress.md`（或 `git checkout -- app.js index.html styles.css docs/usage.md progress.md`）。
