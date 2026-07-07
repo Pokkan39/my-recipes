@@ -664,11 +664,11 @@ function toggleWhatToEatPanel() {
   if (isOpen) { renderWhatToEatPanel(); scrollPanelIntoView(whatToEatPanel); }
 }
 
-// 打开面板后平滑滚动到它，避免用户以为"点了没反应"
+// 打开面板后直接跳到它（瞬间定位，不做滑动过程）
 function scrollPanelIntoView(panel) {
   if (!panel) return;
   requestAnimationFrame(() => {
-    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    panel.scrollIntoView({ behavior: "auto", block: "start" });
   });
 }
 

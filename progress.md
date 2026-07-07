@@ -594,3 +594,18 @@
 - `app.js`：新增 scrollPanelIntoView；toggleWhatToEatPanel/toggleMealPlanPanel/toggleByIngredientPanel/toggleMyToolsPanel/toggleShoppingListPanel/toggleCustomizePanel 及 openNewEditor 打开时调用。
 - `progress.md`：追加本轮记录。
 - 回滚方式：`git checkout 4164383 -- app.js`。
+
+## 2026-07-07 - Task: 面板打开改为直接跳转（去掉滑动过程）
+### What was done
+- 用户反馈上一版是"点击后向下滑动"而非直接跳过去。根因是全局 CSS `html { scroll-behavior: smooth }`（第 55 行）让所有滚动都变平滑，JS 的 behavior:auto 被其覆盖。
+- 将全局 scroll-behavior 改为 auto，scrollPanelIntoView 也用 behavior:auto，实现打开面板瞬间定位、无滑动过程。
+- 保留 AI 助手消息区内部的 smooth（聊天滚到底），与页面定位无关。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过；CSS 花括号配平。
+- 无头浏览器实测：点"配一桌菜"后 60ms 即到位（scrollY 1069，与最终值一致），确认瞬间跳转而非平滑滑动，面板定位到视口顶部。
+
+### Notes
+- `styles.css`：第 55 行 html scroll-behavior smooth → auto。
+- `app.js`：scrollPanelIntoView 用 behavior auto。
+- 回滚方式：`git checkout 40c60eb -- app.js styles.css`。
