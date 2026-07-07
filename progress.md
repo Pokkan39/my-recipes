@@ -625,3 +625,22 @@
 - `index.html`：顶部按钮区新增"☁️ 云端备份"按钮和"☁️ 云端恢复"文件选择标签。
 - `progress.md`：追加本轮记录。
 - 回滚方式：`git checkout a9798df -- app.js index.html`。
+
+## 2026-07-07 - Task: 第4阶段操作日志 - 新增操作日志面板
+
+### What was done
+- 计划书第4阶段最后一项"操作日志"已实现，第4阶段全部完成。
+- 顶部新增「📋 操作日志」按钮，点击展开日志面板，显示本浏览器内所有新增/修改/删除操作，最多保留最近 100 条。
+- 日志条目在保存菜谱（新增/修改）和删除菜谱时自动写入 localStorage；操作类型用颜色标签区分（绿=新增、橙=修改、红=删除）。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过（SYNTAX_OK）。
+- CSS 花括号配平：464 open / 464 close。
+- 关键标识符核查：activityLogButton、closeActivityLogButton、activityLogPanel、activityLogList、toggleLogPanel、renderLogPanel、appendLog、APP_LOG_KEY 引用一致，无悬空。
+- 未做浏览器端联调：缺少 Chrome/Chromium；需手动验证日志面板展开、条目渲染和颜色标签。
+
+### Notes
+- `app.js`：新增 APP_LOG_KEY、APP_LOG_MAX 常量；新增 appendLog 工具函数；saveRecipe 增加 isEdit 判断并调用 appendLog；deleteCurrentRecipe 调用 appendLog；bindEvents 新增两处事件绑定；新增 toggleLogPanel、renderLogPanel 两个函数。
+- `index.html`：顶部按钮区新增「📋 操作日志」按钮；editorPanel 前新增 #activityLogPanel 面板 section。
+- `styles.css`：末尾新增操作日志面板各元素样式（log-entry、log-action 三色变体、log-name、log-meta、log-empty）。
+- 回滚方式：`git checkout e455344^ -- app.js index.html styles.css`，或 `git revert e455344`。
