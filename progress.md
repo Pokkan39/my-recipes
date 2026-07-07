@@ -447,3 +447,22 @@
 - `README.md`、`docs/product-plan.md`：补充工具筛选能力。
 - `backups/`：回填前云端快照。
 - 回滚方式：用 `backups/cloud-backup-before-tools-*.json` 通过 PUT 写回云端可清除 tools 字段；本地 git reset 到本轮前提交。
+
+## 2026-07-07 - Task: 点菜看做法改为全屏做法页 + 返回按钮
+### What was done
+- 把"点菜看做法"从右侧栏常驻详情改成全屏覆盖做法页：点任意菜从整屏盖上一个 fixed 覆盖层，展示该菜完整详情（图、标题、版本切换、meta、工具、食材、步骤、视频、编辑按钮），左上角"← 返回"按钮或 ESC 键关闭回到列表，手机电脑统一体验。
+- 复用现有详情 HTML 生成逻辑：renderDetail 增加可选 target 参数，默认渲染到原 #recipeDetail，打开全屏页时渲染到 #recipeModalBody，并把编辑/版本切换/步骤折叠等事件绑定统一指向 target，确保全屏页内交互正常。
+- 全屏页内版本切换保持停留在全屏页（重新 openRecipeModal 切换）；点编辑按钮先关闭全屏页再打开编辑器，避免被覆盖层遮挡。
+- 列表点菜（菜卡主体、版本 pill）和 5 处结果跳转（今天吃什么结果与"去看做法"、配一桌菜、食材反查、工具筛选）统一改为调用 openRecipeModal。
+- 列表改为单栏铺满宽度，原右侧 detail-panel 隐藏；render() 精简为只渲染列表，详情仅在打开全屏页时渲染。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过（SYNTAX_OK）。
+- 自查：全文已无 `#recipeDetail` 的 scrollIntoView 调用；8 处 openRecipeModal 调用点 id 来源与原代码一致（btn.dataset.id / picked.id / group.recipes[0].id / button.dataset.id / 形参 id）。
+- 说明：未做浏览器手动交互验证（无自动化 UI 测试入口），仅静态语法与调用点核对。
+
+### Notes
+- `index.html`：在 </main> 后新增 #recipeModal 全屏做法页容器（返回按钮条 + #recipeModalBody）。
+- `app.js`：顶部新增 recipeModal/recipeModalBody 引用；renderDetail 增加 target 参数并把事件绑定指向 target；新增 openRecipeModal/closeRecipeModal；render() 去掉 renderDetail 调用；renderList 两处点击与 5 处结果跳转改为 openRecipeModal；bindEvents 绑定返回按钮与 ESC 关闭。
+- `styles.css`：.layout 改单栏；.detail-panel 改为 display:none；新增 .recipe-modal / .recipe-modal-bar / .recipe-modal-back / .recipe-modal-body 样式（z-index:900，低于 AI 悬浮助手 9999）。
+- 回滚方式：git reset 到本轮提交前，或还原上述三文件到 HEAD~1。

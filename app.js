@@ -146,6 +146,8 @@ let aiDraft = null;
 
 const recipeList = document.querySelector("#recipeList");
 const recipeDetail = document.querySelector("#recipeDetail");
+const recipeModal = document.querySelector("#recipeModal");
+const recipeModalBody = document.querySelector("#recipeModalBody");
 const recipeCount = document.querySelector("#recipeCount");
 const syncStatus = document.querySelector("#syncStatus");
 const searchInput = document.querySelector("#searchInput");
@@ -428,6 +430,10 @@ function bindEvents() {
   recipeForm.addEventListener("submit", saveRecipe);
   deleteRecipeButton.addEventListener("click", deleteCurrentRecipe);
   importInput.addEventListener("change", importRecipes);
+  document.querySelector("#recipeModalBack").addEventListener("click", closeRecipeModal);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !recipeModal.hidden) closeRecipeModal();
+  });
 
   // 昵称面板
   const nicknameButton = document.querySelector("#nicknameButton");
@@ -732,10 +738,8 @@ function renderWhatToEatResult() {
   `;
   whatToEatResult.querySelectorAll(".what-to-eat-card").forEach((btn) => {
     btn.addEventListener("click", () => {
-      selectedId = btn.dataset.id;
       whatToEatPanel.classList.remove("is-open");
-      render();
-      document.querySelector("#recipeDetail").scrollIntoView({ behavior: "smooth", block: "start" });
+      openRecipeModal(btn.dataset.id);
     });
   });
 }
@@ -761,10 +765,8 @@ function randomPickRecipe() {
     </div>
   `;
   document.querySelector("#goToPickedButton").addEventListener("click", () => {
-    selectedId = picked.id;
     whatToEatPanel.classList.remove("is-open");
-    render();
-    document.querySelector("#recipeDetail").scrollIntoView({ behavior: "smooth", block: "start" });
+    openRecipeModal(picked.id);
   });
   document.querySelector("#rerollButton").addEventListener("click", randomPickRecipe);
 }
@@ -873,10 +875,8 @@ function generateMealPlan() {
 
   mealPlanResult.querySelectorAll(".meal-plan-card").forEach((btn) => {
     btn.addEventListener("click", () => {
-      selectedId = btn.dataset.id;
       mealPlanPanel.classList.remove("is-open");
-      render();
-      document.querySelector("#recipeDetail").scrollIntoView({ behavior: "smooth", block: "start" });
+      openRecipeModal(btn.dataset.id);
     });
   });
   document.querySelector("#rerollMealButton").addEventListener("click", generateMealPlan);
@@ -955,10 +955,8 @@ function searchByIngredient() {
 
   byIngredientResult.querySelectorAll(".by-ingredient-card").forEach((btn) => {
     btn.addEventListener("click", () => {
-      selectedId = btn.dataset.id;
       byIngredientPanel.classList.remove("is-open");
-      render();
-      document.querySelector("#recipeDetail").scrollIntoView({ behavior: "smooth", block: "start" });
+      openRecipeModal(btn.dataset.id);
     });
   });
 }
@@ -1054,10 +1052,8 @@ function renderMyToolsResult() {
   `;
 
   const goDetail = (id) => {
-    selectedId = id;
     document.querySelector("#myToolsPanel").classList.remove("is-open");
-    render();
-    document.querySelector("#recipeDetail").scrollIntoView({ behavior: "smooth", block: "start" });
+    openRecipeModal(id);
   };
 
   container.querySelectorAll(".mt-card--ready").forEach((btn) => {
@@ -1436,7 +1432,6 @@ function normalizeAppearance(rawAppearance) {
 
 function render() {
   renderList();
-  renderDetail();
 }
 
 function renderCategoryTabs() {
@@ -1775,16 +1770,14 @@ function renderList() {
     `;
 
     card.querySelector(".recipe-group-main").addEventListener("click", () => {
-      selectedId = group.recipes[0].id;
       closeEditor();
-      render();
+      openRecipeModal(group.recipes[0].id);
     });
 
     card.querySelectorAll(".version-pill").forEach((button) => {
       button.addEventListener("click", () => {
-        selectedId = button.dataset.id;
         closeEditor();
-        render();
+        openRecipeModal(button.dataset.id);
       });
     });
 
@@ -1792,12 +1785,12 @@ function renderList() {
   });
 }
 
-function renderDetail() {
+function renderDetail(target = recipeDetail) {
   const recipe = recipes.find((item) => item.id === selectedId);
 
   if (!recipe) {
     const template = document.querySelector("#emptyDetailTemplate");
-    recipeDetail.innerHTML = template.innerHTML;
+    target.innerHTML = template.innerHTML;
     return;
   }
 
@@ -1858,7 +1851,7 @@ function renderDetail() {
     </div>
   ` : "";
 
-  recipeDetail.innerHTML = `
+  target.innerHTML = `
     ${imageMarkup}
     <div class="detail-header">
       <div>
@@ -1902,19 +1895,27 @@ function renderDetail() {
     ${!safeVideo ? `<div class="detail-section"><h3>教学视频</h3><p>暂未填写视频链接。</p></div>` : ""}
   `;
 
-  document.querySelector("#editRecipeButton").addEventListener("click", () => openEditEditor(recipe.id));
-  document.querySelectorAll(".version-card").forEach((button) => {
+  const inModal = target === recipeModalBody;
+  target.querySelector("#editRecipeButton").addEventListener("click", () => {
+    if (inModal) closeRecipeModal();
+    openEditEditor(recipe.id);
+  });
+  target.querySelectorAll(".version-card").forEach((button) => {
     button.addEventListener("click", () => {
-      selectedId = button.dataset.id;
-      render();
+      if (inModal) {
+        openRecipeModal(button.dataset.id);
+      } else {
+        selectedId = button.dataset.id;
+        render();
+      }
     });
   });
 
   // 步骤折叠切换
-  const stepsToggle = recipeDetail.querySelector(".steps-toggle");
+  const stepsToggle = target.querySelector(".steps-toggle");
   if (stepsToggle) {
     stepsToggle.addEventListener("click", () => {
-      const stepsList = recipeDetail.querySelector(".steps");
+      const stepsList = target.querySelector(".steps");
       const isCollapsed = stepsList.classList.toggle("is-collapsed");
       stepsToggle.setAttribute("aria-expanded", String(!isCollapsed));
       stepsToggle.classList.toggle("is-open", !isCollapsed);
@@ -1924,6 +1925,23 @@ function renderDetail() {
       if (hint) hint.textContent = isCollapsed ? "（点击展开）" : "";
     });
   }
+}
+
+function openRecipeModal(id) {
+  const recipe = recipes.find((item) => item.id === id);
+  if (!recipe) return;
+  selectedId = id;
+  renderList();
+  renderDetail(recipeModalBody);
+  recipeModal.hidden = false;
+  document.body.style.overflow = "hidden";
+  recipeModal.scrollTop = 0;
+  recipeModalBody.scrollTop = 0;
+}
+
+function closeRecipeModal() {
+  recipeModal.hidden = true;
+  document.body.style.overflow = "";
 }
 
 function openNewEditor() {
