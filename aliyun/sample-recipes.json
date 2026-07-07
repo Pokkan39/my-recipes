@@ -1,0 +1,224 @@
+[
+  {
+    "id": "sample-scrambled-egg-rice",
+    "name": "蛋炒饭",
+    "image": "",
+    "source": "家常做法",
+    "variant": "隔夜饭快手版",
+    "world": "现实中的饭",
+    "description": "最经典的快手主食，隔夜饭加鸡蛋几分钟搞定，新手也不容易翻车。",
+    "cost": "约 6 元",
+    "occasion": "工作日晚餐 / 快手菜",
+    "time": "约 10 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "隔夜米饭", "amount": "1 碗", "category": "主料", "note": "隔夜饭更干爽，不容易粘" },
+      { "name": "鸡蛋", "amount": "2 个", "category": "主料", "note": "" },
+      { "name": "葱花", "amount": "适量", "category": "辅料", "note": "" },
+      { "name": "食用油", "amount": "适量", "category": "辅料", "note": "" },
+      { "name": "盐", "amount": "少许", "category": "调味料", "note": "" },
+      { "name": "生抽", "amount": "少许", "category": "调味料", "note": "提味用，可省略" }
+    ],
+    "steps": [
+      "鸡蛋打散，米饭提前用勺子压散。",
+      "热锅下油，倒入蛋液炒至半凝固。",
+      "倒入米饭，快速翻炒让米粒裹上蛋液。",
+      "加盐、生抽调味，撒葱花翻匀出锅。"
+    ]
+  },
+  {
+    "id": "sample-tomato-beef-noodle",
+    "name": "番茄牛肉面",
+    "image": "",
+    "source": "家常做法",
+    "variant": "浓汤版",
+    "world": "现实中的饭",
+    "description": "酸甜浓郁的汤底配软烂牛肉，一碗下去暖身又满足，适合冬天或没胃口时。",
+    "cost": "约 20 元",
+    "occasion": "午餐 / 晚餐",
+    "time": "约 60 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "牛腩", "amount": "300g", "category": "主料", "note": "切块，选带点筋的更香" },
+      { "name": "番茄", "amount": "3 个", "category": "主料", "note": "熟透的更出汁" },
+      { "name": "面条", "amount": "2 人份", "category": "主料", "note": "" },
+      { "name": "洋葱", "amount": "半个", "category": "辅料", "note": "" },
+      { "name": "姜", "amount": "3 片", "category": "辅料", "note": "" },
+      { "name": "盐", "amount": "适量", "category": "调味料", "note": "" },
+      { "name": "生抽", "amount": "2 勺", "category": "调味料", "note": "" },
+      { "name": "番茄酱", "amount": "1 勺", "category": "调味料", "note": "让汤色更红更浓，可选" }
+    ],
+    "steps": [
+      "牛腩冷水下锅焯水，撇去浮沫后捞出。",
+      "锅中炒香洋葱和姜，下番茄块炒出沙。",
+      "加入牛腩和番茄酱翻炒，倒入没过食材的热水。",
+      "小火炖 40 分钟至牛肉软烂，加盐和生抽调味。",
+      "另起锅煮面，捞入碗中浇上番茄牛肉汤即可。"
+    ]
+  },
+  {
+    "id": "sample-anime-omurice",
+    "name": "黄金蛋包饭",
+    "image": "",
+    "source": "《食戟之灵》灵感",
+    "variant": "半熟滑蛋版",
+    "world": "二次元中的饭",
+    "description": "动漫里划开蛋皮、金黄蛋液缓缓流淌盖住炒饭的名场面。关键在蛋液半熟时离火，用余温定型。",
+    "cost": "约 12 元",
+    "occasion": "午餐 / 治愈系",
+    "time": "约 20 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "米饭", "amount": "1 碗", "category": "主料", "note": "" },
+      { "name": "鸡蛋", "amount": "3 个", "category": "主料", "note": "越新鲜蛋皮颜色越金黄" },
+      { "name": "鸡腿肉", "amount": "100g", "category": "主料", "note": "切丁" },
+      { "name": "洋葱", "amount": "1/4 个", "category": "辅料", "note": "切碎" },
+      { "name": "黄油", "amount": "1 小块", "category": "辅料", "note": "滑蛋更香" },
+      { "name": "番茄酱", "amount": "2 勺", "category": "调味料", "note": "炒饭调味兼摆盘" },
+      { "name": "盐", "amount": "少许", "category": "调味料", "note": "" }
+    ],
+    "steps": [
+      "鸡腿肉丁和洋葱碎炒熟，加米饭和番茄酱炒成番茄鸡肉饭，盛入盘中堆成橄榄形。",
+      "鸡蛋加少许盐打散，尽量打匀。",
+      "平底锅小火化黄油，倒入蛋液不停搅动至半熟滑嫩状态。",
+      "趁蛋液还会流动时离火，整块盖在炒饭上。",
+      "上桌后用刀从中间划开，让金黄蛋液流淌包住饭即可。"
+    ]
+  },
+  {
+    "id": "sample-anime-onigiri",
+    "name": "海苔饭团",
+    "image": "",
+    "source": "日常番常见",
+    "variant": "梅子馅版",
+    "world": "二次元中的饭",
+    "description": "无数动漫便当里出现的三角饭团，做法极简，适合带饭或野餐，也是新手练手好选择。",
+    "cost": "约 8 元",
+    "occasion": "早餐 / 便当 / 快手菜",
+    "time": "约 15 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "温热米饭", "amount": "1 碗", "category": "主料", "note": "温的更好捏成型" },
+      { "name": "海苔", "amount": "2 片", "category": "主料", "note": "" },
+      { "name": "梅干", "amount": "2 颗", "category": "主料", "note": "去核，可换成肉松或吞拿鱼" },
+      { "name": "盐", "amount": "少许", "category": "调味料", "note": "抹手防粘兼调味" },
+      { "name": "白芝麻", "amount": "少许", "category": "辅料", "note": "可选" }
+    ],
+    "steps": [
+      "手上蘸少许盐水防粘。",
+      "取一团米饭铺平，中间放梅干馅。",
+      "包起来，双手捏成三角形并压实。",
+      "底部裹上一条海苔，撒少许白芝麻即可。"
+    ]
+  },
+  {
+    "id": "sample-dark-cola-instant-noodle",
+    "name": "可乐泡面",
+    "image": "",
+    "source": "宿舍黑暗料理",
+    "variant": "重口猎奇版",
+    "world": "黑暗料理",
+    "description": "用可乐代替水煮泡面的传说级操作。甜咸交织、口感诡异，慎试，纯属娱乐挑战。",
+    "cost": "约 7 元",
+    "occasion": "宵夜 / 猎奇挑战",
+    "time": "约 8 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "方便面", "amount": "1 包", "category": "主料", "note": "" },
+      { "name": "可乐", "amount": "1 罐", "category": "主料", "note": "代替煮面的水，这就是灾难的起点" },
+      { "name": "鸡蛋", "amount": "1 个", "category": "辅料", "note": "尝试挽救口感用" },
+      { "name": "调料包", "amount": "1 份", "category": "调味料", "note": "面自带的" }
+    ],
+    "steps": [
+      "把可乐倒进锅里加热（会大量起泡，小心溢出）。",
+      "可乐微沸后下入方便面。",
+      "打入一个鸡蛋试图中和甜味。",
+      "煮软后加调料包，盛出，鼓起勇气尝一口。",
+      "温馨提示：这是娱乐向黑暗料理，做好心理准备。"
+    ]
+  },
+  {
+    "id": "sample-dark-rainbow-dumpling",
+    "name": "彩虹芥末饺子",
+    "image": "",
+    "source": "整蛊聚会菜",
+    "variant": "俄罗斯轮盘版",
+    "world": "黑暗料理",
+    "description": "外表五颜六色很可爱，但其中几个包了大量芥末。适合朋友聚会玩'饺子轮盘'整蛊，吃到的人表情很精彩。",
+    "cost": "约 15 元",
+    "occasion": "聚会 / 整蛊",
+    "time": "约 40 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "饺子皮", "amount": "1 斤", "category": "主料", "note": "" },
+      { "name": "猪肉馅", "amount": "300g", "category": "主料", "note": "" },
+      { "name": "食用色素", "amount": "红黄蓝各少许", "category": "辅料", "note": "给面皮染色，可选" },
+      { "name": "芥末", "amount": "1 管", "category": "调味料", "note": "整蛊灵魂，包进个别饺子里" },
+      { "name": "盐", "amount": "适量", "category": "调味料", "note": "" },
+      { "name": "生抽", "amount": "2 勺", "category": "调味料", "note": "" }
+    ],
+    "steps": [
+      "猪肉馅加盐、生抽拌匀成正常馅料。",
+      "包大部分正常饺子，随机在 2-3 个里塞入大量芥末。",
+      "想加难度可以用色素把面皮染成彩虹色，让人认不出哪个是'雷'。",
+      "全部下锅煮熟，混在一起端上桌。",
+      "大家轮流吃，就看谁运气差抽到芥末弹。"
+    ]
+  },
+  {
+    "id": "sample-fantasy-lembas",
+    "name": "精灵行路面包",
+    "image": "",
+    "source": "《指环王》灵感",
+    "variant": "蜂蜜燕麦版",
+    "world": "存在于幻想中的饭",
+    "description": "传说中精灵制作的干粮 Lembas，一小口就能让成年人饱腹一整天。现实还原成扎实的蜂蜜燕麦能量块，徒步和露营带着很合适。",
+    "cost": "约 18 元",
+    "occasion": "早餐 / 户外能量补给",
+    "time": "约 35 分钟",
+    "video": "",
+    "ingredients": [
+      { "name": "燕麦", "amount": "200g", "category": "主料", "note": "" },
+      { "name": "面粉", "amount": "100g", "category": "主料", "note": "" },
+      { "name": "蜂蜜", "amount": "3 勺", "category": "主料", "note": "精灵的能量来源" },
+      { "name": "黄油", "amount": "50g", "category": "辅料", "note": "" },
+      { "name": "坚果碎", "amount": "1 把", "category": "辅料", "note": "杏仁核桃均可" },
+      { "name": "盐", "amount": "1 小撮", "category": "调味料", "note": "" }
+    ],
+    "steps": [
+      "黄油室温软化，和蜂蜜搅拌均匀。",
+      "加入燕麦、面粉、坚果碎和盐，拌成能捏合的面团。",
+      "压成方形厚片，切成小方块，表面按传统划一道十字。",
+      "180 度烤 20 分钟至金黄，晾凉后用叶子或油纸包好。",
+      "据说包在叶子里能保存很久，行路时一块顶一餐。"
+    ]
+  },
+  {
+    "id": "sample-fantasy-butterbeer-pudding",
+    "name": "黄油啤酒布丁",
+    "image": "",
+    "source": "《哈利波特》灵感",
+    "variant": "无酒精焦糖版",
+    "world": "存在于幻想中的饭",
+    "description": "把魔法世界三把扫帚酒馆的招牌饮品黄油啤酒，还原成焦糖奶油布丁。无酒精，大人小孩都能吃，甜香浓郁。",
+    "cost": "约 16 元",
+    "occasion": "甜点 / 下午茶",
+    "time": "约 30 分钟 + 冷藏",
+    "video": "",
+    "ingredients": [
+      { "name": "牛奶", "amount": "300ml", "category": "主料", "note": "" },
+      { "name": "淡奶油", "amount": "100ml", "category": "主料", "note": "" },
+      { "name": "黄油", "amount": "30g", "category": "主料", "note": "黄油啤酒的灵魂" },
+      { "name": "红糖", "amount": "3 勺", "category": "调味料", "note": "做焦糖香" },
+      { "name": "吉利丁片", "amount": "2 片", "category": "辅料", "note": "凝固用" },
+      { "name": "香草精", "amount": "几滴", "category": "调味料", "note": "可选" }
+    ],
+    "steps": [
+      "吉利丁片用冷水泡软。",
+      "红糖加黄油小火熬成焦糖，倒入牛奶和淡奶油加热（别煮沸）。",
+      "离火后加入泡软的吉利丁和香草精，搅拌至完全融化。",
+      "倒入杯中，晾凉后冷藏 3 小时以上至凝固。",
+      "上面可以挤一层奶油泡，还原黄油啤酒的泡沫顶。"
+    ]
+  }
+]

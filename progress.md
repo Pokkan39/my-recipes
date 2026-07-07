@@ -276,3 +276,20 @@
 - `docs/usage.md`：记录内容清单补充“所属世界”，新增「世界大类导航」使用章节。
 - `progress.md`：追加本轮改动记录。
 - 回滚方式：恢复本轮修改前的 `app.js`、`index.html`、`styles.css`、`docs/usage.md` 和 `progress.md`（或 `git checkout -- app.js index.html styles.css docs/usage.md progress.md`）。
+
+## 2026-07-07 - Task: 生成示例菜谱并安全追加到云端
+### What was done
+- 新增 8 道示例菜谱，覆盖 4 个世界大类：现实中的饭（蛋炒饭、番茄牛肉面）、二次元中的饭（黄金蛋包饭、海苔饭团）、黑暗料理（可乐泡面、彩虹芥末饺子）、存在于幻想中的饭（精灵行路面包、黄油啤酒布丁）。每道菜含完整食材分类、步骤、成本、耗时和场景标签，可直观展示大类导航与场景标签的两层过滤效果。
+- 用安全合并脚本把示例追加到阿里云共享库：先拉取现有数据，按 id 去重后追加，再写回；操作前先完整备份云端数据。原有 6 道真实菜谱全部保留，追加后云端共 14 道。
+
+### Testing
+- `python -m json.tool aliyun/sample-recipes.json`：通过，示例 JSON 格式有效，8 道菜。
+- `node aliyun/merge-samples.mjs`：执行成功，云端由 6 道变为 14 道，去重逻辑正常。
+- 追加前后各拉取一次云端数据核对数量，确认真实菜谱未被覆盖。
+
+### Notes
+- `aliyun/sample-recipes.json`：新增示例菜谱数据文件。
+- `aliyun/merge-samples.mjs`：新增安全合并脚本（拉取→去重追加→写回→核对）。
+- `.gitignore`：新增，排除 `backups/`（云端快照，仅本地保留）和 `node_modules/`。
+- `backups/`：本地保存了追加前的云端数据快照，未入库。
+- 回滚方式：如需移除示例，可用 `backups/` 里追加前的快照文件通过 PUT 写回云端（`curl -X PUT ... --data-binary @备份文件`）；本地文件删除 `aliyun/sample-recipes.json` 和 `aliyun/merge-samples.mjs` 即可。
