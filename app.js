@@ -119,6 +119,18 @@ let editingIngredients = [];
 let selectedDishIds = new Set();
 let activeOccasionFilters = new Set();
 let activeTimeFilters = new Set();
+let activeCategoryTab = "全部";
+
+const CATEGORY_TABS = [
+  { label: "全部",   keywords: [] },
+  { label: "早餐",   keywords: ["早餐", "早上", "早饭"] },
+  { label: "午餐",   keywords: ["午餐", "午饭", "中午"] },
+  { label: "晚餐",   keywords: ["晚餐", "晚饭", "工作日"] },
+  { label: "宵夜",   keywords: ["宵夜", "夜宵"] },
+  { label: "快手菜", keywords: ["快手", "15分钟", "20分钟", "分钟"] },
+  { label: "健身餐", keywords: ["健身", "减脂", "低脂"] },
+  { label: "下饭菜", keywords: ["下饭", "米饭配菜"] }
+];
 let aiChatHistory = [];
 let aiDraft = null;
 
@@ -199,6 +211,7 @@ async function init() {
   recipes = await loadRecipes();
   selectedId = recipes[0]?.id || "";
   bindEvents();
+  renderCategoryTabs();
   render();
   initFloatAi();
   startCloudPolling();
@@ -381,6 +394,23 @@ function bindEvents() {
   recipeForm.addEventListener("submit", saveRecipe);
   deleteRecipeButton.addEventListener("click", deleteCurrentRecipe);
   importInput.addEventListener("change", importRecipes);
+
+  // 昵称面板
+  const nicknameButton = document.querySelector("#nicknameButton");
+  const nicknamePanel  = document.querySelector("#nicknamePanel");
+  const nicknameInput  = document.querySelector("#nicknameInput");
+  const nicknameSubmit = document.querySelector("#nicknameSubmit");
+  nicknameInput.value  = localStorage.getItem("my-recipe-author-name") || "";
+  nicknameButton.addEventListener("click", () => {
+    nicknamePanel.style.display = nicknamePanel.style.display === "none" ? "block" : "none";
+    if (nicknamePanel.style.display === "block") nicknameInput.focus();
+  });
+  nicknameSubmit.addEventListener("click", () => {
+    const name = nicknameInput.value.trim();
+    localStorage.setItem("my-recipe-author-name", name);
+    nicknamePanel.style.display = "none";
+    alert(name ? `昵称已保存：${name}` : "昵称已清空");
+  });
 }
 
 const AI_CONFIG_KEY = "my-recipe-ai-config";
@@ -1041,6 +1071,21 @@ function render() {
   renderDetail();
 }
 
+function renderCategoryTabs() {
+  const container = document.querySelector("#categoryTabs");
+  if (!container) return;
+  container.innerHTML = CATEGORY_TABS.map((cat) =>
+    `<button class="category-tab-btn${activeCategoryTab === cat.label ? " is-active" : ""}" type="button" data-label="${escapeAttr(cat.label)}">${escapeHtml(cat.label)}</button>`
+  ).join("");
+  container.querySelectorAll(".category-tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      activeCategoryTab = btn.dataset.label;
+      renderCategoryTabs();
+      renderList();
+    });
+  });
+}
+
 function generateDraftFromHelper() {
   const transcript = helperFields.transcript.value.trim();
   const title = helperFields.videoTitle.value.trim();
@@ -1204,9 +1249,19 @@ function getSameDishRecipes(recipe) {
 
 function renderList() {
   const keyword = searchInput.value.trim().toLowerCase();
-  const visibleRecipes = recipes.filter((recipe) => {
+  let visibleRecipes = recipes.filter((recipe) => {
     return `${recipe.name} ${recipe.source} ${recipe.variant} ${recipe.occasion} ${recipe.description}`.toLowerCase().includes(keyword);
   });
+
+  if (activeCategoryTab !== "全部") {
+    const cat = CATEGORY_TABS.find((c) => c.label === activeCategoryTab);
+    if (cat) {
+      visibleRecipes = visibleRecipes.filter((recipe) =>
+        cat.keywords.some((kw) => (recipe.occasion || "").includes(kw))
+      );
+    }
+  }
+
   const groups = getRecipeGroups(visibleRecipes);
 
   recipeCount.textContent = `${getRecipeGroups(recipes).length} 道菜 / ${recipes.length} 个做法`;
@@ -1362,6 +1417,8 @@ function renderDetail() {
       <div class="meta-item"><span>💰 大概成本</span><strong>${escapeHtml(recipe.cost)}</strong></div>
       <div class="meta-item"><span>🍚 适合时间</span><strong>${escapeHtml(recipe.occasion)}</strong></div>
       <div class="meta-item"><span>⏱️ 大概耗时</span><strong>${escapeHtml(recipe.time)}</strong></div>
+      ${recipe.author ? `<div class="meta-item"><span>👤 添加者</span><strong>${escapeHtml(recipe.author)}</strong></div>` : ""}
+      ${recipe.updatedAt ? `<div class="meta-item"><span>🕐 最近更新</span><strong>${formatDateTime(recipe.updatedAt)}</strong></div>` : ""}
     </div>
 
     ${ingredientsHtml}
@@ -1457,7 +1514,9 @@ async function saveRecipe(event) {
     time: fields.time.value.trim(),
     video: fields.video.value.trim(),
     ingredients: editingIngredients.filter((ing) => ing.name.trim()),
-    steps: stepsRaw
+    steps: stepsRaw,
+    updatedAt: new Date().toISOString(),
+    author: localStorage.getItem("my-recipe-author-name") || "匿名"
   };
 
   const index = recipes.findIndex((item) => item.id === recipe.id);
@@ -1550,7 +1609,9 @@ function normalizeRecipes(rawRecipes) {
           note: String(ing.note || "")
         })).filter((ing) => ing.name.trim())
       : [],
-    steps: Array.isArray(recipe.steps) ? recipe.steps.map(String) : String(recipe.steps || "").split("\n").filter(Boolean)
+    steps: Array.isArray(recipe.steps) ? recipe.steps.map(String) : String(recipe.steps || "").split("\n").filter(Boolean),
+    updatedAt: String(recipe.updatedAt || ""),
+    author: String(recipe.author || "匿名")
   }));
 }
 
@@ -1601,6 +1662,16 @@ function hexToRgb(hexColor) {
 
 function rgbToHex(rgb) {
   return `#${rgb.map((value) => value.toString(16).padStart(2, "0")).join("")}`;
+}
+
+function formatDateTime(isoString) {
+  try {
+    const d = new Date(isoString);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return isoString;
+  }
 }
 
 function escapeHtml(value) {

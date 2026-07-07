@@ -1871,3 +1871,85 @@ h2 {
     right: 12px;
   }
 }
+
+/* ===== 分类 Tab 过滤 ===== */
+.category-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.category-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.category-tab-btn {
+  flex-shrink: 0;
+  padding: 5px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 20px;
+  background: var(--card);
+  color: var(--muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.category-tab-btn:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.category-tab-btn.is-active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ===== 昵称面板 ===== */
+.nickname-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 200;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nickname-panel-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.nickname-panel input[type="text"] {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.nickname-panel input[type="text"]:focus {
+  border-color: var(--brand);
+}
+
+/* 让昵称按钮相对定位，面板绝对定位到它下方 */
+.hero-actions {
+  position: relative;
+}
