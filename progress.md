@@ -221,3 +221,39 @@
 - `docs/aliyun-setup.md`：补充接口无响应时的部署配置排查说明。
 - `progress.md`：追加本轮修复、验证结果和回滚方式。
 - 回滚方式：恢复本轮修改前的 `aliyun/recipe-api/index.js`、`docs/aliyun-setup.md` 和 `progress.md`。
+
+## 2026-07-07 - Task: AI 面板第二阶段改造
+### What was done
+- AI 面板打开后显示 4 个快捷入口按钮（视频链接、字幕文案、食材推荐、优化菜谱），不再只显示文字欢迎语。
+- 点击入口后自动显示对应引导提示，输入框切换为对应占位符，对话区显示。
+- AI 返回菜谱 JSON 时渲染为草稿卡片（菜名、耗时/成本/场景标签、介绍、食材分类清单、步骤列表），不再显示原始代码块。
+- 用户发消息后快捷入口自动隐藏；点「新对话」重新出现。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过，JavaScript 无语法错误。
+- 浏览器自动化未执行：当前环境缺少 Chrome/Chromium；需在浏览器手动验证 AI 面板快捷入口点击和草稿卡片渲染效果。
+
+### Notes
+- `app.js`：重构 `initFloatAi`（增加快捷入口点击处理）、`floatAiStart`（重置时显示快捷入口）、`floatAiAppend`（草稿卡片渲染）、`floatAiSend`（发消息时隐藏快捷入口），新增 `buildDraftCard`。
+- `index.html`：AI 面板消息列表上方新增快捷入口 HTML 结构。
+- `styles.css`：新增快捷入口按钮和草稿卡片样式。
+- `progress.md`：追加本轮改动记录。
+- 回滚方式：恢复本轮修改前的 `app.js`、`index.html`、`styles.css` 和 `progress.md`。
+
+## 2026-07-07 - Task: 分类标签过滤 + 修改人昵称 + 最近修改时间
+### What was done
+- 菜谱列表顶部新增场景分类标签（全部/早餐/午餐/晚餐/宵夜/快手菜/健身餐/下饭菜），点击后按 occasion 字段模糊过滤，可与搜索关键词叠加使用。
+- 顶部新增「我的昵称」入口，用户可填写昵称并保存到浏览器本地；昵称会随新增或修改菜谱一起保存。
+- 每道菜保存时自动记录 `updatedAt`（ISO 时间）和 `author`（当前昵称，默认"匿名"）。
+- 菜谱详情页 meta 信息区新增「👤 添加者」和「🕐 最近更新」展示（有值时才显示）。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过，JavaScript 无语法错误。
+- 浏览器自动化未执行：需在浏览器手动验证标签切换过滤、昵称保存和详情页时间显示。
+
+### Notes
+- `app.js`：新增 `CATEGORY_TABS` 常量、`activeCategoryTab` 状态、`renderCategoryTabs` 函数；`renderList` 增加分类过滤；`saveRecipe` 增加 `updatedAt` 和 `author`；`normalizeRecipes` 补兼容默认值；`renderDetail` 增加作者和时间显示；新增 `formatDateTime` 工具函数；新增昵称面板初始化逻辑。
+- `index.html`：新增分类标签容器、昵称按钮和昵称面板 HTML。
+- `styles.css`：新增分类标签、昵称面板样式。
+- `progress.md`：追加本轮改动记录。
+- 回滚方式：恢复本轮修改前的 `app.js`、`index.html`、`styles.css` 和 `progress.md`。
