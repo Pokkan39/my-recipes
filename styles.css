@@ -2002,6 +2002,150 @@ h2 {
   line-height: 1.7;
 }
 
+/* 批量整理预览 */
+.batch-preview {
+  align-self: stretch;
+  background: #fff7ed;
+  border: 1.5px solid var(--brand);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.batch-preview-head {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.batch-preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.batch-preview-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  transition: border-color 0.15s;
+}
+
+.batch-preview-item:hover {
+  border-color: var(--brand);
+}
+
+.batch-preview-check {
+  display: flex;
+  align-items: center;
+  padding-top: 2px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.batch-preview-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.batch-preview-body {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.batch-preview-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+
+.batch-preview-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.batch-preview-meta span {
+  background: #f5f0e8;
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.batch-preview-detail {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.batch-preview-detail[hidden] { display: none; }
+
+.batch-preview-detail-row {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.batch-preview-detail-row span {
+  font-weight: 600;
+  color: var(--brand);
+  margin-right: 6px;
+}
+
+.batch-preview-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.batch-preview-actions button {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.batch-preview-actions .batch-preview-toggle-all {
+  background: #fff;
+  border: 1.5px solid var(--line);
+  color: var(--text);
+}
+
+.batch-preview-actions .batch-preview-toggle-all:hover {
+  border-color: var(--brand);
+}
+
+.batch-preview-actions .batch-preview-save {
+  background: var(--brand);
+  border: none;
+  color: #fff;
+  transition: opacity 0.15s;
+}
+
+.batch-preview-actions .batch-preview-save:hover { opacity: 0.88; }
+
+.batch-preview-actions .batch-preview-save:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 /* 输入区 */
 .float-ai-input-area {
   display: flex;
