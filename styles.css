@@ -1177,6 +1177,234 @@ h2 {
   gap: 10px;
 }
 
+/* 配一桌菜 */
+.meal-plan-panel,
+.by-ingredient-panel {
+  display: none;
+  margin: 0 clamp(20px, 5vw, 72px) 18px;
+}
+
+.meal-plan-panel.is-open,
+.by-ingredient-panel.is-open {
+  display: block;
+}
+
+.meal-plan-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.meal-plan-controls label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.meal-plan-controls input {
+  width: 68px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 15px;
+  color: var(--text);
+  background: #fff7ed;
+}
+
+.meal-plan-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.meal-plan-count,
+.by-ingredient-count {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.meal-plan-empty,
+.by-ingredient-empty {
+  color: var(--muted);
+  padding: 12px 0;
+}
+
+.meal-plan-shortage {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--soft);
+  color: var(--brand-dark);
+  font-size: 13px;
+}
+
+.meal-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.meal-plan-card {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px;
+  text-align: left;
+  background: #fff7ed;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.meal-plan-card:hover {
+  border-color: var(--brand);
+  background: var(--soft);
+}
+
+.mpc-type {
+  justify-self: start;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--brand);
+}
+
+.mpc-type--veg {
+  background: #5a9e5a;
+}
+
+.mpc-type--staple {
+  background: #c9922f;
+}
+
+.mpc-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.mpc-meta {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.meal-plan-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.meal-plan-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* 我有什么食材 */
+.by-ingredient-input-area {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.by-ingredient-input-area input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 15px;
+  color: var(--text);
+  background: #fff7ed;
+}
+
+.by-ingredient-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.by-ingredient-card {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px;
+  text-align: left;
+  background: #fff7ed;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.by-ingredient-card:hover {
+  border-color: var(--brand);
+  background: var(--soft);
+}
+
+.bic-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bic-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.bic-score {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.bic-hits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.bic-hit {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--brand-dark);
+  background: var(--soft);
+  border: 1px solid var(--brand);
+}
+
+.bic-missing {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.bic-missing--none {
+  color: #5a9e5a;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .meal-plan-controls {
+    gap: 12px;
+  }
+
+  .by-ingredient-input-area {
+    flex-direction: column;
+  }
+}
+
 /* 详情页视频突出显示 */
 .detail-video-prominent {
   margin: 14px 0;

@@ -16,6 +16,8 @@
         <button id="videoHelperButton" class="primary-button hero-main-action" type="button">AI 生成菜谱</button>
         <button id="newRecipeButton" class="secondary-button">新增菜谱</button>
         <button id="whatToEatButton" class="secondary-button" type="button">今天吃什么</button>
+        <button id="mealPlanButton" class="secondary-button" type="button">配一桌菜</button>
+        <button id="byIngredientButton" class="secondary-button" type="button">我有什么食材</button>
         <button id="shoppingListButton" class="secondary-button" type="button">购物清单</button>
         <button id="customizeButton" class="text-button" type="button">调整网站</button>
         <button id="exportButton" class="text-button">导出备份</button>
@@ -81,6 +83,42 @@
       <button id="clearFiltersButton" class="text-button" type="button">清除筛选</button>
     </div>
     <div id="whatToEatResult" class="what-to-eat-result"></div>
+  </section>
+
+  <section id="mealPlanPanel" class="panel meal-plan-panel" aria-labelledby="mealPlanTitle">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Meal Plan</p>
+        <h2 id="mealPlanTitle">配一桌菜</h2>
+        <p>告诉我几个人吃、想要几个荤菜几个素菜，帮你随机凑一桌。</p>
+      </div>
+      <button id="closeMealPlanButton" class="text-button" type="button">收起</button>
+    </div>
+    <div class="meal-plan-controls">
+      <label>荤菜 <input id="mealMeatCount" type="number" min="0" max="8" value="2"></label>
+      <label>素菜 <input id="mealVegCount" type="number" min="0" max="8" value="2"></label>
+      <label>主食/汤 <input id="mealStapleCount" type="number" min="0" max="4" value="1"></label>
+    </div>
+    <div class="meal-plan-actions">
+      <button id="generateMealButton" class="primary-button" type="button">凑一桌</button>
+    </div>
+    <div id="mealPlanResult" class="meal-plan-result"></div>
+  </section>
+
+  <section id="byIngredientPanel" class="panel by-ingredient-panel" aria-labelledby="byIngredientTitle">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">By Ingredient</p>
+        <h2 id="byIngredientTitle">我有什么食材</h2>
+        <p>输入你手边有的食材，看看能做哪些菜。</p>
+      </div>
+      <button id="closeByIngredientButton" class="text-button" type="button">收起</button>
+    </div>
+    <div class="by-ingredient-input-area">
+      <input id="ingredientQueryInput" type="text" placeholder="用空格或逗号分隔，例如：鸡蛋 番茄 土豆">
+      <button id="searchByIngredientButton" class="primary-button" type="button">查菜</button>
+    </div>
+    <div id="byIngredientResult" class="by-ingredient-result"></div>
   </section>
 
   <section id="shoppingListPanel" class="panel shopping-panel" aria-labelledby="shoppingListTitle">

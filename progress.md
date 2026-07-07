@@ -293,3 +293,60 @@
 - `.gitignore`：新增，排除 `backups/`（云端快照，仅本地保留）和 `node_modules/`。
 - `backups/`：本地保存了追加前的云端数据快照，未入库。
 - 回滚方式：如需移除示例，可用 `backups/` 里追加前的快照文件通过 PUT 写回云端（`curl -X PUT ... --data-binary @备份文件`）；本地文件删除 `aliyun/sample-recipes.json` 和 `aliyun/merge-samples.mjs` 即可。
+
+## 2026-07-07 - Task: 抓取 HowToCook 开源菜谱并解析为本站格式(仅本地)
+### What was done
+- 从开源项目 HowToCook（The Unlicense / 公共领域）抓取菜谱并解析成本站菜谱对象，覆盖早餐、主食、素菜、荤菜、汤、甜品、水产、饮品 8 个分类，每类 6 道，共 48 道，全部写入本地 JSON 文件。
+- 仅产出本地脚本和数据文件，未写云端、未做任何 git 操作。
+- 抓取列表走 GitHub contents API，单文件正文优先 jsdelivr CDN 并回退 raw.githubusercontent，带超时与重试；对子目录类型的菜自动进目录取同名 .md。
+- 解析做了三处针对真实数据的适配：原料列表兼容 `-`/`*`/`+` 三种符号并跨 `### 原料` 子段收集（跳过纯“工具”子段）；步骤只取“操作”段的顶层有序项，忽略缩进子项；耗时只从介绍段提取总时长，避免误抓正文分步时长（如戚风蛋糕曾被误填 10 分钟，修复后不再出现）。
+
+### Testing
+- `node --check aliyun/fetch-howtocook.mjs`：通过，脚本无语法错误。
+- `node aliyun/fetch-howtocook.mjs`：执行成功，8 分类各 6 道共 48 道全部解析成功，无抓取失败，逐道打印进度。
+- `python -m json.tool aliyun/howtocook-recipes.json`：通过，JSON 格式有效。
+- 字段完整性校验：48 道均含 13 个字段，world 统一为“现实中的饭”，原料数与步骤数均非空，介绍均 ≤120 字；抽查太阳蛋（原料5/步骤9/约3分钟）、戚风蛋糕（子目录+`### 原料`子段，原料6/步骤37）、可乐鸡翅解析正确。
+- time 字段 26 道非空，逐一核对疑似项确认均来自介绍段总时长（此前的“疑似”是简介截断到120字导致的假阳性，非误提取）。
+
+### Notes
+- `aliyun/fetch-howtocook.mjs`：新增抓取+解析脚本，含 jsdelivr/raw 双源回退、重试、子目录处理、markdown 分段解析。
+- `aliyun/howtocook-recipes.json`：新增产出数据，48 道菜，约 122KB。
+- 未改动云端、未 git 提交；未新增行为/配置/依赖，故未改 `docs/`。
+- 回滚方式：删除 `aliyun/fetch-howtocook.mjs` 和 `aliyun/howtocook-recipes.json` 两个新增文件即可，无其他改动。
+
+## 2026-07-07 - Task: 清理 HowToCook 数据并导入云端
+### What was done
+- 清理抓取到的 HowToCook 菜谱：把误当成食材的厨具（面包机、微波炉、高压锅、平底锅、漏勺等）从食材清单里剔除，共剔除 32 个厨具条目，涉及 20 道菜，菜谱总数不变（48 道）。
+- 用安全合并脚本把 48 道 HowToCook 菜谱按 id 去重追加到阿里云共享库；操作前完整备份云端数据。原有 14 道（含真实菜谱和示例）全部保留，追加后云端共 62 道。
+- HowToCook 采用 The Unlicense（公共领域）许可，数据可自由使用，来源已在 source 字段标注为"HowToCook 程序员做饭指南"。
+
+### Testing
+- `node aliyun/clean-howtocook.mjs`：执行成功，剔除 32 个厨具条目。
+- `python -m json.tool aliyun/howtocook-recipes.json`：清理后 JSON 仍有效。
+- `Grep` 复查厨具残留：仅剩菜名"B52轰炸机"（饮品名，非食材），食材清单已无厨具。
+- `node aliyun/merge-howtocook.mjs`：云端由 14 道变为 62 道，去重逻辑正常。
+
+### Notes
+- `aliyun/clean-howtocook.mjs`：新增厨具清理脚本，仅改 ingredients 数组，不动菜名和步骤，含食材白名单防误删。
+- `aliyun/merge-howtocook.mjs`：新增安全合并脚本（拉取→去重追加→写回→核对）。
+- `aliyun/howtocook-recipes.json`：清理后就地更新。
+- `backups/`：导入前的云端快照，仅本地保留。
+- 回滚方式：用 `backups/cloud-backup-before-htc-*.json` 通过 PUT 写回云端即可移除这批 HowToCook 菜谱。
+
+## 2026-07-07 - Task: 新增"配一桌菜"和"我有什么食材"两个做饭决策功能
+### What was done
+- 模仿 HowToCook 招牌玩法，新增两个功能面板并在顶部加入口按钮。
+- 「配一桌菜」：输入荤菜、素菜、主食/汤的数量，系统按荤素主食自动分类并随机凑出一桌菜，支持"换一桌"，点菜名进详情；菜谱不够时提示。
+- 「我有什么食材」：输入手边食材（空格/逗号分隔），按主料双向包含匹配，按命中数排序展示能做的菜，显示命中食材、还差什么和匹配度，点菜名进详情。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过，JavaScript 无语法错误。
+- `Grep` 核对：两个面板的 DOM 引用、事件绑定、5 个核心函数均已接好。
+- 浏览器自动化未执行：当前环境缺少 Chrome/Chromium；需在浏览器手动验证凑一桌、换一桌、食材反查和点击进详情。
+
+### Notes
+- `app.js`：新增 `toggleMealPlanPanel`、`classifyDish`、`pickRandom`、`generateMealPlan`、`toggleByIngredientPanel`、`searchByIngredient` 函数及相关 DOM 引用和事件绑定；复用 `getRecipeGroups`、`clampNumber`、`render` 等现有函数。
+- `index.html`：顶部新增「配一桌菜」「我有什么食材」入口按钮，新增两个面板 section。
+- `styles.css`：新增两个面板及结果卡片样式。
+- `progress.md`：追加本轮改动记录。
+- 回滚方式：恢复本轮修改前的 `app.js`、`index.html`、`styles.css` 和 `progress.md`。

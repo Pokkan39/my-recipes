@@ -166,6 +166,11 @@ const whatToEatPanel = document.querySelector("#whatToEatPanel");
 const whatToEatResult = document.querySelector("#whatToEatResult");
 const occasionFilters = document.querySelector("#occasionFilters");
 const timeFilters = document.querySelector("#timeFilters");
+const mealPlanPanel = document.querySelector("#mealPlanPanel");
+const mealPlanResult = document.querySelector("#mealPlanResult");
+const byIngredientPanel = document.querySelector("#byIngredientPanel");
+const byIngredientResult = document.querySelector("#byIngredientResult");
+const ingredientQueryInput = document.querySelector("#ingredientQueryInput");
 const aiChatSection = document.querySelector("#aiChatSection");
 const aiChatMessages = document.querySelector("#aiChatMessages");
 const aiChatInput = document.querySelector("#aiChatInput");
@@ -382,6 +387,15 @@ function bindEvents() {
   document.querySelector("#closeWhatToEatButton").addEventListener("click", toggleWhatToEatPanel);
   document.querySelector("#randomPickButton").addEventListener("click", randomPickRecipe);
   document.querySelector("#clearFiltersButton").addEventListener("click", clearWhatToEatFilters);
+  document.querySelector("#mealPlanButton").addEventListener("click", toggleMealPlanPanel);
+  document.querySelector("#closeMealPlanButton").addEventListener("click", toggleMealPlanPanel);
+  document.querySelector("#generateMealButton").addEventListener("click", generateMealPlan);
+  document.querySelector("#byIngredientButton").addEventListener("click", toggleByIngredientPanel);
+  document.querySelector("#closeByIngredientButton").addEventListener("click", toggleByIngredientPanel);
+  document.querySelector("#searchByIngredientButton").addEventListener("click", searchByIngredient);
+  ingredientQueryInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); searchByIngredient(); }
+  });
   document.querySelector("#addIngredientButton").addEventListener("click", addIngredientRow);
   document.querySelector("#parseIngredientsButton").addEventListener("click", toggleParseArea);
   document.querySelector("#confirmParseButton").addEventListener("click", confirmParseIngredients);
@@ -745,6 +759,194 @@ function clearWhatToEatFilters() {
   activeOccasionFilters.clear();
   activeTimeFilters.clear();
   renderWhatToEatPanel();
+}
+
+// ===== 配一桌菜 =====
+function toggleMealPlanPanel() {
+  mealPlanPanel.classList.toggle("is-open");
+}
+
+const MEAL_STAPLE_KEYWORDS = ["主食", "面", "饭", "饺", "包", "馒头", "粥", "汤", "饼", "粉", "馄饨", "米线"];
+const MEAL_MEAT_KEYWORDS = ["肉", "鸡", "鸭", "鱼", "虾", "牛", "猪", "羊", "蛋", "排骨", "翅", "蟹", "海鲜", "培根", "香肠", "腊肠", "火腿"];
+
+/** 把一道菜分成 meat / veg / staple */
+function classifyDish(recipe) {
+  const text = `${recipe.occasion || ""} ${recipe.name || ""} ${recipe.variant || ""}`;
+  const mainIngredientNames = (recipe.ingredients || [])
+    .filter((ing) => (ing.category || "主料") === "主料")
+    .map((ing) => ing.name || "")
+    .join(" ");
+
+  if (MEAL_STAPLE_KEYWORDS.some((kw) => text.includes(kw))) return "staple";
+  if (MEAL_MEAT_KEYWORDS.some((kw) => text.includes(kw) || mainIngredientNames.includes(kw))) return "meat";
+  return "veg";
+}
+
+/** 从数组里随机取 count 个，不改变原数组 */
+function pickRandom(list, count) {
+  const pool = [...list];
+  const picked = [];
+  while (picked.length < count && pool.length > 0) {
+    const index = Math.floor(Math.random() * pool.length);
+    picked.push(pool.splice(index, 1)[0]);
+  }
+  return picked;
+}
+
+function generateMealPlan() {
+  if (recipes.length === 0) {
+    mealPlanResult.innerHTML = '<p class="meal-plan-empty">还没有菜谱，先去添加几道菜吧。</p>';
+    return;
+  }
+
+  const meatCount = clampNumber(document.querySelector("#mealMeatCount").value, 0, 8, 0);
+  const vegCount = clampNumber(document.querySelector("#mealVegCount").value, 0, 8, 0);
+  const stapleCount = clampNumber(document.querySelector("#mealStapleCount").value, 0, 4, 0);
+
+  if (meatCount + vegCount + stapleCount === 0) {
+    mealPlanResult.innerHTML = '<p class="meal-plan-empty">至少要选一道菜，调一下上面的数量。</p>';
+    return;
+  }
+
+  // 每组菜取第一个做法作为代表，再按荤素主食分桶
+  const representatives = getRecipeGroups(recipes).map((group) => group.recipes[0]);
+  const buckets = { meat: [], veg: [], staple: [] };
+  representatives.forEach((recipe) => {
+    buckets[classifyDish(recipe)].push(recipe);
+  });
+
+  const plan = [
+    ...pickRandom(buckets.meat, meatCount),
+    ...pickRandom(buckets.veg, vegCount),
+    ...pickRandom(buckets.staple, stapleCount)
+  ];
+
+  const shortages = [];
+  if (buckets.meat.length < meatCount) shortages.push("荤菜");
+  if (buckets.veg.length < vegCount) shortages.push("素菜");
+  if (buckets.staple.length < stapleCount) shortages.push("主食/汤");
+
+  if (plan.length === 0) {
+    mealPlanResult.innerHTML = '<p class="meal-plan-empty">没凑出菜，检查一下菜谱数量或调整需求。</p>';
+    return;
+  }
+
+  const typeLabels = { meat: "荤菜", veg: "素菜", staple: "主食/汤" };
+  const shortageTip = shortages.length
+    ? `<p class="meal-plan-shortage">${escapeHtml(shortages.join("、"))}类菜谱不够，已按现有数量凑。</p>`
+    : "";
+
+  mealPlanResult.innerHTML = `
+    <p class="meal-plan-count">为你凑了 <strong>${plan.length} 道菜</strong></p>
+    ${shortageTip}
+    <div class="meal-plan-grid">
+      ${plan.map((recipe) => {
+        const type = classifyDish(recipe);
+        return `
+          <button class="meal-plan-card" type="button" data-id="${escapeAttr(recipe.id)}">
+            <span class="mpc-type mpc-type--${type}">${typeLabels[type]}</span>
+            <span class="mpc-name">${escapeHtml(recipe.name)}</span>
+            <span class="mpc-meta">${escapeHtml(recipe.occasion || "")} · ${escapeHtml(recipe.time || "")}</span>
+          </button>
+        `;
+      }).join("")}
+    </div>
+    <div class="meal-plan-footer">
+      <button class="secondary-button" type="button" id="rerollMealButton">换一桌</button>
+      <p class="meal-plan-hint">凑得不满意就再换一桌，点菜名可以看具体做法。</p>
+    </div>
+  `;
+
+  mealPlanResult.querySelectorAll(".meal-plan-card").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectedId = btn.dataset.id;
+      mealPlanPanel.classList.remove("is-open");
+      render();
+      document.querySelector("#recipeDetail").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+  document.querySelector("#rerollMealButton").addEventListener("click", generateMealPlan);
+}
+
+// ===== 我有什么食材 =====
+function toggleByIngredientPanel() {
+  byIngredientPanel.classList.toggle("is-open");
+}
+
+function searchByIngredient() {
+  const raw = ingredientQueryInput.value.trim();
+  if (!raw) {
+    byIngredientResult.innerHTML = '<p class="by-ingredient-empty">请先输入食材。</p>';
+    return;
+  }
+
+  const keywords = raw.split(/[\s,，、]+/).map((word) => word.trim()).filter(Boolean);
+  if (keywords.length === 0) {
+    byIngredientResult.innerHTML = '<p class="by-ingredient-empty">请先输入食材。</p>';
+    return;
+  }
+
+  // 每组菜取第一个做法作为代表，统计主料与用户输入的匹配情况
+  const matches = [];
+  getRecipeGroups(recipes).forEach((group) => {
+    const recipe = group.recipes[0];
+    const mainIngredients = (recipe.ingredients || []).filter((ing) => (ing.category || "主料") === "主料");
+    const ingredientNames = mainIngredients.map((ing) => ing.name).filter(Boolean);
+
+    const hitNames = [];
+    const missingNames = [];
+    ingredientNames.forEach((name) => {
+      const hit = keywords.some((kw) => name.includes(kw) || kw.includes(name));
+      if (hit) {
+        hitNames.push(name);
+      } else {
+        missingNames.push(name);
+      }
+    });
+
+    if (hitNames.length > 0) {
+      matches.push({ recipe, hitNames, missingNames, total: ingredientNames.length });
+    }
+  });
+
+  if (matches.length === 0) {
+    byIngredientResult.innerHTML = '<p class="by-ingredient-empty">没有找到用到这些食材的菜，换些常见食材试试。</p>';
+    return;
+  }
+
+  matches.sort((a, b) => b.hitNames.length - a.hitNames.length);
+
+  byIngredientResult.innerHTML = `
+    <p class="by-ingredient-count">找到 <strong>${matches.length} 道菜</strong>可以用上你的食材</p>
+    <div class="by-ingredient-grid">
+      ${matches.map((item) => {
+        const missingShown = item.missingNames.slice(0, 5);
+        return `
+          <button class="by-ingredient-card" type="button" data-id="${escapeAttr(item.recipe.id)}">
+            <span class="bic-head">
+              <span class="bic-name">${escapeHtml(item.recipe.name)}</span>
+              <span class="bic-score">命中 ${item.hitNames.length}/${item.total} 种主料</span>
+            </span>
+            <span class="bic-hits">
+              ${item.hitNames.map((name) => `<em class="bic-hit">${escapeHtml(name)}</em>`).join("")}
+            </span>
+            ${missingShown.length
+              ? `<span class="bic-missing">还差：${missingShown.map((name) => escapeHtml(name)).join("、")}${item.missingNames.length > 5 ? " 等" : ""}</span>`
+              : `<span class="bic-missing bic-missing--none">食材齐了，可以直接做</span>`}
+          </button>
+        `;
+      }).join("")}
+    </div>
+  `;
+
+  byIngredientResult.querySelectorAll(".by-ingredient-card").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectedId = btn.dataset.id;
+      byIngredientPanel.classList.remove("is-open");
+      render();
+      document.querySelector("#recipeDetail").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
 }
 
 function toggleShoppingListPanel() {
