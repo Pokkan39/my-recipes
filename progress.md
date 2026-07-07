@@ -534,3 +534,25 @@
 - `styles.css`：新增首页横向行样式块（.home-row / .home-row-head / .home-row-track / 行内卡片竖版覆盖 / .home-row-more），移动端媒体查询追加横向行卡片缩宽与标题字号适配。
 - `index.html`：未改动（#recipeList 容器已存在，直接复用）。
 - 回滚方式：`git checkout 06dffe9 -- app.js styles.css` 恢复本轮改动前版本，或 `git revert` 本次提交。
+
+## 2026-07-07 - Task: 修复手机首页超长列表 + 首页横向滚动展示
+### What was done
+- 定位并修复"手机首页能无限下滑、底部像有空白"的问题：根因是首页把 74 道菜全部纵向铺开，列表单块高达 12907px。用无头浏览器（Edge headless + DevTools 协议）在 390×844 手机视口实测确认。
+- 首页默认态改为 Netflix 式：按世界大类分排，每排横向滚动卡片，每排最多 12 道，超出放"查看全部"卡片跳到该大类完整列表。
+- 搜索或筛选（世界/场景）时自动回落到原纵向完整列表，交互不变。
+- 卡片生成抽成 createRecipeCard 复用，点卡进做法页、版本切换等事件完全保留。
+- 修复横向滚动容器 min-width/max-width 约束，确保在视口内横滑不撑破布局。
+- 滚动景深联动跳过横向行内卡片，避免 transform 干扰横滑。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过。
+- 无头浏览器实测（手机视口 390px）：页面高度 14302px → 约 3700px，5 个大类行正常，横向 track clientWidth 574px 受控、scrollWidth 2772px 可横滑。
+- 关键接口 grep 核查：#recipeList、createRecipeCard、renderHomeRows、openRecipeModal 均在，逻辑完整。
+- CSS 花括号配平。
+
+### Notes
+- `app.js`：renderList 拆分为首页横向模式（renderHomeRows）+ 筛选纵向模式，共用 createRecipeCard；initScrollFx 景深循环跳过 .home-row-track 内卡片。
+- `styles.css`：新增 .home-row/.home-row-head/.home-row-track/.home-row-more 样式和移动端适配，横向容器加宽度约束。
+- `README.md`、`docs/product-plan.md`：补充首页横向滚动展示说明。
+- `progress.md`：追加本轮记录。
+- 回滚方式：`git checkout 06dffe9 -- app.js styles.css` 回到首页改造前，或整体 `git reset --hard f12244e`。

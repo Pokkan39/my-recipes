@@ -807,6 +807,13 @@ h3 {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
+  /* 保证横向滚动容器不被子卡片撑破父布局，老实在视口内横滑 */
+  min-width: 0;
+  max-width: 100%;
+}
+
+.home-row {
+  min-width: 0;
 }
 
 .home-row-track::-webkit-scrollbar {
