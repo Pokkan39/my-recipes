@@ -556,3 +556,27 @@
 - `README.md`、`docs/product-plan.md`：补充首页横向滚动展示说明。
 - `progress.md`：追加本轮记录。
 - 回滚方式：`git checkout 06dffe9 -- app.js styles.css` 回到首页改造前，或整体 `git reset --hard f12244e`。
+
+## 2026-07-07 - Task: 按主流机型精准适配手机与平板
+### What was done
+- 参考 2024-2025 主流机型真实 CSS 逻辑宽度重新划分响应式断点：桌面 >1024、平板竖屏 768-1024、大屏手机 601-767、主流手机 ≤600（覆盖 iPhone 15/16≈393、Pro Max≈430、含 6.28 寸的安卓旗舰 393-430）、小屏手机 ≤375。
+- 新增平板竖屏专属适配：功能亮点 4 列、首页横向卡片放大到 300px、搜索/筛选纵向列表改双列、做法页正文限宽、AI 面板加宽。
+- 修复一个真实 bug：手机端整页横向溢出（会左右晃动）——根因是 .layout/.list-panel/.home-row 容器链缺 min-width:0，横向滚动卡片把整页撑宽。补齐容器收缩约束后消除。
+- 修复 768px 同时命中两个媒体查询导致功能条列数冲突（改 601-767 避开重叠）。
+- 首页列表按态加 is-home-view/is-list-view 标记，让平板双列样式只作用于纵向列表态，不破坏首页横向行。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过；CSS 花括号配平。
+- 无头浏览器（Edge）在 4 个真实机型尺寸实测：
+  - iPhone15/16 (393)：无横向溢出，功能条 1 列，横向卡片 260px，track 约束在 319px
+  - Pro Max/安卓旗舰 (430)：无横向溢出，track 356px
+  - iPad 竖屏 (768)：无横向溢出，功能条 4 列，卡片 300px
+  - iPad Pro (1024)：无横向溢出，功能条 4 列
+- 修复前实测确认过手机端存在横向溢出，修复后复测消除。
+
+### Notes
+- `styles.css`：重构响应式断点分档，新增平板档，补 .layout/.list-panel/.recipe-list/.home-row/.home-row-track 宽度收缩约束。
+- `app.js`：renderList 按态给 recipeList 加 is-home-view/is-list-view 类。
+- `README.md`：更新适配机型说明。
+- `progress.md`：追加本轮记录。
+- 回滚方式：`git checkout 7236855 -- app.js styles.css README.md`。

@@ -1735,11 +1735,15 @@ function renderList() {
   // 首页默认态（无搜索、无世界筛选、无场景筛选）：按世界大类横向滚动分组，控制页面高度
   const isHomeDefault = activeWorld === "全部" && activeCategoryTab === "全部" && keyword === "";
   if (isHomeDefault) {
+    recipeList.classList.remove("is-list-view");
+    recipeList.classList.add("is-home-view");
     renderHomeRows(visibleRecipes);
     return;
   }
 
-  // 搜索/筛选态：保留原纵向列表
+  // 搜索/筛选态：保留原纵向列表（标记 is-list-view，供平板双列样式命中）
+  recipeList.classList.remove("is-home-view");
+  recipeList.classList.add("is-list-view");
   const groups = getRecipeGroups(visibleRecipes);
 
   if (groups.length === 0) {

@@ -484,7 +484,14 @@ h3 {
   grid-template-columns: minmax(0, 1fr);
   gap: 20px;
   padding: 0 clamp(22px, 6vw, 96px) 56px;
+  min-width: 0;
 }
+
+/* 确保横向滚动容器链条都能收缩，不被子卡片撑破视口（防止整页横向溢出） */
+.list-panel { min-width: 0; }
+.recipe-list { min-width: 0; }
+.home-row { min-width: 0; max-width: 100%; overflow: hidden; }
+.home-row-track { width: 100%; }
 
 .panel {
   background: linear-gradient(180deg, var(--card-hi), var(--card));
@@ -2857,14 +2864,17 @@ h3 {
 }
 
 /* =========================================================================
-   响应式
+   响应式（按 2024-2025 主流机型真实 CSS 逻辑宽度分档）
+   桌面 >1024 ｜ 平板 768-1024 ｜ 大屏手机/横屏 601-767
+   主流手机 ≤600（iPhone 15/16≈393、Pro Max≈440、安卓旗舰含6.28寸≈393-430）
+   小屏手机 ≤375
    ========================================================================= */
 
-/* 平板 */
-@media (max-width: 900px) {
+/* ===== 平板与中屏（≤1024）：hero 单栏、主布局单列 ===== */
+@media (max-width: 1024px) {
   .hero {
     display: block;
-    padding-top: 46px;
+    padding-top: 48px;
   }
 
   .hero-plate {
@@ -2872,11 +2882,7 @@ h3 {
   }
 
   .hero-actions {
-    margin-top: 22px;
-  }
-
-  .feature-strip {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 24px;
   }
 
   .layout {
@@ -2891,6 +2897,50 @@ h3 {
 
   .detail-header {
     display: grid;
+  }
+}
+
+/* ===== 平板竖屏专属（768-1024，如 iPad 768 / iPad Air 820 / iPad Pro 1024）
+   平板空间充裕：功能亮点 4 列、首页横向卡片更大、正文限宽居中更好读 ===== */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .feature-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  /* 平板首页横向行卡片放大，一屏能看到 2-3 张半 */
+  .home-row-track > .recipe-group-card,
+  .home-row-more {
+    flex-basis: 300px;
+    width: 300px;
+  }
+
+  .home-row-track .recipe-thumb {
+    height: 170px;
+  }
+
+  /* 筛选/搜索纵向列表：平板用双列，不浪费横向空间（仅列表态，不影响首页横向行） */
+  .recipe-list.is-list-view {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
+  }
+
+  /* 全屏做法页正文限宽，平板上不至于每行过长 */
+  .recipe-modal-body {
+    max-width: 760px;
+    margin-inline: auto;
+  }
+
+  .float-ai-panel {
+    width: 420px;
+  }
+}
+
+/* ===== 大屏手机/小平板（601-767）：功能亮点 2 列 ===== */
+@media (min-width: 601px) and (max-width: 767px) {
+  .feature-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -2974,19 +3024,25 @@ h3 {
     opacity: 1 !important;
   }
 
-  /* 手机端首页横向行：卡片略缩、标题字号适配 */
+  /* 手机端首页横向行：卡片宽度按屏宽自适应，主流 6.28 寸(≈393-430px)一屏露出约 1.5 张，提示可横滑 */
   .home-row-head h3 {
     font-size: 17px;
   }
 
   .home-row-track > .recipe-group-card,
   .home-row-more {
-    flex-basis: 200px;
-    width: 200px;
+    flex-basis: 72vw;
+    width: 72vw;
+    max-width: 260px;
   }
 
   .home-row-track .recipe-thumb {
-    height: 118px;
+    height: 150px;
+  }
+
+  /* 搜索/筛选纵向列表在手机上单列铺满 */
+  .recipe-list.is-list-view {
+    display: block;
   }
 
   .float-ai-panel {
@@ -3001,10 +3057,14 @@ h3 {
   }
 }
 
-/* 超小屏 */
-@media (max-width: 380px) {
+/* ===== 小屏手机（≤375，如 iPhone SE/mini、旧安卓）===== */
+@media (max-width: 375px) {
   h1 {
-    font-size: 34px;
+    font-size: 32px;
+  }
+
+  .hero {
+    padding: 34px 16px 24px;
   }
 
   .customize-grid {
@@ -3013,5 +3073,18 @@ h3 {
 
   .float-ai-shortcut-btn {
     padding: 11px 12px;
+  }
+
+  /* 小屏首页横向卡片再收一点，避免单张占满看不出可滑 */
+  .home-row-track > .recipe-group-card,
+  .home-row-more {
+    flex-basis: 76vw;
+    width: 76vw;
+  }
+
+  .hero-actions .primary-button,
+  .hero-actions .secondary-button {
+    font-size: 14px;
+    padding: 12px 14px;
   }
 }
