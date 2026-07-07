@@ -1685,7 +1685,6 @@ function initFloatAi() {
 
   newBtn.addEventListener("click", () => {
     floatAiStart();
-    // 重新开始时隐藏设置区
     floatAiSettingsVisible = false;
     settingsEl.hidden = true;
   });
@@ -1704,6 +1703,28 @@ function initFloatAi() {
   });
 
   fillBtn.addEventListener("click", floatAiFillToForm);
+
+  // 快捷入口按钮
+  const SHORTCUT_PROMPTS = {
+    video:      { placeholder: "粘贴 B站 / 抖音 / 小红书视频链接，AI 帮你整理成菜谱…", hint: "📺 粘贴视频链接，我来帮你提取菜谱信息。\n\n支持 B站（BV/av/b23.tv）。其他平台可以把视频标题和文案一起粘贴进来。" },
+    transcript: { placeholder: "粘贴视频字幕、文案或做菜步骤描述…", hint: "📋 把字幕、文案或做菜描述粘贴进来，我来整理成标准菜谱格式。" },
+    suggest:    { placeholder: "告诉我冰箱里有什么食材，我来推荐一道菜…", hint: "🥘 告诉我你手边有哪些食材，我来推荐一道适合今天做的菜。" },
+    improve:    { placeholder: "想优化哪道菜？说说想改进的方向…", hint: "✨ 告诉我想优化哪道菜，比如「红烧肉步骤太模糊」或「想让口感更软烂」，我来帮你完善。" }
+  };
+
+  document.querySelector("#floatAiShortcuts").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-action]");
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const cfg = SHORTCUT_PROMPTS[action];
+    if (!cfg) return;
+
+    // 隐藏快捷入口，显示对话区
+    document.querySelector("#floatAiShortcuts").hidden = true;
+    floatAiAppend("assistant", cfg.hint);
+    input.placeholder = cfg.placeholder;
+    input.focus();
+  });
 }
 
 function floatAiLoadConfig() {
@@ -1734,7 +1755,7 @@ function floatAiStart() {
   floatAiDraft = null;
   document.querySelector("#floatAiFillBar").hidden = true;
   document.querySelector("#floatAiMessages").innerHTML = "";
-  floatAiAppend("assistant", `你好！我是这个菜谱网站的 AI 助手 ✦\n\n你可以：\n• **记录菜谱** — 告诉我菜名，或粘贴视频字幕让我整理\n• **问烹饪问题** — 比如“茄子怎么炒不吸油”\n• **推荐菜** — 比如“给我推荐一道 15 分钟能做好的菜”`);
+  document.querySelector("#floatAiShortcuts").hidden = false;
 }
 
 function floatAiAppend(role, content) {
@@ -1742,18 +1763,40 @@ function floatAiAppend(role, content) {
   const div = document.createElement("div");
   div.className = `float-msg float-msg--${role}`;
 
-  // 检测 JSON 代码块，提取 draft
+  // 检测 JSON 代码块，提取 draft 并渲染成菜谱卡片
   const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
   if (jsonMatch) {
     try {
       floatAiDraft = JSON.parse(jsonMatch[1]);
       document.querySelector("#floatAiFillBar").hidden = false;
-    } catch { /* 解析失败忽略 */ }
+
+      // 替换 JSON 块为可读草稿卡片
+      const card = buildDraftCard(floatAiDraft);
+      const textBefore = content.slice(0, jsonMatch.index).trim();
+      const textAfter  = content.slice(jsonMatch.index + jsonMatch[0].length).trim();
+
+      if (textBefore) {
+        const pre = document.createElement("div");
+        pre.innerHTML = escapeHtml(textBefore).replace(/\n/g, "<br>").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+        div.appendChild(pre);
+      }
+      div.appendChild(card);
+      if (textAfter) {
+        const post = document.createElement("div");
+        post.style.marginTop = "8px";
+        post.innerHTML = escapeHtml(textAfter).replace(/\n/g, "<br>").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+        div.appendChild(post);
+      }
+
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+      if (role === "assistant") floatAiHistory.push({ role, content });
+      return;
+    } catch { /* 解析失败，降级到普通渲染 */ }
   }
 
-  // 简单渲染：代码块、粗体、换行
+  // 普通渲染：粗体、换行
   div.innerHTML = escapeHtml(content)
-    .replace(/```json\n([\s\S]*?)\n```/g, '<pre>$1</pre>')
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/•/g, "•")
     .replace(/\n/g, "<br>");
@@ -1766,6 +1809,41 @@ function floatAiAppend(role, content) {
   }
 }
 
+function buildDraftCard(d) {
+  const card = document.createElement("div");
+  card.className = "draft-card";
+
+  const mainIngredients = (d.ingredients || [])
+    .filter((i) => i.category === "主料")
+    .map((i) => escapeHtml(i.name))
+    .join("、") || "未填写";
+
+  const allIngredients = (d.ingredients || []);
+  const byCategory = { 主料: [], 辅料: [], 调味料: [] };
+  allIngredients.forEach((i) => {
+    const cat = byCategory[i.category] ? i.category : "主料";
+    byCategory[cat].push(`${escapeHtml(i.name)} ${escapeHtml(i.amount || "")}`.trim());
+  });
+
+  const ingredientRows = Object.entries(byCategory)
+    .filter(([, items]) => items.length > 0)
+    .map(([cat, items]) => `<div class="draft-ing-row"><span class="draft-ing-cat">${cat}</span><span>${items.join("、")}</span></div>`)
+    .join("");
+
+  card.innerHTML = `
+    <div class="draft-card-title">${escapeHtml(d.name || "未命名菜谱")}</div>
+    <div class="draft-card-meta">
+      ${d.time   ? `<span>⏱ ${escapeHtml(d.time)}</span>` : ""}
+      ${d.cost   ? `<span>💰 ${escapeHtml(d.cost)}</span>` : ""}
+      ${d.occasion ? `<span>🍚 ${escapeHtml(d.occasion)}</span>` : ""}
+    </div>
+    ${d.description ? `<div class="draft-card-desc">${escapeHtml(d.description)}</div>` : ""}
+    ${ingredientRows ? `<div class="draft-card-ingredients">${ingredientRows}</div>` : ""}
+    ${d.steps && d.steps.length ? `<ol class="draft-card-steps">${d.steps.map((s) => `<li>${escapeHtml(s)}</li>`).join("")}</ol>` : ""}
+  `;
+  return card;
+}
+
 async function floatAiSend() {
   const input = document.querySelector("#floatAiInput");
   const text = input.value.trim();
@@ -1776,9 +1854,12 @@ async function floatAiSend() {
     document.querySelector("#floatAiSettings").hidden = false;
     floatAiSettingsVisible = true;
     floatAiFillConfig();
-    floatAiAppend("assistant", "⚙️ 请先填写 API Key 并点击“保存配置”。");
+    floatAiAppend("assistant", "⚙️ 请先填写 API Key 并点击「保存配置」。");
     return;
   }
+
+  // 用户开始输入就隐藏快捷入口
+  document.querySelector("#floatAiShortcuts").hidden = true;
 
   input.value = "";
   floatAiAppend("user", text);
