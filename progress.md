@@ -390,3 +390,17 @@
 - `app.js`：新增批量整理系统提示词常量 `BATCH_AI_SYSTEM_PROMPT`；新增全局变量 `floatAiBatchMode`、`batchDraftList`；新增函数 `openBatchMode`、`handleBatchParse`、`parseBatchReply`、`renderBatchPreview`、`saveBatchSelected`；改造 `floatAiSend` 开头加入批量模式分支；快捷入口监听增加 batch 分支并在切换/新对话时复位批量状态。
 - `styles.css`：新增 `.batch-preview` 及其子元素样式（预览卡片列表、复选框、meta、详情、底部操作条），风格与既有 `.draft-card`、`.float-ai-shortcut-btn` 一致。
 - 回滚方式：`git revert 08592d1` 或 `git reset --hard dd530b2`（dd530b2 为本轮改动前提交）可回到施工前状态。
+
+## 2026-07-07 - Task: 图片上传方案写入计划书
+### What was done
+- 应用户要求，将"图片上传"功能的方案设计和取舍写入产品计划书，暂不实现代码。
+- 新增「9.5 图片上传方案」章节：说明当前架构存不了大图的难点，对比三种方案（A：Base64 存进数据零成本但会拖慢同步；B：阿里云 OSS 上传，正规稳定但需配置且有小额费用；C：第三方免费图床，不稳定），给出建议路线和待实现清单。
+- 阶段排期新增「图片上传（规划中）」条目，与新章节呼应。
+
+### Testing
+- 纯文档改动，无代码变更，无需运行测试。
+
+### Notes
+- `docs/product-plan.md`：新增 9.5 图片上传方案章节；阶段排期新增图片上传规划条目。
+- `progress.md`：追加本轮记录。
+- 回滚方式：恢复本轮修改前的 `docs/product-plan.md` 和 `progress.md`。
