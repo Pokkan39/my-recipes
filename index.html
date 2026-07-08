@@ -396,9 +396,13 @@
         </label>
 
         <div class="image-upload-block">
-          <button type="button" id="recipeImageFileButton" class="image-upload-btn">📷 从本地选图（自动压缩）</button>
+          <div class="image-action-row">
+            <button type="button" id="recipeImageFileButton" class="image-upload-btn">📷 从本地选图（自动压缩）</button>
+            <button type="button" id="recipeImageGenButton" class="image-gen-btn">🎨 AI 生成配图</button>
+          </div>
           <input id="recipeImageFile" type="file" accept="image/*" hidden>
-          <p class="image-upload-hint">本地选图会压缩后直接存进菜谱数据，适合少量配图；图片较多时建议后续升级为云端上传。</p>
+          <input id="recipeImageGenPrompt" type="text" class="image-gen-prompt" placeholder="可选：补充画面描述，如「色泽金黄、摆盘精致」">
+          <p class="image-upload-hint">本地选图会压缩后直接存进菜谱数据，适合少量配图；图片较多时建议后续升级为云端上传。AI 配图会按菜名与所属世界生成，无需真实照片。</p>
           <div id="recipeImagePreview" class="image-preview" hidden>
             <img id="recipeImagePreviewImg" alt="配图预览">
             <button type="button" id="recipeImageRemove" class="image-preview-remove">移除图片</button>

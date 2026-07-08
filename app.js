@@ -460,6 +460,12 @@ function bindEvents() {
     });
   }
   fields.image.addEventListener("input", renderImagePreview);
+
+  // AI 生成配图
+  const imageGenButton = document.querySelector("#recipeImageGenButton");
+  if (imageGenButton) {
+    imageGenButton.addEventListener("click", handleImageGenerate);
+  }
   document.querySelector("#recipeModalBack").addEventListener("click", closeRecipeModal);
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !recipeModal.hidden) closeRecipeModal();
@@ -2255,6 +2261,134 @@ function renderImagePreview() {
   } else {
     previewImg.removeAttribute("src");
     preview.hidden = true;
+  }
+}
+
+// ===== AI 生成菜品配图 =====
+// 开关：接入真实文生图服务后改为 true，并在 generateImageViaApi 里填好调用逻辑。
+// 当前为 false，走本地 Canvas 画一张按世界大类配色的美化占位图（合规、零成本、即时可用）。
+const IMAGE_GEN_ENABLED = false;
+
+// 各世界大类的配色主题（本地占位图用）：[渐变起, 渐变止, 文字色, 餐具图标]
+const WORLD_IMAGE_THEMES = {
+  "现实中的饭":       { from: "#f7b733", to: "#c0392b", text: "#fff8ee", icon: "🍚" },
+  "二次元中的饭":     { from: "#c471ed", to: "#f64f59", text: "#fff5fb", icon: "🍱" },
+  "黑暗料理":         { from: "#5a1e1e", to: "#1a0d0d", text: "#ffd9d0", icon: "🥘" },
+  "存在于幻想中的饭": { from: "#2193b0", to: "#6dd5ed", text: "#f0fbff", icon: "✨" },
+  "外国菜":           { from: "#a8a339", to: "#5c5010", text: "#fdfbe8", icon: "🍽️" }
+};
+const DEFAULT_IMAGE_THEME = { from: "#f7b733", to: "#c0392b", text: "#fff8ee", icon: "🍽️" };
+
+// 拼出给文生图模型的提示词（接真服务时用；当前也作为占位图文案来源）
+function buildImagePrompt(name, world, extra) {
+  const parts = [];
+  if (name) parts.push(`一道名为「${name}」的美食`);
+  if (world && world !== "现实中的饭") parts.push(`风格：${world}`);
+  parts.push("俯拍或侧拍，摆盘精致，光线柔和，餐厅级美食摄影");
+  if (extra && extra.trim()) parts.push(extra.trim());
+  return parts.join("，");
+}
+
+// 本地 Canvas 画一张带菜名的美化占位图，返回 data:image/jpeg
+function drawPlaceholderImage(name, world) {
+  const theme = WORLD_IMAGE_THEMES[world] || DEFAULT_IMAGE_THEME;
+  const W = 1024, H = 768;
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+
+  // 对角渐变背景
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, theme.from);
+  grad.addColorStop(1, theme.to);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // 半透明斜纹纹理，增加层次
+  ctx.save();
+  ctx.globalAlpha = 0.06;
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 40;
+  for (let x = -H; x < W; x += 90) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x + H, H);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // 顶部餐具图标
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "160px system-ui, 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif";
+  ctx.fillText(theme.icon, W / 2, H / 2 - 130);
+
+  // 居中菜名（过长自动缩小字号）
+  const title = (name || "未命名菜谱").slice(0, 20);
+  let fontSize = 84;
+  ctx.fillStyle = theme.text;
+  ctx.font = `700 ${fontSize}px "PingFang SC","Microsoft YaHei",system-ui,sans-serif`;
+  while (ctx.measureText(title).width > W - 160 && fontSize > 36) {
+    fontSize -= 6;
+    ctx.font = `700 ${fontSize}px "PingFang SC","Microsoft YaHei",system-ui,sans-serif`;
+  }
+  ctx.shadowColor = "rgba(0,0,0,0.35)";
+  ctx.shadowBlur = 18;
+  ctx.fillText(title, W / 2, H / 2 + 40);
+  ctx.shadowBlur = 0;
+
+  // 底部世界大类小字
+  ctx.globalAlpha = 0.85;
+  ctx.font = `500 34px "PingFang SC","Microsoft YaHei",system-ui,sans-serif`;
+  ctx.fillText(world || "现实中的饭", W / 2, H / 2 + 150);
+  ctx.globalAlpha = 1;
+
+  return canvas.toDataURL("image/jpeg", 0.85);
+}
+
+// 真实文生图调用（空壳）：接入服务后把 IMAGE_GEN_ENABLED 改 true 并完善此函数
+async function generateImageViaApi(prompt) {
+  if (!IMAGE_GEN_ENABLED) {
+    throw new Error("尚未启用真实文生图服务");
+  }
+  // 预留：接入 OpenAI 兼容 /images/generations 时在此实现，
+  // 拿到返回的图片后同样走 Canvas 压缩转 Base64，再返回 data URI。
+  throw new Error("文生图服务未配置");
+}
+
+// 入口：点「AI 生成配图」
+async function handleImageGenerate() {
+  const name = (fields.name.value || "").trim();
+  if (!name) {
+    alert("请先填写菜名，AI 才能按菜名生成配图。");
+    fields.name.focus();
+    return;
+  }
+
+  const worldSel = document.querySelector("#recipeWorld");
+  const world = (worldSel && worldSel.value) || "现实中的饭";
+  const extra = (document.querySelector("#recipeImageGenPrompt")?.value || "").trim();
+
+  const btn = document.querySelector("#recipeImageGenButton");
+  const originalText = btn ? btn.textContent : "";
+  if (btn) { btn.disabled = true; btn.textContent = "生成中…"; }
+
+  try {
+    let dataUrl;
+    if (IMAGE_GEN_ENABLED) {
+      dataUrl = await generateImageViaApi(buildImagePrompt(name, world, extra));
+    } else {
+      // 占位：本地画一张美化图（同步操作，用 await 让 UI 有机会先渲染禁用态）
+      await new Promise((r) => setTimeout(r, 50));
+      dataUrl = drawPlaceholderImage(name, world);
+    }
+    fields.image.value = dataUrl;
+    renderImagePreview();
+  } catch (error) {
+    alert("生成配图失败：" + (error.message || "未知错误"));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = originalText; }
   }
 }
 

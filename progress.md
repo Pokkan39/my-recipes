@@ -711,3 +711,25 @@
 - `styles.css`：末尾追加 `.image-upload-block`/`.image-upload-btn`/`.image-upload-hint`/`.image-preview`/`.image-preview-remove` 及手机端响应式样式。
 - `docs/product-plan.md`：§9.5 与 §10 图片上传状态更新为"方案 A 已实现"。
 - 回滚方式：`git checkout 927fbac -- app.js index.html styles.css docs/product-plan.md`，或 `git revert` 本轮提交。
+
+## 2026-07-08 - Task: AI 生成菜品配图（占位框架 + 方案A存储）
+
+### What was done
+- **否决网络爬图**：用户最初希望"网上搜集爬取图片放上网站"，明确不采纳——绝大多数美食图片有版权，爬取并公开挂站有侵权风险，且违背项目"只用开放授权、不用爬虫数据"原则。经确认改走 AI 文生图合规路线。
+- **新增"AI 生成配图"入口**：编辑菜谱页图片区新增"🎨 AI 生成配图"按钮和可选的画面描述输入框，点击后按菜名 + 所属世界大类生成配图，填入预览，复用方案A的 Base64 存储和现有预览/移除逻辑。
+- **占位即完整可用**：本次按用户要求"先不接真服务、做占位"，但做的是一条真实完整的链路——用 Canvas 本地画一张按世界大类配色（现实=暖橙、二次元=粉紫、黑暗料理=暗红、幻想=青蓝、外国菜=橄榄金）的美化图，含餐具图标、菜名大字（超长自动缩字号）、世界大类小字，产出 1024×768 的 JPEG data URI。现在点按钮立刻能得到一张像样的配图，不是空白。
+- **预留接真服务的口子**：`IMAGE_GEN_ENABLED` 开关 + `generateImageViaApi` 空壳 + `buildImagePrompt` 提示词拼接已就绪，后续接 OpenAI 兼容 `/images/generations` 时把开关改 true、补全空壳即可，UI/存储/预览全部复用。
+
+### Testing
+- `node --check app.js`：SYNTAX_OK。
+- CSS 花括号配平：526 open / 526 close，balanced；确认 `--accent` 变量存在。
+- DOM id 双向核对：HTML 新增 `#recipeImageGenButton`/`#recipeImageGenPrompt` 与 app.js 引用一一对应。
+- Node 静态验证纯字符串逻辑：`buildImagePrompt` 三种情况（有菜名/带世界大类和额外描述/无菜名）拼接正确；`WORLD_IMAGE_THEMES` 5 个大类命中、未知大类回退默认主题。
+- **浏览器联调缺口**：`drawPlaceholderImage` 依赖浏览器 Canvas，Node 无法执行；本机无 Chrome 且不宜为一次性验证拉取数百 MB 二进制，故未做端到端联调。需浏览器手动验证：填菜名 → 点"AI 生成配图" → 出现按世界大类配色的占位图 → 填入预览 → 保存后卡片/详情页正常显示；未填菜名时应提示先填菜名。
+
+### Notes
+- `index.html`：`.image-upload-block` 内选图按钮旁新增 `.image-action-row` 包裹的"🎨 AI 生成配图"按钮 `#recipeImageGenButton` + 描述输入框 `#recipeImageGenPrompt`；提示文案补充 AI 配图说明。
+- `app.js`：renderImagePreview 后新增 AI 配图区——常量 `IMAGE_GEN_ENABLED`(false)、`WORLD_IMAGE_THEMES`/`DEFAULT_IMAGE_THEME`，函数 `buildImagePrompt`/`drawPlaceholderImage`/`generateImageViaApi`(空壳)/`handleImageGenerate`；bindEvents 内绑定 `#recipeImageGenButton` → handleImageGenerate。
+- `styles.css`：末尾追加 `.image-action-row`/`.image-gen-btn`(品牌金渐变)/`.image-gen-prompt` 及手机端响应式。
+- `docs/product-plan.md`：§9.5 与 §10 记录 AI 配图占位框架已就绪、否决网络爬图的原因。
+- 回滚方式：`git checkout e612cbd -- app.js index.html styles.css docs/product-plan.md`，或 `git revert` 本轮提交。
