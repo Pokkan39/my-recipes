@@ -733,3 +733,28 @@
 - `styles.css`：末尾追加 `.image-action-row`/`.image-gen-btn`(品牌金渐变)/`.image-gen-prompt` 及手机端响应式。
 - `docs/product-plan.md`：§9.5 与 §10 记录 AI 配图占位框架已就绪、否决网络爬图的原因。
 - 回滚方式：`git checkout e612cbd -- app.js index.html styles.css docs/product-plan.md`，或 `git revert` 本轮提交。
+
+## 2026-07-08 - Task: 免费图库配图（Pixabay，支持中文搜索）
+
+### What was done
+- **决策过程**：用户先要"网上爬图"（已否决，版权风险）→ 改 AI 文生图（占位已做）→ 用户指出 AI 文生图慢又贵，要用免费图库 → 再指出"试试中国的图库"。调研后国内商业图库多为付费/需授权、缺开放免费 API，最终选 **Pixabay**：有中文站、API 支持中文搜索（lang=zh）、CC0 免费可商用且无需署名、图库含大量中国美食图。
+- **新增"🔍 从图库找图"入口**：编辑菜谱页图片区新增按钮，作为主推的真实照片来源；原"从本地选图""AI 生成配图"保留，三来源并存（AI 占位图退为兜底）。
+- **候选图挑选弹层**：点按钮弹出搜索弹层，用当前菜名自动搜一次，结果以缩略图网格展示，点任意一张即选用——不自动填第一张，避免通用图库搜不准时配错图。可手动改关键词重搜。
+- **中文搜索 + 英文兜底**：优先用中文原名搜（lang=zh）；搜不到时自动用内置"中→英菜名映射表"（约 50 条常见菜）的英文词再搜一次。
+- **选中即压缩存储**：选中图走方案A的 Canvas 压缩转 Base64 存进菜谱（离线可用）；跨域压缩失败时兜底存 largeImageURL 外链并提示。
+- **Key 管理**：Pixabay API Key 存 localStorage，首次使用弹窗引导填写（附获取方式），只存本机。
+- **错误处理**：Key 错(401/403)、超额(429)、网络失败、无结果，各给明确中文提示，不静默失败。
+
+### Testing
+- `node --check app.js`：SYNTAX_OK。
+- CSS 花括号配平：550 open / 550 close，balanced。
+- DOM id 双向核对：HTML 8 个 stock 相关 id（recipeImageStockButton/stockPickerModal/stockModalMask/stockSearchInput/stockSearchButton/stockCloseButton/stockStatus/stockResultGrid）与 app.js 引用一一对应。
+- Node 静态验证纯逻辑：`buildStockQuery` 映射命中（红烧肉→braised pork belly）/未命中（原样中文）/空串正确；Pixabay 搜索 URL 拼接正确，中文 q 正确 encodeURIComponent（红烧肉→%E7%BA%A2%E7%83%A7%E8%82%89）。
+- **浏览器联调缺口 + 国内直连实测待办**：searchPixabay（fetch）、compressImageFromUrl（Canvas 跨域导出）依赖浏览器和真实 Key+网络，Node 无法测；本机无 Chrome 未做端到端。**需用户填真实 Pixabay Key 后在浏览器验证**：① 搜索（含中文关键词）能否返回结果 ② 候选图缩略图显示 ③ 选图后压缩填入预览 ④ 保存后卡片/详情页显示 ⑤ **国内网络能否直连 pixabay.com/api/**（服务器在海外，连通性未知，若不通需另议后端代理方案）⑥ Pixabay 图跨域 canvas 导出是否成功（失败会走外链兜底）。
+
+### Notes
+- `index.html`：`.image-action-row` 内新增"🔍 从图库找图"按钮 `#recipeImageStockButton`（放本地选图与 AI 生成之间）；backToTop 按钮后新增图库弹层 `#stockPickerModal`（遮罩 + 搜索栏 + 结果网格 + 状态区 + 来源说明）。
+- `app.js`：handleImageGenerate 后新增 Pixabay 区——常量 `PIXABAY_KEY_STORAGE`/`PIXABAY_SEARCH_URL`、`DISH_KEYWORD_MAP`（约 50 条中→英菜名）、函数 `getPixabayKey`/`promptForPixabayKey`/`buildStockQuery`/`searchPixabay`/`compressImageFromUrl`/`openStockPicker`/`closeStockPicker`/`runStockSearch`/`renderStockResults`/`selectStockPhoto` + 变量 stockLastLargeUrl/setStockStatus；bindEvents 内绑定图库按钮、搜索按钮、搜索框回车、关闭按钮、遮罩点击、结果网格事件委托。复用方案A的压缩常量（IMAGE_MAX_EDGE/IMAGE_TARGET_BYTES/IMAGE_QUALITY_STEPS/estimateDataUrlBytes）。
+- `styles.css`：末尾追加 `.image-stock-btn`(青色系) + `.stock-modal` 系列弹层样式（遮罩、卡片、搜索栏、结果网格自适应列、缩略图 4:3、hover 高亮）+ 手机端全屏适配。
+- `docs/product-plan.md`：§9.5 与 §10 记录 Pixabay 图库已接入、中文搜索、局限与国内直连实测待办。
+- 回滚方式：`git checkout 8a8d11f -- app.js index.html styles.css docs/product-plan.md`，或 `git revert` 本轮提交。

@@ -398,6 +398,7 @@
         <div class="image-upload-block">
           <div class="image-action-row">
             <button type="button" id="recipeImageFileButton" class="image-upload-btn">📷 从本地选图（自动压缩）</button>
+            <button type="button" id="recipeImageStockButton" class="image-stock-btn">🔍 从图库找图</button>
             <button type="button" id="recipeImageGenButton" class="image-gen-btn">🎨 AI 生成配图</button>
           </div>
           <input id="recipeImageFile" type="file" accept="image/*" hidden>
@@ -485,6 +486,21 @@
 
   <!-- 返回顶部按钮 -->
   <button id="backToTop" class="back-to-top" type="button" aria-label="返回顶部" hidden>↑</button>
+
+  <!-- 图库找图弹层（Pixabay） -->
+  <div id="stockPickerModal" class="stock-modal" hidden>
+    <div class="stock-modal-mask" id="stockModalMask"></div>
+    <div class="stock-modal-card" role="dialog" aria-label="从图库找图">
+      <div class="stock-modal-head">
+        <input id="stockSearchInput" type="text" class="stock-search-input" placeholder="输入菜名或关键词，如「红烧肉」">
+        <button id="stockSearchButton" type="button" class="stock-search-btn">搜索</button>
+        <button id="stockCloseButton" type="button" class="stock-close-btn" aria-label="关闭">✕</button>
+      </div>
+      <p id="stockStatus" class="stock-status"></p>
+      <div id="stockResultGrid" class="stock-result-grid"></div>
+      <p class="stock-modal-foot">图片来自 Pixabay，CC0 授权，免费可商用、无需署名。选中后会压缩存进菜谱。</p>
+    </div>
+  </div>
 
   <!-- AI 悬浮助手 -->
   <div id="floatAiWidget" class="float-ai-widget" aria-label="AI 助手" role="complementary">

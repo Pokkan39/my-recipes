@@ -466,6 +466,38 @@ function bindEvents() {
   if (imageGenButton) {
     imageGenButton.addEventListener("click", handleImageGenerate);
   }
+
+  // 从图库找图（Pixabay）
+  const imageStockButton = document.querySelector("#recipeImageStockButton");
+  if (imageStockButton) {
+    imageStockButton.addEventListener("click", openStockPicker);
+  }
+  const stockSearchButton = document.querySelector("#stockSearchButton");
+  if (stockSearchButton) {
+    stockSearchButton.addEventListener("click", runStockSearch);
+  }
+  const stockSearchInput = document.querySelector("#stockSearchInput");
+  if (stockSearchInput) {
+    stockSearchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); runStockSearch(); }
+    });
+  }
+  const stockCloseButton = document.querySelector("#stockCloseButton");
+  if (stockCloseButton) {
+    stockCloseButton.addEventListener("click", closeStockPicker);
+  }
+  const stockModalMask = document.querySelector("#stockModalMask");
+  if (stockModalMask) {
+    stockModalMask.addEventListener("click", closeStockPicker);
+  }
+  const stockResultGrid = document.querySelector("#stockResultGrid");
+  if (stockResultGrid) {
+    stockResultGrid.addEventListener("click", (e) => {
+      const cell = e.target.closest(".stock-cell");
+      if (!cell) return;
+      selectStockPhoto(cell.dataset.thumb, cell.dataset.large);
+    });
+  }
   document.querySelector("#recipeModalBack").addEventListener("click", closeRecipeModal);
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !recipeModal.hidden) closeRecipeModal();
@@ -2389,6 +2421,265 @@ async function handleImageGenerate() {
     alert("生成配图失败：" + (error.message || "未知错误"));
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = originalText; }
+  }
+}
+
+// ===== 从免费图库找图（Pixabay，支持中文搜索）=====
+const PIXABAY_KEY_STORAGE = "my-recipe-pixabay-key";
+const PIXABAY_SEARCH_URL = "https://pixabay.com/api/";
+
+// 常见中文菜名/食材 → 英文关键词增强表：命中时用英文搜（部分菜英文图更多），未命中直接用中文（靠 lang=zh）
+const DISH_KEYWORD_MAP = {
+  "红烧肉": "braised pork belly",
+  "回锅肉": "twice cooked pork",
+  "宫保鸡丁": "kung pao chicken",
+  "鱼香肉丝": "yuxiang shredded pork",
+  "麻婆豆腐": "mapo tofu",
+  "番茄炒蛋": "tomato scrambled eggs",
+  "西红柿炒鸡蛋": "tomato scrambled eggs",
+  "糖醋里脊": "sweet and sour pork",
+  "糖醋排骨": "sweet and sour ribs",
+  "可乐鸡翅": "braised chicken wings",
+  "红烧排骨": "braised pork ribs",
+  "水煮鱼": "boiled fish chili",
+  "酸菜鱼": "fish pickled cabbage soup",
+  "小炒肉": "stir fried pork",
+  "青椒肉丝": "pepper shredded pork",
+  "土豆丝": "shredded potato stir fry",
+  "干煸豆角": "dry fried green beans",
+  "地三鲜": "stir fried eggplant potato pepper",
+  "饺子": "dumplings",
+  "包子": "steamed buns baozi",
+  "馒头": "steamed bun mantou",
+  "小笼包": "xiaolongbao soup dumpling",
+  "拉面": "ramen noodles",
+  "牛肉面": "beef noodle soup",
+  "炒面": "fried noodles",
+  "炒饭": "fried rice",
+  "蛋炒饭": "egg fried rice",
+  "扬州炒饭": "yangzhou fried rice",
+  "粥": "congee rice porridge",
+  "火锅": "hot pot",
+  "麻辣烫": "malatang spicy soup",
+  "烧烤": "barbecue skewers",
+  "煎饼": "chinese pancake jianbing",
+  "春卷": "spring rolls",
+  "锅贴": "pan fried dumplings",
+  "馄饨": "wonton soup",
+  "粽子": "zongzi rice dumpling",
+  "月饼": "mooncake",
+  "红烧鱼": "braised fish",
+  "清蒸鱼": "steamed fish",
+  "白切鸡": "white cut chicken",
+  "叉烧": "char siu bbq pork",
+  "咕噜肉": "sweet and sour pork",
+  "麻辣香锅": "mala xiang guo spicy pot",
+  "披萨": "pizza",
+  "汉堡": "hamburger",
+  "意面": "pasta spaghetti",
+  "寿司": "sushi",
+  "咖喱": "curry",
+  "沙拉": "salad",
+  "蛋糕": "cake dessert",
+  "面包": "bread"
+};
+
+function getPixabayKey() {
+  return (localStorage.getItem(PIXABAY_KEY_STORAGE) || "").trim();
+}
+
+function promptForPixabayKey() {
+  const input = prompt(
+    "请输入 Pixabay API Key（免费）。\n" +
+    "获取方式：登录 pixabay.com → 打开 pixabay.com/api/docs/ → 页面上会显示你的专属 key。\n" +
+    "Key 只保存在本机浏览器，不会上传。"
+  );
+  if (input === null) return "";
+  const key = input.trim();
+  if (key) localStorage.setItem(PIXABAY_KEY_STORAGE, key);
+  return key;
+}
+
+// 菜名 → 搜索关键词：命中增强表用英文，否则用中文原名
+function buildStockQuery(name) {
+  const clean = (name || "").trim();
+  if (!clean) return "";
+  if (DISH_KEYWORD_MAP[clean]) return DISH_KEYWORD_MAP[clean];
+  return clean;
+}
+
+// 调 Pixabay 搜索，返回 hits 数组；lang=zh 支持中文
+async function searchPixabay(query, key) {
+  const url = PIXABAY_SEARCH_URL +
+    "?key=" + encodeURIComponent(key) +
+    "&q=" + encodeURIComponent(query) +
+    "&image_type=photo&lang=zh&per_page=24&safesearch=true";
+
+  let res;
+  try {
+    res = await fetch(url);
+  } catch (e) {
+    throw new Error("网络请求失败，可能是网络不稳定或无法连接图库服务。");
+  }
+
+  if (res.status === 401 || res.status === 403) {
+    throw new Error("API Key 无效，请检查后重新填写。");
+  }
+  if (res.status === 429) {
+    throw new Error("请求过于频繁，已达免费额度上限，请稍后再试。");
+  }
+  if (!res.ok) {
+    throw new Error("图库返回错误：HTTP " + res.status);
+  }
+
+  const data = await res.json().catch(() => ({}));
+  return Array.isArray(data.hits) ? data.hits : [];
+}
+
+// 把图片 URL 加载并压缩成 data:image/jpeg（复用方案A的压缩参数）
+function compressImageFromUrl(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous"; // Pixabay 图支持 CORS，便于 canvas 导出
+    img.onerror = () => reject(new Error("图片加载失败"));
+    img.onload = () => {
+      try {
+        let { width, height } = img;
+        if (width > IMAGE_MAX_EDGE || height > IMAGE_MAX_EDGE) {
+          const scale = IMAGE_MAX_EDGE / Math.max(width, height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+
+        let result = "";
+        for (let i = 0; i < IMAGE_QUALITY_STEPS.length; i++) {
+          result = canvas.toDataURL("image/jpeg", IMAGE_QUALITY_STEPS[i]);
+          if (estimateDataUrlBytes(result) <= IMAGE_TARGET_BYTES) break;
+        }
+        resolve(result);
+      } catch (error) {
+        // 跨域污染等导致 canvas 导出失败
+        reject(new Error("图片处理失败（可能跨域限制）"));
+      }
+    };
+    img.src = url;
+  });
+}
+
+let stockLastLargeUrl = ""; // 记录当前选中图的大图外链，压缩失败时兜底
+
+function setStockStatus(text) {
+  const el = document.querySelector("#stockStatus");
+  if (el) el.textContent = text || "";
+}
+
+function openStockPicker() {
+  const modal = document.querySelector("#stockPickerModal");
+  if (!modal) return;
+
+  let key = getPixabayKey();
+  if (!key) {
+    key = promptForPixabayKey();
+    if (!key) return; // 用户取消
+  }
+
+  modal.hidden = false;
+  const input = document.querySelector("#stockSearchInput");
+  const name = (fields.name.value || "").trim();
+  if (input) {
+    input.value = name;
+    input.focus();
+  }
+  if (name) {
+    runStockSearch();
+  } else {
+    setStockStatus("输入关键词后点搜索。");
+    const grid = document.querySelector("#stockResultGrid");
+    if (grid) grid.innerHTML = "";
+  }
+}
+
+function closeStockPicker() {
+  const modal = document.querySelector("#stockPickerModal");
+  if (modal) modal.hidden = true;
+}
+
+async function runStockSearch() {
+  const input = document.querySelector("#stockSearchInput");
+  const grid = document.querySelector("#stockResultGrid");
+  const raw = (input?.value || "").trim();
+  if (!raw) { setStockStatus("请输入搜索关键词。"); return; }
+
+  const key = getPixabayKey();
+  if (!key) { setStockStatus("尚未填写 API Key。"); return; }
+
+  setStockStatus("搜索中…");
+  if (grid) grid.innerHTML = "";
+
+  try {
+    let hits = await searchPixabay(raw, key);
+    // 中文原词搜不到时，用增强表的英文词再搜一次
+    if (hits.length === 0) {
+      const enQuery = buildStockQuery(raw);
+      if (enQuery && enQuery !== raw) {
+        setStockStatus("换英文关键词再试…");
+        hits = await searchPixabay(enQuery, key);
+      }
+    }
+    if (hits.length === 0) {
+      setStockStatus("没找到合适的图片，换个关键词试试（如更通用的词）。");
+      return;
+    }
+    setStockStatus("找到 " + hits.length + " 张，点一张即可用。");
+    renderStockResults(hits);
+  } catch (error) {
+    setStockStatus("搜索失败：" + (error.message || "未知错误"));
+  }
+}
+
+function renderStockResults(hits) {
+  const grid = document.querySelector("#stockResultGrid");
+  if (!grid) return;
+  grid.innerHTML = "";
+  hits.forEach((hit) => {
+    const thumb = hit.webformatURL;
+    const large = hit.largeImageURL || hit.webformatURL;
+    if (!thumb) return;
+    const cell = document.createElement("button");
+    cell.type = "button";
+    cell.className = "stock-cell";
+    cell.dataset.thumb = thumb;
+    cell.dataset.large = large;
+    const im = document.createElement("img");
+    im.src = thumb;
+    im.alt = hit.tags || "候选配图";
+    im.loading = "lazy";
+    cell.appendChild(im);
+    grid.appendChild(cell);
+  });
+}
+
+async function selectStockPhoto(thumbUrl, largeUrl) {
+  stockLastLargeUrl = largeUrl || thumbUrl;
+  setStockStatus("处理图片中…");
+  try {
+    const dataUrl = await compressImageFromUrl(thumbUrl);
+    fields.image.value = dataUrl;
+    renderImagePreview();
+    closeStockPicker();
+  } catch (error) {
+    // 跨域压缩失败：兜底直接存外链，仍可显示
+    fields.image.value = stockLastLargeUrl;
+    renderImagePreview();
+    closeStockPicker();
+    alert("图片已用网络链接方式添加（本地压缩失败，可能是跨域限制）。如需离线可用，可改用「从本地选图」。");
   }
 }
 
