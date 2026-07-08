@@ -669,3 +669,21 @@
 - `index.html`：#activityLogPanel 移到 `<main>` 之前；hero-actions 改为三分组（action-group--primary/tools/settings），工具按钮改 tool-button。
 - `styles.css`：修正日志面板 CSS 变量和颜色；新增 panelSlideIn/logEntryIn keyframe；.is-open 面板和 editor-panel.is-open 加 panelSlideIn 动画；.log-entry 加 logEntryIn 动画；新增 action-group/tool-button 样式和手机端响应式。
 - 回滚方式：`git checkout 815a970 -- app.js index.html styles.css`，或 `git revert 1898658`。
+
+## 2026-07-08 - Task: 返回顶部按钮 + 手机端动画与UI精修
+
+### What was done
+- **新增返回顶部按钮**：固定在右下角的 `#backToTop` 悬浮按钮，滚动超过 400px 时淡入浮现，点击平滑回到页面顶部；按钮圆形设计、带毛玻璃效果，与 AI 助手按钮上下叠放不冲突。
+- **修复手机端卡片动画**：原 `initScrollFx` 中手机端直接跳过卡片效果，现改为用 IntersectionObserver 在卡片进入视口时触发 `mobileCardIn` 淡入上浮动画，提升手机端浏览体验。
+- **手机端UI精修（5处）**：卡片阴影与圆角更细腻、:active 状态按下缩放反馈；面板进入改为从底部上滑（`panelSlideInMobile`）；modal bar 和返回按钮触摸面积加大、按下反馈更流畅；所有主按钮、工具按钮加 :active 缩放；返回顶部按钮在手机端稍小并下移。
+
+### Testing
+- `node --check app.js`：SYNTAX_OK。
+- CSS 花括号配平：502 open / 502 close。
+- 未做浏览器联调：返回顶部按钮显隐阈值、手机端卡片入场动画、面板上滑动效、触摸反馈需手动验证。
+
+### Notes
+- `app.js`：initScrollFx 末尾补 IntersectionObserver 给手机端卡片加入场动画；bindEvents 末尾新增返回顶部按钮的滚动监听与点击回顶逻辑。
+- `index.html`：AI 助手按钮之前插入 `#backToTop` 按钮（↑ 箭头，默认 hidden）。
+- `styles.css`：末尾追加 `.back-to-top` 样式（圆形、毛玻璃、淡入上浮）、`.back-to-top.is-visible` 显示态、`@keyframes mobileCardIn` 卡片入场动画、`@media (max-width: 768px)` 内追加卡片阴影圆角精修、面板上滑动画 `panelSlideInMobile`、modal bar 和按钮触感增强、按钮 :active 缩放、返回顶部尺寸位置调整。
+- 回滚方式：`git checkout 1898658 -- app.js index.html styles.css`，或 `git revert HEAD`。

@@ -468,6 +468,21 @@ function bindEvents() {
     nicknamePanel.style.display = "none";
     alert(name ? `昵称已保存：${name}` : "昵称已清空");
   });
+
+  // 返回顶部按钮 — 滚动超过 400px 后浮现
+  const backToTopBtn = document.querySelector("#backToTop");
+  if (backToTopBtn) {
+    window.addEventListener("scroll", function () {
+      if (window.scrollY > 400) {
+        backToTopBtn.classList.add("is-visible");
+      } else {
+        backToTopBtn.classList.remove("is-visible");
+      }
+    }, { passive: true });
+    backToTopBtn.addEventListener("click", function () {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
 }
 
 const AI_CONFIG_KEY = "my-recipe-ai-config";
@@ -3326,9 +3341,12 @@ function floatAiFillToForm() {
       }
     }
 
-    if (isMobile) return; // 手机只保留 hero 轻视差，卡片景深关闭
+    if (isMobile) {
+      // 手机端：不做卡片景深效果，但保留卡片进入视口时的入场动画（通过 IntersectionObserver）
+      return;
+    }
 
-    // 卡片景深：据卡片中心相对视口中心的位置做轻微位移 + 缩放 + 透明度（含蓄，不干扰阅读）
+    // 桌面端卡片景深：据卡片中心相对视口中心的位置做轻微位移 + 缩放 + 透明度（含蓄，不干扰阅读）
     for (var i = 0; i < cards.length; i++) {
       var card = cards[i];
       // 首页横向行内的卡片不做景深联动：transform 会干扰横向滚动
@@ -3360,6 +3378,19 @@ function floatAiFillToForm() {
       }
       onScroll();
     });
+  }
+
+  // 手机端：用 IntersectionObserver 给卡片加入场动画
+  if (isMobile && "IntersectionObserver" in window) {
+    var mobileCardObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("card-animate-in");
+          mobileCardObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -20px 0px" });
+    cards.forEach(function (c) { mobileCardObserver.observe(c); });
   }
 
   update();
