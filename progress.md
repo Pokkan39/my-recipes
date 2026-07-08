@@ -687,3 +687,27 @@
 - `index.html`：AI 助手按钮之前插入 `#backToTop` 按钮（↑ 箭头，默认 hidden）。
 - `styles.css`：末尾追加 `.back-to-top` 样式（圆形、毛玻璃、淡入上浮）、`.back-to-top.is-visible` 显示态、`@keyframes mobileCardIn` 卡片入场动画、`@media (max-width: 768px)` 内追加卡片阴影圆角精修、面板上滑动画 `panelSlideInMobile`、modal bar 和按钮触感增强、按钮 :active 缩放、返回顶部尺寸位置调整。
 - 回滚方式：`git checkout 1898658 -- app.js index.html styles.css`，或 `git revert HEAD`。
+
+## 2026-07-08 - Task: 本地图片上传（方案 A：Base64 压缩，零成本过渡）
+
+### What was done
+- **新增本地选图上传**：编辑菜谱时除了原有"填图片网址"，现在可以点"📷 从本地选图（自动压缩）"从本机（含手机拍照/相册）选图，前端用 Canvas 压缩后转成 Base64 直接存进菜谱数据，无需任何后端和费用。
+- **自动压缩控制体积**：图片最大边限制 1280px 等比缩小，JPEG 质量从 0.82 逐级下调直到单图 ≤300KB；透明 PNG 转 JPEG 时铺白底避免黑背景。
+- **图片预览与移除**：选图或手填网址后即时显示缩略图，可一键移除；新建、编辑、AI 填充（两个入口）等所有打开编辑器的场景都会正确刷新预览状态。
+- **数量软提示**：当菜谱库里本地图片已达 12 张时，再选图会提醒"本地图片较多会拖慢多人同步，建议后续升级云端上传"，但仍允许继续（过渡方案不强制阻断）。
+- 说明：这是计划书 §9.5 的方案 A 过渡实现；图片存进共享 JSON 会随数量增多变大、拖慢同步，需求变多后按计划升级方案 B（阿里云 OSS 上传）。
+
+### Testing
+- `node --check app.js`：SYNTAX_OK。
+- CSS 花括号配平：516 open / 516 close，balanced。
+- `estimateDataUrlBytes` 字节换算算法用 Node 独立验证：1/2/3 字节 padding 边界及 300KB 用例全部精确匹配。
+- DOM id 双向核对：HTML 新增 6 个 id 与 app.js 引用完全一一对应，无遗漏无多余。
+- 函数与调用链核对：4 个新函数定义就位，7 处 renderImagePreview() 覆盖全部编辑器入口，事件绑定齐全。
+- **浏览器联调缺口**：本机未安装 Chrome/Chromium，且不宜为一次性验证拉取数百 MB 二进制改变环境，故未做真实浏览器端到端联调。以下需在浏览器手动验证：真机选图后 Canvas 压缩是否成功、预览缩略图显示、保存后卡片/详情页图片渲染、移除按钮、手填 URL 预览、手机端拍照选图。核心存储/渲染链路（escapeAttr 不影响 data URI、image 字段直存不过 safeUrl）已静态确认无需改造。
+
+### Notes
+- `index.html`：`#recipeImage` 网址输入框下方新增 `.image-upload-block`（选图按钮 `#recipeImageFileButton` + 隐藏 `#recipeImageFile` + 提示 + 预览区 `#recipeImagePreview`/`#recipeImagePreviewImg` + 移除按钮 `#recipeImageRemove`）；原 URL 输入方式保留并存。
+- `app.js`：closeEditor 后新增图片工具区（常量 IMAGE_MAX_EDGE/IMAGE_TARGET_BYTES/IMAGE_QUALITY_STEPS/BASE64_IMAGE_WARN_COUNT + 函数 estimateDataUrlBytes/compressImageFile/handleImageFileSelect/renderImagePreview）；bindEvents 内新增选图按钮/文件框/移除按钮/URL 输入的事件绑定；openNewEditor、openEditEditor、aiFillForm、悬浮 AI fillForm 四处赋值 image 后各补一次 renderImagePreview()。渲染/存储链路未改动。
+- `styles.css`：末尾追加 `.image-upload-block`/`.image-upload-btn`/`.image-upload-hint`/`.image-preview`/`.image-preview-remove` 及手机端响应式样式。
+- `docs/product-plan.md`：§9.5 与 §10 图片上传状态更新为"方案 A 已实现"。
+- 回滚方式：`git checkout 927fbac -- app.js index.html styles.css docs/product-plan.md`，或 `git revert` 本轮提交。

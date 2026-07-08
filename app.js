@@ -444,6 +444,22 @@ function bindEvents() {
   recipeForm.addEventListener("submit", saveRecipe);
   deleteRecipeButton.addEventListener("click", deleteCurrentRecipe);
   importInput.addEventListener("change", importRecipes);
+
+  // 本地图片上传（方案 A：压缩转 Base64）
+  const imageFileButton = document.querySelector("#recipeImageFileButton");
+  const imageFileInput = document.querySelector("#recipeImageFile");
+  const imageRemoveButton = document.querySelector("#recipeImageRemove");
+  if (imageFileButton && imageFileInput) {
+    imageFileButton.addEventListener("click", () => imageFileInput.click());
+    imageFileInput.addEventListener("change", handleImageFileSelect);
+  }
+  if (imageRemoveButton) {
+    imageRemoveButton.addEventListener("click", () => {
+      fields.image.value = "";
+      renderImagePreview();
+    });
+  }
+  fields.image.addEventListener("input", renderImagePreview);
   document.querySelector("#recipeModalBack").addEventListener("click", closeRecipeModal);
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !recipeModal.hidden) closeRecipeModal();
@@ -686,6 +702,7 @@ function aiFillForm() {
       : []
   );
 
+  renderImagePreview();
   aiChatSection.style.display = "none";
   fields.name.focus();
   alert("AI 整理的菜谱已填入表单，检查一下再保存。");
@@ -2079,6 +2096,7 @@ function openNewEditor() {
   const t = document.querySelector("#recipeTools");
   if (t) t.value = "";
   resetIngredientEditor([]);
+  renderImagePreview();
   scrollPanelIntoView(editorPanel);
   fields.name.focus();
   render();
@@ -2108,6 +2126,7 @@ function openEditEditor(id) {
   if (toolsInput) toolsInput.value = (recipe.tools || []).join(" ");
 
   resetIngredientEditor(recipe.ingredients || []);
+  renderImagePreview();
 
   editorTitle.textContent = "编辑菜谱";
   deleteRecipeButton.style.display = "inline-flex";
@@ -2117,6 +2136,126 @@ function openEditEditor(id) {
 
 function closeEditor() {
   editorPanel.classList.remove("is-open");
+}
+
+// ===== 本地图片上传（方案 A：前端压缩转 Base64）=====
+const IMAGE_MAX_EDGE = 1280;        // 最大边长（超过则等比缩小）
+const IMAGE_TARGET_BYTES = 300 * 1024; // 单图目标体积上限：300KB
+const IMAGE_QUALITY_STEPS = [0.82, 0.7, 0.6, 0.5, 0.42]; // 逐级降质量直到达标
+const BASE64_IMAGE_WARN_COUNT = 12; // 本地图片数量软提示阈值
+
+// 估算 dataURL 里图片二进制的字节数（去掉头部，按 base64 换算）
+function estimateDataUrlBytes(dataUrl) {
+  const comma = dataUrl.indexOf(",");
+  const b64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
+  const padding = b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0;
+  return Math.floor((b64.length * 3) / 4) - padding;
+}
+
+// 把本地图片文件压缩成 data:image/jpeg;base64 字符串
+function compressImageFile(file) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type || !file.type.startsWith("image/")) {
+      reject(new Error("请选择图片文件（jpg / png / webp 等）。"));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("读取图片失败，请换一张试试。"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("图片解码失败，请换一张试试。"));
+      img.onload = () => {
+        try {
+          let { width, height } = img;
+          if (width > IMAGE_MAX_EDGE || height > IMAGE_MAX_EDGE) {
+            const scale = IMAGE_MAX_EDGE / Math.max(width, height);
+            width = Math.round(width * scale);
+            height = Math.round(height * scale);
+          }
+
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          // 白底铺垫，避免透明 PNG 转 JPEG 后出现黑色背景
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+
+          let result = "";
+          for (let i = 0; i < IMAGE_QUALITY_STEPS.length; i++) {
+            result = canvas.toDataURL("image/jpeg", IMAGE_QUALITY_STEPS[i]);
+            if (estimateDataUrlBytes(result) <= IMAGE_TARGET_BYTES) break;
+          }
+          if (!result) {
+            reject(new Error("图片压缩失败，请换一张试试。"));
+            return;
+          }
+          resolve(result);
+        } catch (error) {
+          reject(new Error("图片处理出错：" + (error.message || "未知错误")));
+        }
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// 处理文件选择：软提示 → 压缩 → 填入字段 → 刷新预览
+async function handleImageFileSelect(event) {
+  const input = event.target;
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  if (!file.type || !file.type.startsWith("image/")) {
+    alert("请选择图片文件（jpg / png / webp 等）。");
+    input.value = "";
+    return;
+  }
+
+  // 本地图片数量软提示：超过阈值仍允许，但提醒会拖慢多人同步
+  const localImageCount = recipes.filter((r) => String(r.image || "").startsWith("data:")).length;
+  if (localImageCount >= BASE64_IMAGE_WARN_COUNT) {
+    const go = confirm(
+      "当前已有 " + localImageCount + " 张本地图片存进了菜谱数据。\n" +
+      "本地图片较多会让数据变大、拖慢多人同步，建议后续升级为云端图片上传。\n\n" +
+      "仍要继续添加这张本地图片吗？"
+    );
+    if (!go) { input.value = ""; return; }
+  }
+
+  const btn = document.querySelector("#recipeImageFileButton");
+  const originalText = btn ? btn.textContent : "";
+  if (btn) { btn.disabled = true; btn.textContent = "压缩中…"; }
+
+  try {
+    const dataUrl = await compressImageFile(file);
+    fields.image.value = dataUrl;
+    renderImagePreview();
+  } catch (error) {
+    alert(error.message || "图片处理失败，请重试。");
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = originalText; }
+    input.value = ""; // 清空以便再次选择同一文件也能触发 change
+  }
+}
+
+// 根据 fields.image 当前值刷新预览区（data URI 或 http URL 均可预览）
+function renderImagePreview() {
+  const preview = document.querySelector("#recipeImagePreview");
+  const previewImg = document.querySelector("#recipeImagePreviewImg");
+  if (!preview || !previewImg) return;
+
+  const value = (fields.image.value || "").trim();
+  if (value) {
+    previewImg.src = value;
+    preview.hidden = false;
+  } else {
+    previewImg.removeAttribute("src");
+    preview.hidden = true;
+  }
 }
 
 async function saveRecipe(event) {
@@ -3245,6 +3384,7 @@ function floatAiFillToForm() {
   panel.hidden = true;
   document.querySelector("#floatAiToggle").setAttribute("aria-expanded", "false");
 
+  renderImagePreview();
   fields.name.focus();
 }
 

@@ -395,6 +395,16 @@
           <input id="recipeImage" type="url" placeholder="填写图片 URL；也可以先留空">
         </label>
 
+        <div class="image-upload-block">
+          <button type="button" id="recipeImageFileButton" class="image-upload-btn">📷 从本地选图（自动压缩）</button>
+          <input id="recipeImageFile" type="file" accept="image/*" hidden>
+          <p class="image-upload-hint">本地选图会压缩后直接存进菜谱数据，适合少量配图；图片较多时建议后续升级为云端上传。</p>
+          <div id="recipeImagePreview" class="image-preview" hidden>
+            <img id="recipeImagePreviewImg" alt="配图预览">
+            <button type="button" id="recipeImageRemove" class="image-preview-remove">移除图片</button>
+          </div>
+        </div>
+
         <label>
           菜品介绍
           <textarea id="recipeDescription" rows="3" required placeholder="简单说明这道菜的口味、特点或适合人群"></textarea>
