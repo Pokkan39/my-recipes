@@ -609,3 +609,215 @@
 - `styles.css`：第 55 行 html scroll-behavior smooth → auto。
 - `app.js`：scrollPanelIntoView 用 behavior auto。
 - 回滚方式：`git checkout 40c60eb -- app.js styles.css`。
+
+## 2026-07-07 - Task: 第4阶段备份恢复 - 新增云端备份与云端恢复功能
+### What was done
+- 计划书第4阶段"备份恢复"已实现：新增"☁️ 云端备份"（直接从阿里云拉取当前数据下载为带时间戳 JSON 文件）和"☁️ 云端恢复"（选一个备份文件直接写回阿里云并刷新页面），与现有"导出备份/导入备份"（本地浏览器）并列。
+- 云端恢复支持两种文件格式（{list:[...]} 或直接数组），有二次确认弹窗防误操作，恢复失败时给出明确提示。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过，JavaScript 无语法错误。
+- 功能逻辑核查：cloudBackup 调用已有 fetchCloudRecipes、cloudRestore 走 PUT 接口并 normalizeRecipes 归一化，与现有架构一致。
+- 未做真机端对端验证：需配好阿里云 API 后手动测试备份下载和恢复上传流程。
+
+### Notes
+- `app.js`：bindEvents 新增两个事件绑定；新增 cloudBackup、cloudRestore 两个 async 函数（在 exportRecipes 之前）。
+- `index.html`：顶部按钮区新增"☁️ 云端备份"按钮和"☁️ 云端恢复"文件选择标签。
+- `progress.md`：追加本轮记录。
+- 回滚方式：`git checkout a9798df -- app.js index.html`。
+
+## 2026-07-07 - Task: 第4阶段操作日志 - 新增操作日志面板
+
+### What was done
+- 计划书第4阶段最后一项"操作日志"已实现，第4阶段全部完成。
+- 顶部新增「📋 操作日志」按钮，点击展开日志面板，显示本浏览器内所有新增/修改/删除操作，最多保留最近 100 条。
+- 日志条目在保存菜谱（新增/修改）和删除菜谱时自动写入 localStorage；操作类型用颜色标签区分（绿=新增、橙=修改、红=删除）。
+
+### Testing
+- `node --check E:/recipe-site/app.js`：通过（SYNTAX_OK）。
+- CSS 花括号配平：464 open / 464 close。
+- 关键标识符核查：activityLogButton、closeActivityLogButton、activityLogPanel、activityLogList、toggleLogPanel、renderLogPanel、appendLog、APP_LOG_KEY 引用一致，无悬空。
+- 未做浏览器端联调：缺少 Chrome/Chromium；需手动验证日志面板展开、条目渲染和颜色标签。
+
+### Notes
+- `app.js`：新增 APP_LOG_KEY、APP_LOG_MAX 常量；新增 appendLog 工具函数；saveRecipe 增加 isEdit 判断并调用 appendLog；deleteCurrentRecipe 调用 appendLog；bindEvents 新增两处事件绑定；新增 toggleLogPanel、renderLogPanel 两个函数。
+- `index.html`：顶部按钮区新增「📋 操作日志」按钮；editorPanel 前新增 #activityLogPanel 面板 section。
+- `styles.css`：末尾新增操作日志面板各元素样式（log-entry、log-action 三色变体、log-name、log-meta、log-empty）。
+- 回滚方式：`git checkout e455344^ -- app.js index.html styles.css`，或 `git revert e455344`。
+
+## 2026-07-07 - Task: 自查bug修复 + UI动画升级
+
+### What was done
+- **Bug修复（6项）**：
+  1. `#activityLogPanel` 位置错误（在 `<main>` grid 内会挤成一列）→ 移到 `<main>` 之前，与其他面板同级。
+  2. CSS 变量 `--text-main`/`--text-dim` 未定义 → 改为已有的 `var(--text)`/`var(--muted)`；日志条目背景改为暖色调 `rgba(255,220,180,0.05)`；三色标签改用 `var(--leaf)`/`var(--brand-2)`/`var(--danger)`。
+  3. `link.click()` 未挂载到 DOM 导致 Firefox 下载失败 → cloudBackup 和 exportRecipes 均补 `appendChild` + `removeChild`。
+  4. `importRecipes` 和 `saveBatchSelected` 批量操作未记录操作日志 → 补调 `appendLog`。
+  5. `openVideoHelper()` 缺 `populateWorldSelect()` → 补调，AI生成菜谱入口打开时世界大类下拉不再为空。
+- **UI/动画升级（3项）**：
+  1. hero-actions 按钮按"主操作 / 工具功能 / 设置"三组分层，中间组改用新 `.tool-button` 样式（圆角胶囊，带边框，有 hover 上浮微交互），设置组默认半透明悬停恢复。
+  2. 新增 `@keyframes panelSlideIn` 和 `@keyframes logEntryIn`，所有 `.is-open` 面板和编辑器打开时触发滑入动效，操作日志条目逐条错落出现（30ms 步进）。
+  3. 移动端适配：`.activity-log-panel` 纳入边距规则，`.tool-button` 手机端按 50% 宽自动换行。
+
+### Testing
+- `node --check app.js`：SYNTAX_OK。
+- CSS 花括号配平：482 open / 482 close。
+- 未做浏览器联调：按钮分组视觉、面板动效、日志条目动画需手动验证。
+
+### Notes
+- `app.js`：openVideoHelper 补 populateWorldSelect；importRecipes/saveBatchSelected 补 appendLog；cloudBackup/exportRecipes link.click 补 DOM 挂载；renderLogPanel 加 animation-delay 错落。
+- `index.html`：#activityLogPanel 移到 `<main>` 之前；hero-actions 改为三分组（action-group--primary/tools/settings），工具按钮改 tool-button。
+- `styles.css`：修正日志面板 CSS 变量和颜色；新增 panelSlideIn/logEntryIn keyframe；.is-open 面板和 editor-panel.is-open 加 panelSlideIn 动画；.log-entry 加 logEntryIn 动画；新增 action-group/tool-button 样式和手机端响应式。
+- 回滚方式：`git checkout 815a970 -- app.js index.html styles.css`，或 `git revert 1898658`。
+
+## 2026-07-08 - Task: 返回顶部按钮 + 手机端动画与UI精修
+
+### What was done
+- **新增返回顶部按钮**：固定在右下角的 `#backToTop` 悬浮按钮，滚动超过 400px 时淡入浮现，点击平滑回到页面顶部；按钮圆形设计、带毛玻璃效果，与 AI 助手按钮上下叠放不冲突。
+- **修复手机端卡片动画**：原 `initScrollFx` 中手机端直接跳过卡片效果，现改为用 IntersectionObserver 在卡片进入视口时触发 `mobileCardIn` 淡入上浮动画，提升手机端浏览体验。
+- **手机端UI精修（5处）**：卡片阴影与圆角更细腻、:active 状态按下缩放反馈；面板进入改为从底部上滑（`panelSlideInMobile`）；modal bar 和返回按钮触摸面积加大、按下反馈更流畅；所有主按钮、工具按钮加 :active 缩放；返回顶部按钮在手机端稍小并下移。
+
+### Testing
+- `node --check app.js`：SYNTAX_OK。
+- CSS 花括号配平：502 open / 502 close。
+- 未做浏览器联调：返回顶部按钮显隐阈值、手机端卡片入场动画、面板上滑动效、触摸反馈需手动验证。
+
+### Notes
+- `app.js`：initScrollFx 末尾补 IntersectionObserver 给手机端卡片加入场动画；bindEvents 末尾新增返回顶部按钮的滚动监听与点击回顶逻辑。
+- `index.html`：AI 助手按钮之前插入 `#backToTop` 按钮（↑ 箭头，默认 hidden）。
+- `styles.css`：末尾追加 `.back-to-top` 样式（圆形、毛玻璃、淡入上浮）、`.back-to-top.is-visible` 显示态、`@keyframes mobileCardIn` 卡片入场动画、`@media (max-width: 768px)` 内追加卡片阴影圆角精修、面板上滑动画 `panelSlideInMobile`、modal bar 和按钮触感增强、按钮 :active 缩放、返回顶部尺寸位置调整。
+- 回滚方式：`git checkout 1898658 -- app.js index.html styles.css`，或 `git revert HEAD`。
+
+## 2026-07-08 - Task: 本地图片上传（方案 A：Base64 压缩，零成本过渡）
+
+### What was done
+- **新增本地选图上传**：编辑菜谱时除了原有"填图片网址"，现在可以点"📷 从本地选图（自动压缩）"从本机（含手机拍照/相册）选图，前端用 Canvas 压缩后转成 Base64 直接存进菜谱数据，无需任何后端和费用。
+- **自动压缩控制体积**：图片最大边限制 1280px 等比缩小，JPEG 质量从 0.82 逐级下调直到单图 ≤300KB；透明 PNG 转 JPEG 时铺白底避免黑背景。
+- **图片预览与移除**：选图或手填网址后即时显示缩略图，可一键移除；新建、编辑、AI 填充（两个入口）等所有打开编辑器的场景都会正确刷新预览状态。
+- **数量软提示**：当菜谱库里本地图片已达 12 张时，再选图会提醒"本地图片较多会拖慢多人同步，建议后续升级云端上传"，但仍允许继续（过渡方案不强制阻断）。
+- 说明：这是计划书 §9.5 的方案 A 过渡实现；图片存进共享 JSON 会随数量增多变大、拖慢同步，需求变多后按计划升级方案 B（阿里云 OSS 上传）。
+
+### Testing
+- `node --check app.js`：SYNTAX_OK。
+- CSS 花括号配平：516 open / 516 close，balanced。
+- `estimateDataUrlBytes` 字节换算算法用 Node 独立验证：1/2/3 字节 padding 边界及 300KB 用例全部精确匹配。
+- DOM id 双向核对：HTML 新增 6 个 id 与 app.js 引用完全一一对应，无遗漏无多余。
+- 函数与调用链核对：4 个新函数定义就位，7 处 renderImagePreview() 覆盖全部编辑器入口，事件绑定齐全。
+- **浏览器联调缺口**：本机未安装 Chrome/Chromium，且不宜为一次性验证拉取数百 MB 二进制改变环境，故未做真实浏览器端到端联调。以下需在浏览器手动验证：真机选图后 Canvas 压缩是否成功、预览缩略图显示、保存后卡片/详情页图片渲染、移除按钮、手填 URL 预览、手机端拍照选图。核心存储/渲染链路（escapeAttr 不影响 data URI、image 字段直存不过 safeUrl）已静态确认无需改造。
+
+### Notes
+- `index.html`：`#recipeImage` 网址输入框下方新增 `.image-upload-block`（选图按钮 `#recipeImageFileButton` + 隐藏 `#recipeImageFile` + 提示 + 预览区 `#recipeImagePreview`/`#recipeImagePreviewImg` + 移除按钮 `#recipeImageRemove`）；原 URL 输入方式保留并存。
+- `app.js`：closeEditor 后新增图片工具区（常量 IMAGE_MAX_EDGE/IMAGE_TARGET_BYTES/IMAGE_QUALITY_STEPS/BASE64_IMAGE_WARN_COUNT + 函数 estimateDataUrlBytes/compressImageFile/handleImageFileSelect/renderImagePreview）；bindEvents 内新增选图按钮/文件框/移除按钮/URL 输入的事件绑定；openNewEditor、openEditEditor、aiFillForm、悬浮 AI fillForm 四处赋值 image 后各补一次 renderImagePreview()。渲染/存储链路未改动。
+- `styles.css`：末尾追加 `.image-upload-block`/`.image-upload-btn`/`.image-upload-hint`/`.image-preview`/`.image-preview-remove` 及手机端响应式样式。
+- `docs/product-plan.md`：§9.5 与 §10 图片上传状态更新为"方案 A 已实现"。
+- 回滚方式：`git checkout 927fbac -- app.js index.html styles.css docs/product-plan.md`，或 `git revert` 本轮提交。
+
+## 2026-07-08 - Task: AI 生成菜品配图（占位框架 + 方案A存储）
+
+### What was done
+- **否决网络爬图**：用户最初希望"网上搜集爬取图片放上网站"，明确不采纳——绝大多数美食图片有版权，爬取并公开挂站有侵权风险，且违背项目"只用开放授权、不用爬虫数据"原则。经确认改走 AI 文生图合规路线。
+- **新增"AI 生成配图"入口**：编辑菜谱页图片区新增"🎨 AI 生成配图"按钮和可选的画面描述输入框，点击后按菜名 + 所属世界大类生成配图，填入预览，复用方案A的 Base64 存储和现有预览/移除逻辑。
+- **占位即完整可用**：本次按用户要求"先不接真服务、做占位"，但做的是一条真实完整的链路——用 Canvas 本地画一张按世界大类配色（现实=暖橙、二次元=粉紫、黑暗料理=暗红、幻想=青蓝、外国菜=橄榄金）的美化图，含餐具图标、菜名大字（超长自动缩字号）、世界大类小字，产出 1024×768 的 JPEG data URI。现在点按钮立刻能得到一张像样的配图，不是空白。
+- **预留接真服务的口子**：`IMAGE_GEN_ENABLED` 开关 + `generateImageViaApi` 空壳 + `buildImagePrompt` 提示词拼接已就绪，后续接 OpenAI 兼容 `/images/generations` 时把开关改 true、补全空壳即可，UI/存储/预览全部复用。
+
+### Testing
+- `node --check app.js`：SYNTAX_OK。
+- CSS 花括号配平：526 open / 526 close，balanced；确认 `--accent` 变量存在。
+- DOM id 双向核对：HTML 新增 `#recipeImageGenButton`/`#recipeImageGenPrompt` 与 app.js 引用一一对应。
+- Node 静态验证纯字符串逻辑：`buildImagePrompt` 三种情况（有菜名/带世界大类和额外描述/无菜名）拼接正确；`WORLD_IMAGE_THEMES` 5 个大类命中、未知大类回退默认主题。
+- **浏览器联调缺口**：`drawPlaceholderImage` 依赖浏览器 Canvas，Node 无法执行；本机无 Chrome 且不宜为一次性验证拉取数百 MB 二进制，故未做端到端联调。需浏览器手动验证：填菜名 → 点"AI 生成配图" → 出现按世界大类配色的占位图 → 填入预览 → 保存后卡片/详情页正常显示；未填菜名时应提示先填菜名。
+
+### Notes
+- `index.html`：`.image-upload-block` 内选图按钮旁新增 `.image-action-row` 包裹的"🎨 AI 生成配图"按钮 `#recipeImageGenButton` + 描述输入框 `#recipeImageGenPrompt`；提示文案补充 AI 配图说明。
+- `app.js`：renderImagePreview 后新增 AI 配图区——常量 `IMAGE_GEN_ENABLED`(false)、`WORLD_IMAGE_THEMES`/`DEFAULT_IMAGE_THEME`，函数 `buildImagePrompt`/`drawPlaceholderImage`/`generateImageViaApi`(空壳)/`handleImageGenerate`；bindEvents 内绑定 `#recipeImageGenButton` → handleImageGenerate。
+- `styles.css`：末尾追加 `.image-action-row`/`.image-gen-btn`(品牌金渐变)/`.image-gen-prompt` 及手机端响应式。
+- `docs/product-plan.md`：§9.5 与 §10 记录 AI 配图占位框架已就绪、否决网络爬图的原因。
+- 回滚方式：`git checkout e612cbd -- app.js index.html styles.css docs/product-plan.md`，或 `git revert` 本轮提交。
+
+## 2026-07-08 - Task: 免费图库配图（Pixabay，支持中文搜索）
+
+### What was done
+- **决策过程**：用户先要"网上爬图"（已否决，版权风险）→ 改 AI 文生图（占位已做）→ 用户指出 AI 文生图慢又贵，要用免费图库 → 再指出"试试中国的图库"。调研后国内商业图库多为付费/需授权、缺开放免费 API，最终选 **Pixabay**：有中文站、API 支持中文搜索（lang=zh）、CC0 免费可商用且无需署名、图库含大量中国美食图。
+- **新增"🔍 从图库找图"入口**：编辑菜谱页图片区新增按钮，作为主推的真实照片来源；原"从本地选图""AI 生成配图"保留，三来源并存（AI 占位图退为兜底）。
+- **候选图挑选弹层**：点按钮弹出搜索弹层，用当前菜名自动搜一次，结果以缩略图网格展示，点任意一张即选用——不自动填第一张，避免通用图库搜不准时配错图。可手动改关键词重搜。
+- **中文搜索 + 英文兜底**：优先用中文原名搜（lang=zh）；搜不到时自动用内置"中→英菜名映射表"（约 50 条常见菜）的英文词再搜一次。
+- **选中即压缩存储**：选中图走方案A的 Canvas 压缩转 Base64 存进菜谱（离线可用）；跨域压缩失败时兜底存 largeImageURL 外链并提示。
+- **Key 管理**：Pixabay API Key 存 localStorage，首次使用弹窗引导填写（附获取方式），只存本机。
+- **错误处理**：Key 错(401/403)、超额(429)、网络失败、无结果，各给明确中文提示，不静默失败。
+
+### Testing
+- `node --check app.js`：SYNTAX_OK。
+- CSS 花括号配平：550 open / 550 close，balanced。
+- DOM id 双向核对：HTML 8 个 stock 相关 id（recipeImageStockButton/stockPickerModal/stockModalMask/stockSearchInput/stockSearchButton/stockCloseButton/stockStatus/stockResultGrid）与 app.js 引用一一对应。
+- Node 静态验证纯逻辑：`buildStockQuery` 映射命中（红烧肉→braised pork belly）/未命中（原样中文）/空串正确；Pixabay 搜索 URL 拼接正确，中文 q 正确 encodeURIComponent（红烧肉→%E7%BA%A2%E7%83%A7%E8%82%89）。
+- **浏览器联调缺口 + 国内直连实测待办**：searchPixabay（fetch）、compressImageFromUrl（Canvas 跨域导出）依赖浏览器和真实 Key+网络，Node 无法测；本机无 Chrome 未做端到端。**需用户填真实 Pixabay Key 后在浏览器验证**：① 搜索（含中文关键词）能否返回结果 ② 候选图缩略图显示 ③ 选图后压缩填入预览 ④ 保存后卡片/详情页显示 ⑤ **国内网络能否直连 pixabay.com/api/**（服务器在海外，连通性未知，若不通需另议后端代理方案）⑥ Pixabay 图跨域 canvas 导出是否成功（失败会走外链兜底）。
+
+### Notes
+- `index.html`：`.image-action-row` 内新增"🔍 从图库找图"按钮 `#recipeImageStockButton`（放本地选图与 AI 生成之间）；backToTop 按钮后新增图库弹层 `#stockPickerModal`（遮罩 + 搜索栏 + 结果网格 + 状态区 + 来源说明）。
+- `app.js`：handleImageGenerate 后新增 Pixabay 区——常量 `PIXABAY_KEY_STORAGE`/`PIXABAY_SEARCH_URL`、`DISH_KEYWORD_MAP`（约 50 条中→英菜名）、函数 `getPixabayKey`/`promptForPixabayKey`/`buildStockQuery`/`searchPixabay`/`compressImageFromUrl`/`openStockPicker`/`closeStockPicker`/`runStockSearch`/`renderStockResults`/`selectStockPhoto` + 变量 stockLastLargeUrl/setStockStatus；bindEvents 内绑定图库按钮、搜索按钮、搜索框回车、关闭按钮、遮罩点击、结果网格事件委托。复用方案A的压缩常量（IMAGE_MAX_EDGE/IMAGE_TARGET_BYTES/IMAGE_QUALITY_STEPS/estimateDataUrlBytes）。
+- `styles.css`：末尾追加 `.image-stock-btn`(青色系) + `.stock-modal` 系列弹层样式（遮罩、卡片、搜索栏、结果网格自适应列、缩略图 4:3、hover 高亮）+ 手机端全屏适配。
+- `docs/product-plan.md`：§9.5 与 §10 记录 Pixabay 图库已接入、中文搜索、局限与国内直连实测待办。
+- 回滚方式：`git checkout 8a8d11f -- app.js index.html styles.css docs/product-plan.md`，或 `git revert` 本轮提交。
+
+## 2026-07-08 - Task: 产品计划书大重构
+
+### What was done
+- **重排章节结构**：应用户要求把所有待办集中、优化文档、补齐不足与建议。将原 12 章重排为 9 章，把用户最关心的三件事提到正文前部——§3 统一待办清单、§4 当前不足与风险、§5 合理建议，历史完成项下沉到附录 §9.1 表格。
+- **新增 §3 统一待办总表**：把原先散落在 §9.5「待实现清单」、§10 各阶段、数据扩充、Pixabay 实测等至少 5 处的待办，收拢成一张按优先级排列的总表（立即做/近期/中期/长期），每条注明谁来做。立即项突出：Pixabay 国内直连实测、直连不通的后端代理应对、Key 安全决策。
+- **新增 §4 当前不足与风险**：基于核查的代码事实如实写——密钥明文存 localStorage、数据全量覆盖无并发锁、无登录无追责、Base64 拖慢同步、外部依赖不可控、无自动化测试。
+- **新增 §5 合理建议**：按投入产出比排 6 条，每条给「做什么+为什么+代价」，用业务语言。
+- **消除重复与过时**：图片方案原本在 §9.5 和 §10 各写一遍，现合并到 §6.1 一处（三种存储方案对比表 + 三种配图来源）；删掉过时的「AI 体验/美食氛围待改进」（早已完成）；统一状态标记为 ✅/🔄/⬜/💡，去掉「✅占位」等混用。
+- **保留全部高价值内容**：AI 输出 JSON 结构、权限表格、架构图、UI/详情页草图、内测邀请语均无丢失，各归其位（草图归附录 §9.2、邀请语归 §9.3）。
+
+### Testing
+- grep 校验关键信息点全部保留：Pixabay(14)、方案 B(2)、88 道(1)、管理员权限(2)、小程序(10)、IMAGE_GEN_ENABLED(1)、lang=zh(1)、HowToCook(2)、localStorage(1)、乐观锁(1)、PWA(1)。
+- 章节层级校验：标题编号连续 1-9，子章节完整无断层，markdown 层级正确。
+- 通读确认无内容矛盾、无重复章节。
+- 纯文档任务，无代码改动，无需语法检查。
+
+### Notes
+- `docs/product-plan.md`：整篇重写。新结构——1 愿景/2 已上线能力/3 统一待办/4 不足与风险/5 建议/6 关键功能方案(图片/AI视频/协作权限)/7 架构/8 平台演进/9 附录(已完成存档表/UI草图/邀请语)。
+- 回滚方式：`git checkout 147b206 -- docs/product-plan.md`，或 `git revert` 本轮提交。
+
+## 2026-07-08 - Task: 全站浅色苹果风换肤（去 AI 味）
+
+### What was done
+- **动因**：用户反馈网站"AI 味太重，一看就是 codex 这种 AI 做的"——根源是深色底 + 高饱和霓虹橙 + 满屏渐变/发光/文字渐变。经两轮样板（showcase-light 杂志风、showcase-apple 苹果风）确认，用户选定"苹果排版 + 苹果动画 + 番茄红暖色点缀"，锁死浅色主视觉（可视化调色不放开，几何调整保留）。
+- **纯 CSS 换肤**：只改 styles.css。经核查 app.js 的 initScrollFx 已含完整苹果式动画（滚动渐显/hero 视差/卡片景深/步骤逐条/手机入场），HTML 的 data-reveal 标记与 .panel 结构齐备，故 JS 和 HTML 一行未动，动画骨架完整保留。
+- **:root 变量体系深色→浅色**：--bg 改苹果浅灰 #f5f5f7、--card 纯白、--text 苹果近黑 #1d1d1f、--muted #6e6e73、--line 淡灰、--accent 番茄红 #e8543f；--shadow 系列改苹果极淡投影；--glow 由发光改为极淡投影（保变量名避免引用失效）；字体系统字体优先（-apple-system/SF）；color-scheme 改 light。
+- **消灭三大 AI 味来源**：linear-gradient 从 40+ 处清到 0（主按钮橙金渐变 ×15、卡片/面板渐变 ×6、danger/hero/图库按钮等逐个改纯色）；文字渐变 background-clip:text 从 2 处清到 0（站点大标题、随机结果菜名改纯色）；大范围发光 box-shadow(0 0 40-60px) 全部改为苹果式向下柔和投影。
+- **配套浅色化**：暖白半透明底 rgba(255,220,180,0.0x) 共 31 处按深浅映射为 #f5f5f7/#ececf0/#e6e6ea；番茄红按钮上的深色文字 #1a0d00 ×14 + #1a120a ×1 改白色；输入框焦点环、hero 光晕、蒸汽装饰、做法页顶栏毛玻璃、图库弹层等深色残留全部改浅色。
+- **保留项**：圆角体系（--panel-radius 等几何变量）、全部滚动动画、苹果缓动曲线（--ease 调为 cubic-bezier(0.28,0.11,0.32,1)）、遮罩层半透明黑、图片浮层深底（合理）。
+
+### Testing
+- CSS 花括号配平：547 / 547，balanced。
+- 残留清零核查：linear-gradient=0、background-clip:text=0、rgba(255,220,180)=0、#1a0d00=0、大发光(0 0 40/50/60px)=0。
+- app.js / index.html：git status 确认零改动，动画逻辑与 DOM 钩子完好；data-reveal/hero-copy 的 CSS class 仍匹配。
+- 本地 http server：index.html 与 styles.css 均 HTTP 200。
+- **浏览器联调缺口**：本机无 Chrome，未做真机视觉验证。需用户在浏览器实测：① 首页/卡片/详情/各功能面板整体浅色协调 ② 滚动动画（渐显、hero 视差、卡片景深）是否顺滑 ③ 番茄红按钮文字对比度 ④ 可视化调整的几何项（圆角/图高/列宽）仍生效、调色不影响主视觉 ⑤ 手机端。
+
+### Notes
+- `styles.css`：:root 变量体系整体换浅色苹果风；全文件消灭渐变/发光/文字渐变；暖白底与深色文字批量浅色化；hero 光晕、蒸汽、做法页顶栏、图库弹层等深色残留改浅色。app.js、index.html 未改动。
+- `showcase-light.html` / `showcase-apple.html`：样板页保留供日后参考，未删。
+- 回滚方式：`git checkout 340ac81 -- styles.css`，或 `git revert` 本轮提交。换肤只动 styles.css，回滚干净。
+
+## 2026-07-08 - Task: 卡片跳转体验优化（返回位置 + 返回键 + 放大入场动画）
+
+### What was done
+- **修返回后要往上滑的 bug**：详情页用全屏 fixed 层覆盖首页，但原 closeRecipeModal 只隐藏层、没恢复首页滚动位置，导致返回后停在别处。现在 openRecipeModal 进入前记录 `modalReturnScrollY = window.scrollY`，closeRecipeModal 关闭后 `window.scrollTo(0, modalReturnScrollY)`（instant 无滚动过程），返回即回到点卡片时的位置。
+- **卡片放大铺满入场动画（FLIP）**：点卡片时抓取该卡片的位置尺寸（getBoundingClientRect），详情层从"卡片的位置和大小"用 transform scale+translate 起步，rAF 后过渡到铺满全屏（0.42s 苹果缓动）+ 淡入，视觉上是"这张卡片放大成了详情页"。返回用稳妥的缩小淡出（scale 0.92 + 淡出），不强求精准缩回原卡片以避免翻车。
+- **FLIP 定位修正**：卡片 `.recipe-group-card` 本身原来没有可定位的 id（data-id 只在内部 version-pill 上，且卡片按菜品分组），故新增 `data-group-id`（= 分组首个版本 id，正是封面点击打开详情用的 id）；computeCardFlipTransform 先按 data-group-id 找卡片，找不到再用 version-pill 的 data-id 往上 closest 到卡片。
+- **返回键加强**：从灰底胶囊（hover 才变色）改为默认番茄红填充白字 + 柔和阴影 + 更大点击区（padding 12×26、字号 16），像 iOS 主色返回键，常驻 sticky 顶栏；hover 变深、active 缩放反馈。
+- **降级**：prefers-reduced-motion 时 open/close 直接显示/隐藏并恢复位置，不跑放大动画；CSS 里也对 .recipe-modal 关闭过渡。找不到卡片位置时回退纯淡入。
+
+### Testing
+- `node --check app.js`：SYNTAX_OK。
+- CSS 花括号配平：551 / 551，balanced。
+- 静态核对：modalReturnScrollY 记录/恢复链路、computeCardFlipTransform 双重定位（data-group-id + version-pill 兜底）、modal-anim-in/out 类、reduced-motion 分支均就位；确认卡片渲染处已加 data-group-id。
+- 本地 http server：index.html / app.js 均 200。
+- **浏览器联调缺口**：本机无 Chrome，未做真机验证。需浏览器实测：① 点卡片是否从卡片位置放大铺满、顺不顺 ② 返回是否回到点击前位置、视线不跳 ③ 返回键是否醒目好点 ④ 横向滚动行里的卡片点击定位是否正确 ⑤ 手机端 ⑥ reduced-motion 降级。
+
+### Notes
+- `app.js`：新增全局 `modalReturnScrollY` 与 `computeCardFlipTransform(id)`；重写 openRecipeModal（记录滚动位置 + 设 FLIP 起始 transform + rAF 过渡铺满）与 closeRecipeModal（缩小淡出 + transitionend/超时兜底关闭 + 恢复滚动位置）；createRecipeCard 给卡片加 `card.dataset.groupId`。
+- `styles.css`：.recipe-modal 由 modalFade 动画改为 transform+opacity 过渡驱动，新增 .modal-anim-in（铺满态）/.modal-anim-out（缩小淡出）；reduced-motion 段关闭 .recipe-modal 过渡；.recipe-modal-back 改番茄红填充醒目样式 + active 反馈。
+- 回滚方式：`git checkout 208ab34 -- app.js styles.css`，或 `git revert` 本轮提交。
