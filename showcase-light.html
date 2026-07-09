@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>浅色杂志风样板预览 · 我的食谱</title>
+<style>
+  :root {
+    /* 浅色杂志风 · 奶白底 + 番茄红点缀 + 深棕文字 */
+    --bg: #faf7f2;          /* 奶白背景 */
+    --bg-2: #f3ede4;        /* 略深的米色分区 */
+    --card: #ffffff;        /* 纯白卡片 */
+    --text: #2b2420;        /* 深棕近黑正文 */
+    --text-soft: #6f645b;   /* 次要文字 */
+    --muted: #a89e93;       /* 更弱的说明字 */
+    --line: #ece5db;        /* 极细暖灰分割线 */
+    --line-2: #e2d9cc;
+    --brand: #e8543f;       /* 番茄红，克制使用 */
+    --brand-soft: #fbe9e4;  /* 番茄红浅底 */
+    --leaf: #5b8c3e;        /* 叶绿标签 */
+    --leaf-soft: #eaf2e2;
+    --gold: #c98a2b;        /* 暖金，用于耗时等次要标签 */
+    --gold-soft: #f6ecd9;
+    /* 柔和低透明投影，取代发光 */
+    --shadow-sm: 0 2px 10px rgba(60, 45, 30, 0.06);
+    --shadow: 0 8px 28px rgba(60, 45, 30, 0.10);
+    --shadow-lg: 0 18px 50px rgba(60, 45, 30, 0.14);
+    --radius: 20px;
+    --radius-sm: 14px;
+    --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+    /* 衬线标题增加杂志/手账气质 */
+    --serif: "Noto Serif SC", "Songti SC", "STSong", Georgia, serif;
+    --sans: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    color: var(--text);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    line-height: 1.6;
+  }
+
+  /* ===== 顶部导航条 ===== */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px clamp(20px, 5vw, 64px);
+    background: rgba(250, 247, 242, 0.88);
+    -webkit-backdrop-filter: saturate(120%) blur(10px);
+    backdrop-filter: saturate(120%) blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .brand-mark {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .brand-mark .dot { color: var(--brand); }
+  .topbar-actions { display: flex; gap: 10px; }
+
+  /* ===== HERO ===== */
+  .hero {
+    padding: clamp(48px, 9vw, 110px) clamp(20px, 5vw, 64px) clamp(36px, 6vw, 72px);
+    max-width: 1100px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .hero-kicker {
+    display: inline-block;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--brand);
+    font-weight: 700;
+    margin-bottom: 18px;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(34px, 6vw, 64px);
+    line-height: 1.2;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: var(--text);
+  }
+  .hero p {
+    max-width: 560px;
+    margin: 22px auto 0;
+    font-size: clamp(15px, 2vw, 18px);
+    color: var(--text-soft);
+  }
+  .hero-actions {
+    margin-top: 34px;
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* ===== 按钮：纯色，无渐变无发光 ===== */
+  .btn {
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 600;
+    padding: 13px 26px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform 0.15s var(--ease), background 0.2s, box-shadow 0.2s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--brand);
+    color: #fff;
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-primary:hover { background: #d64530; box-shadow: var(--shadow); }
+  .btn-ghost {
+    background: #fff;
+    color: var(--text);
+    border-color: var(--line-2);
+  }
+  .btn-ghost:hover { border-color: var(--brand); color: var(--brand); }
+
+  /* ===== 分区标题 ===== */
+  .section {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: clamp(30px, 5vw, 60px) clamp(20px, 5vw, 64px);
+  }
+  .section-head { margin-bottom: 26px; }
+  .section-head h2 {
+    font-family: var(--serif);
+    font-size: clamp(24px, 3.5vw, 36px);
+    font-weight: 800;
+    color: var(--text);
+  }
+  .section-head p { color: var(--text-soft); margin-top: 8px; max-width: 560px; }
+
+  /* ===== 世界大类 tabs ===== */
+  .tabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+  }
+  .tab {
+    padding: 9px 18px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid var(--line-2);
+    color: var(--text-soft);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s var(--ease);
+  }
+  .tab:hover { border-color: var(--brand); color: var(--brand); }
+  .tab.active {
+    background: var(--brand);
+    color: #fff;
+    border-color: var(--brand);
+  }
+
+  /* ===== 卡片网格 ===== */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+  }
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease);
+  }
+  .card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
+  .card-img {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: var(--bg-2);
+  }
+  .card-img i {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    transition: transform 0.5s var(--ease);
+  }
+  .card:hover .card-img i { transform: scale(1.05); }
+  .card-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+  }
+  .card-body { padding: 18px 18px 20px; }
+  .card-title {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .card-desc {
+    font-size: 14px;
+    color: var(--text-soft);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 14px;
+    min-height: 44px;
+  }
+  .card-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    font-size: 12px;
+    padding: 5px 11px;
+    border-radius: 8px;
+    background: var(--gold-soft);
+    color: var(--gold);
+    font-weight: 600;
+  }
+  .chip.leaf { background: var(--leaf-soft); color: var(--leaf); }
+
+  /* ===== 全屏详情 ===== */
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: var(--bg);
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s var(--ease), visibility 0.3s;
+  }
+  .modal.open { opacity: 1; visibility: visible; }
+  .modal-bar {
+    position: sticky;
+    top: 0;
+    padding: 14px clamp(18px, 5vw, 48px);
+    background: rgba(250, 247, 242, 0.9);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+    z-index: 3;
+  }
+  .back-btn {
+    padding: 9px 18px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid var(--line-2);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--sans);
+  }
+  .back-btn:hover { border-color: var(--brand); color: var(--brand); }
+  .modal-hero {
+    height: clamp(220px, 40vw, 420px);
+    background: var(--bg-2);
+    overflow: hidden;
+  }
+  .modal-hero i {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+  }
+  .modal-content {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: clamp(28px, 5vw, 52px) clamp(20px, 5vw, 32px) 80px;
+  }
+  .modal-content h1 {
+    font-family: var(--serif);
+    font-size: clamp(28px, 4.5vw, 44px);
+    font-weight: 800;
+  }
+  .modal-content .lead {
+    color: var(--text-soft);
+    font-size: 17px;
+    margin-top: 12px;
+  }
+  .meta-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 28px 0;
+  }
+  .meta-box {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    text-align: center;
+  }
+  .meta-box span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+  .meta-box strong { font-size: 15px; }
+  .block-title {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 700;
+    margin: 32px 0 16px;
+    padding-left: 12px;
+    border-left: 4px solid var(--brand);
+  }
+  .ing-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .ing-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 14px;
+  }
+  .ing-item .amt { color: var(--muted); }
+  .steps { display: flex; flex-direction: column; gap: 14px; }
+  .step {
+    display: flex;
+    gap: 14px;
+    padding: 16px 18px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+  }
+  .step.in { opacity: 1; transform: none; }
+  .step .num {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--brand);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step p { margin: 2px 0 0; color: var(--text); }
+
+  /* ===== 对照说明条 ===== */
+  .compare-note {
+    max-width: 1180px;
+    margin: 10px auto 0;
+    padding: 18px clamp(20px, 5vw, 64px);
+  }
+  .compare-note .box {
+    background: var(--brand-soft);
+    border: 1px solid #f2cfc6;
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    font-size: 14px;
+    color: #9a4433;
+  }
+  .compare-note b { color: var(--brand); }
+
+  footer {
+    text-align: center;
+    padding: 40px 20px 60px;
+    color: var(--muted);
+    font-size: 13px;
+    border-top: 1px solid var(--line);
+    margin-top: 30px;
+  }
+
+  @media (max-width: 768px) {
+    .meta-row { grid-template-columns: repeat(2, 1fr); }
+    .btn { flex: 1; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand-mark">我的食谱<span class="dot">.</span></div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost">＋ 新增菜谱</button>
+    </div>
+  </div>
+
+  <div class="compare-note">
+    <div class="box">
+      这是<b>浅色杂志风</b>样板预览：奶白底 · 番茄红点缀 · 深棕衬线标题 · 柔和投影，去掉了原来的深色霓虹渐变与发光。数据为示例，正式应用会保留全部现有功能。
+    </div>
+  </div>
+
+  <section class="hero">
+    <span class="hero-kicker">Today's Kitchen</span>
+    <h1>今天，想吃点什么？</h1>
+    <p>收藏你的家常菜、朋友的拿手菜和视频里的灵感。不知道吃什么时，就从这里挑一道。</p>
+    <div class="hero-actions">
+      <button class="btn btn-primary">🎬 AI 生成菜谱</button>
+      <button class="btn btn-ghost">＋ 手动新增</button>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>五个世界的味道</h2>
+      <p>从热气腾腾的家常菜，到只存在于动漫和幻想里的奇想料理。选一个世界，开始今天的探索。</p>
+    </div>
+    <div class="tabs">
+      <div class="tab active">全部</div>
+      <div class="tab">现实中的饭</div>
+      <div class="tab">二次元中的饭</div>
+      <div class="tab">黑暗料理</div>
+      <div class="tab">存在于幻想中的饭</div>
+      <div class="tab">外国菜</div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <div class="modal" id="modal">
+    <div class="modal-bar"><button class="back-btn" id="back">← 返回</button></div>
+    <div class="modal-hero" id="modalHero"><i></i></div>
+    <div class="modal-content" id="modalContent"></div>
+  </div>
+
+  <footer>浅色杂志风样板预览 · 数据为示例 · 正式应用后会保留全部现有功能</footer>
+
+<script>
+  const RECIPES = [
+    { name: "番茄炒蛋", world: "现实中的饭", img: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=1200&q=80", desc: "酸甜开胃、做法稳定的家常菜，嫩滑鸡蛋裹着多汁番茄。", time: "约 15 分钟", cost: "约 12 元", occ: "工作日晚餐", ings: [["番茄","2 个"],["鸡蛋","3 个"],["盐","少许"],["白糖","少许"]], steps: ["鸡蛋打散加少许盐搅匀。","番茄切块，喜欢汤汁多可去皮。","热锅下油，鸡蛋炒到凝固盛出。","番茄炒出汁，加盐和糖调味。","倒回鸡蛋翻炒均匀，撒葱花出锅。"] },
+    { name: "黄金蛋包饭", world: "二次元中的饭", img: "https://images.unsplash.com/photo-1567529692333-de9fd6772897?auto=format&fit=crop&w=1200&q=80", desc: "动漫里划开蛋皮、金黄蛋液流淌盖住炒饭的名场面。", time: "约 20 分钟", cost: "约 12 元", occ: "治愈系午餐", ings: [["米饭","1 碗"],["鸡蛋","3 个"],["鸡腿肉","100g"],["番茄酱","2 勺"]], steps: ["鸡肉丁和洋葱炒成番茄鸡肉饭，堆成橄榄形。","鸡蛋加盐打散打匀。","小火化黄油，倒蛋液搅动至半熟滑嫩。","趁流动时离火，整块盖在炒饭上。","上桌划开，让金黄蛋液流淌包住饭。"] },
+    { name: "可乐泡面", world: "黑暗料理", img: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=1200&q=80", desc: "用可乐代替水煮泡面的传说级操作，慎试，纯属娱乐挑战。", time: "约 8 分钟", cost: "约 7 元", occ: "宵夜 / 猎奇", ings: [["方便面","1 包"],["可乐","1 罐"],["鸡蛋","1 个"]], steps: ["可乐倒进锅里加热（小心起泡）。","可乐微沸后下方便面。","打入一个鸡蛋试图中和甜味。","煮软加调料包，鼓起勇气尝一口。"] },
+    { name: "精灵行路面包", world: "存在于幻想中的饭", img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1200&q=80", desc: "《指环王》里精灵的干粮 Lembas，还原成蜂蜜燕麦能量块。", time: "约 35 分钟", cost: "约 18 元", occ: "户外能量补给", ings: [["燕麦","200g"],["面粉","100g"],["蜂蜜","3 勺"],["坚果碎","1 把"]], steps: ["黄油软化和蜂蜜拌匀。","加燕麦、面粉、坚果碎拌成面团。","压成方块，表面划十字。","180 度烤 20 分钟至金黄。","晾凉用叶子或油纸包好。"] },
+    { name: "汤姆柯林斯", world: "外国菜", img: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=1200&q=80", desc: "经典夏日高球鸡尾酒，金酒、柠檬、糖浆和苏打水调成。", time: "约 5 分钟", cost: "—", occ: "饮品", ings: [["金酒","60ml"],["柠檬汁","30ml"],["糖浆","7ml"],["苏打水","适量"]], steps: ["柯林斯杯装满冰块。","加金酒、柠檬汁和糖浆。","搅拌均匀。","苏打水填满，樱桃柠檬片装饰。"] },
+    { name: "糖醋里脊", world: "现实中的饭", img: "https://images.unsplash.com/photo-1625938145312-c88c1373e75f?auto=format&fit=crop&w=1200&q=80", desc: "外酥里嫩、酸甜挂汁的经典宴客菜，孩子最爱。", time: "约 25 分钟", cost: "约 25 元", occ: "宴客菜", ings: [["猪里脊","300g"],["淀粉","适量"],["番茄酱","3 勺"],["白醋","2 勺"]], steps: ["里脊切条，加盐腌制。","裹淀粉糊，下油锅炸至金黄。","复炸一次更酥脆。","调糖醋汁下锅熬稠。","倒入里脊快速翻裹出锅。"] }
+  ];
+
+  const grid = document.getElementById("grid");
+  RECIPES.forEach((r) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="card-img"><i style="background-image:url('${r.img}')"></i><span class="card-badge">${r.world}</span></div>
+      <div class="card-body">
+        <div class="card-title">${r.name}</div>
+        <div class="card-desc">${r.desc}</div>
+        <div class="card-meta"><span class="chip">⏱ ${r.time}</span><span class="chip leaf">${r.occ}</span></div>
+      </div>`;
+    card.addEventListener("click", () => openModal(r));
+    grid.appendChild(card);
+  });
+
+  const modal = document.getElementById("modal");
+  function openModal(r) {
+    document.querySelector("#modalHero i").style.backgroundImage = `url('${r.img}')`;
+    document.getElementById("modalContent").innerHTML = `
+      <h1>${r.name}</h1>
+      <p class="lead">${r.desc}</p>
+      <div class="meta-row">
+        <div class="meta-box"><span>耗时</span><strong>${r.time}</strong></div>
+        <div class="meta-box"><span>成本</span><strong>${r.cost}</strong></div>
+        <div class="meta-box"><span>场景</span><strong>${r.occ}</strong></div>
+        <div class="meta-box"><span>所属</span><strong>${r.world}</strong></div>
+      </div>
+      <div class="block-title">食材清单</div>
+      <div class="ing-list">${r.ings.map(([n,a]) => `<div class="ing-item"><span>${n}</span><span class="amt">${a}</span></div>`).join("")}</div>
+      <div class="block-title">做法步骤</div>
+      <div class="steps">${r.steps.map((s) => `<div class="step"><span class="num">·</span><p>${s}</p></div>`).join("")}</div>`;
+    modal.querySelectorAll(".step .num").forEach((n, i) => n.textContent = i + 1);
+    modal.classList.add("open");
+    modal.scrollTop = 0;
+    document.body.style.overflow = "hidden";
+    const steps = modal.querySelectorAll(".step");
+    steps.forEach((s, i) => { s.style.transitionDelay = (0.1 + i * 0.08) + "s"; requestAnimationFrame(() => s.classList.add("in")); });
+  }
+  function closeModal() { modal.classList.remove("open"); document.body.style.overflow = ""; }
+  document.getElementById("back").addEventListener("click", closeModal);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+
+  document.querySelectorAll(".tab").forEach((t) => {
+    t.addEventListener("click", () => { document.querySelector(".tab.active").classList.remove("active"); t.classList.add("active"); });
+  });
+</script>
+</body>
+</html>

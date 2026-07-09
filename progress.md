@@ -778,3 +778,25 @@
 ### Notes
 - `docs/product-plan.md`：整篇重写。新结构——1 愿景/2 已上线能力/3 统一待办/4 不足与风险/5 建议/6 关键功能方案(图片/AI视频/协作权限)/7 架构/8 平台演进/9 附录(已完成存档表/UI草图/邀请语)。
 - 回滚方式：`git checkout 147b206 -- docs/product-plan.md`，或 `git revert` 本轮提交。
+
+## 2026-07-08 - Task: 全站浅色苹果风换肤（去 AI 味）
+
+### What was done
+- **动因**：用户反馈网站"AI 味太重，一看就是 codex 这种 AI 做的"——根源是深色底 + 高饱和霓虹橙 + 满屏渐变/发光/文字渐变。经两轮样板（showcase-light 杂志风、showcase-apple 苹果风）确认，用户选定"苹果排版 + 苹果动画 + 番茄红暖色点缀"，锁死浅色主视觉（可视化调色不放开，几何调整保留）。
+- **纯 CSS 换肤**：只改 styles.css。经核查 app.js 的 initScrollFx 已含完整苹果式动画（滚动渐显/hero 视差/卡片景深/步骤逐条/手机入场），HTML 的 data-reveal 标记与 .panel 结构齐备，故 JS 和 HTML 一行未动，动画骨架完整保留。
+- **:root 变量体系深色→浅色**：--bg 改苹果浅灰 #f5f5f7、--card 纯白、--text 苹果近黑 #1d1d1f、--muted #6e6e73、--line 淡灰、--accent 番茄红 #e8543f；--shadow 系列改苹果极淡投影；--glow 由发光改为极淡投影（保变量名避免引用失效）；字体系统字体优先（-apple-system/SF）；color-scheme 改 light。
+- **消灭三大 AI 味来源**：linear-gradient 从 40+ 处清到 0（主按钮橙金渐变 ×15、卡片/面板渐变 ×6、danger/hero/图库按钮等逐个改纯色）；文字渐变 background-clip:text 从 2 处清到 0（站点大标题、随机结果菜名改纯色）；大范围发光 box-shadow(0 0 40-60px) 全部改为苹果式向下柔和投影。
+- **配套浅色化**：暖白半透明底 rgba(255,220,180,0.0x) 共 31 处按深浅映射为 #f5f5f7/#ececf0/#e6e6ea；番茄红按钮上的深色文字 #1a0d00 ×14 + #1a120a ×1 改白色；输入框焦点环、hero 光晕、蒸汽装饰、做法页顶栏毛玻璃、图库弹层等深色残留全部改浅色。
+- **保留项**：圆角体系（--panel-radius 等几何变量）、全部滚动动画、苹果缓动曲线（--ease 调为 cubic-bezier(0.28,0.11,0.32,1)）、遮罩层半透明黑、图片浮层深底（合理）。
+
+### Testing
+- CSS 花括号配平：547 / 547，balanced。
+- 残留清零核查：linear-gradient=0、background-clip:text=0、rgba(255,220,180)=0、#1a0d00=0、大发光(0 0 40/50/60px)=0。
+- app.js / index.html：git status 确认零改动，动画逻辑与 DOM 钩子完好；data-reveal/hero-copy 的 CSS class 仍匹配。
+- 本地 http server：index.html 与 styles.css 均 HTTP 200。
+- **浏览器联调缺口**：本机无 Chrome，未做真机视觉验证。需用户在浏览器实测：① 首页/卡片/详情/各功能面板整体浅色协调 ② 滚动动画（渐显、hero 视差、卡片景深）是否顺滑 ③ 番茄红按钮文字对比度 ④ 可视化调整的几何项（圆角/图高/列宽）仍生效、调色不影响主视觉 ⑤ 手机端。
+
+### Notes
+- `styles.css`：:root 变量体系整体换浅色苹果风；全文件消灭渐变/发光/文字渐变；暖白底与深色文字批量浅色化；hero 光晕、蒸汽、做法页顶栏、图库弹层等深色残留改浅色。app.js、index.html 未改动。
+- `showcase-light.html` / `showcase-apple.html`：样板页保留供日后参考，未删。
+- 回滚方式：`git checkout 340ac81 -- styles.css`，或 `git revert` 本轮提交。换肤只动 styles.css，回滚干净。
