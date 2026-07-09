@@ -124,6 +124,11 @@ a {
     transform: none !important;
   }
   html { scroll-behavior: auto; }
+  /* 详情页放大过渡在减弱动效时关闭，直接显示 */
+  .recipe-modal {
+    transition: none !important;
+    transform: none !important;
+  }
 }
 
 /* ===== 通用排版 ===== */
@@ -955,11 +960,25 @@ h3 {
   background: var(--bg);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  animation: modalFade 0.5s var(--ease);
+  /* FLIP 放大入场/退场用 transform+opacity 过渡驱动（JS 设置内联起始态）*/
+  transition: transform 0.42s var(--ease), opacity 0.42s var(--ease);
+  will-change: transform, opacity;
 }
 
 .recipe-modal[hidden] {
   display: none;
+}
+
+/* 入场铺满态：JS 加 modal-anim-in 并清掉内联 transform，过渡到全屏 */
+.recipe-modal.modal-anim-in {
+  transform: none;
+  opacity: 1;
+}
+
+/* 退场：缩小淡出（稳妥，不精准缩回原卡片）*/
+.recipe-modal.modal-anim-out {
+  transform: scale(0.92);
+  opacity: 0;
 }
 
 @keyframes modalFade {
@@ -983,23 +1002,27 @@ h3 {
 .recipe-modal-back {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 11px 22px;
-  font-size: 15px;
+  gap: 7px;
+  padding: 12px 26px;
+  font-size: 16px;
   font-weight: 600;
-  color: var(--text);
-  background: #ececf0;
-  border: 1px solid var(--line);
+  color: #fff;
+  background: var(--accent);
+  border: 1px solid transparent;
   border-radius: 999px;
   cursor: pointer;
-  transition: all 0.4s var(--ease);
+  box-shadow: 0 4px 14px rgba(232, 84, 63, 0.28);
+  transition: transform 0.25s var(--ease), background 0.2s, box-shadow 0.2s;
 }
 
 .recipe-modal-back:hover {
-  background: var(--accent);
-  color: #fff;
-  border-color: transparent;
+  background: var(--accent-hover);
   transform: translateX(-4px);
+  box-shadow: 0 6px 18px rgba(232, 84, 63, 0.36);
+}
+
+.recipe-modal-back:active {
+  transform: translateX(-2px) scale(0.97);
 }
 
 .recipe-modal-body {

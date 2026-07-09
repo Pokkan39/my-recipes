@@ -800,3 +800,24 @@
 - `styles.css`：:root 变量体系整体换浅色苹果风；全文件消灭渐变/发光/文字渐变；暖白底与深色文字批量浅色化；hero 光晕、蒸汽、做法页顶栏、图库弹层等深色残留改浅色。app.js、index.html 未改动。
 - `showcase-light.html` / `showcase-apple.html`：样板页保留供日后参考，未删。
 - 回滚方式：`git checkout 340ac81 -- styles.css`，或 `git revert` 本轮提交。换肤只动 styles.css，回滚干净。
+
+## 2026-07-08 - Task: 卡片跳转体验优化（返回位置 + 返回键 + 放大入场动画）
+
+### What was done
+- **修返回后要往上滑的 bug**：详情页用全屏 fixed 层覆盖首页，但原 closeRecipeModal 只隐藏层、没恢复首页滚动位置，导致返回后停在别处。现在 openRecipeModal 进入前记录 `modalReturnScrollY = window.scrollY`，closeRecipeModal 关闭后 `window.scrollTo(0, modalReturnScrollY)`（instant 无滚动过程），返回即回到点卡片时的位置。
+- **卡片放大铺满入场动画（FLIP）**：点卡片时抓取该卡片的位置尺寸（getBoundingClientRect），详情层从"卡片的位置和大小"用 transform scale+translate 起步，rAF 后过渡到铺满全屏（0.42s 苹果缓动）+ 淡入，视觉上是"这张卡片放大成了详情页"。返回用稳妥的缩小淡出（scale 0.92 + 淡出），不强求精准缩回原卡片以避免翻车。
+- **FLIP 定位修正**：卡片 `.recipe-group-card` 本身原来没有可定位的 id（data-id 只在内部 version-pill 上，且卡片按菜品分组），故新增 `data-group-id`（= 分组首个版本 id，正是封面点击打开详情用的 id）；computeCardFlipTransform 先按 data-group-id 找卡片，找不到再用 version-pill 的 data-id 往上 closest 到卡片。
+- **返回键加强**：从灰底胶囊（hover 才变色）改为默认番茄红填充白字 + 柔和阴影 + 更大点击区（padding 12×26、字号 16），像 iOS 主色返回键，常驻 sticky 顶栏；hover 变深、active 缩放反馈。
+- **降级**：prefers-reduced-motion 时 open/close 直接显示/隐藏并恢复位置，不跑放大动画；CSS 里也对 .recipe-modal 关闭过渡。找不到卡片位置时回退纯淡入。
+
+### Testing
+- `node --check app.js`：SYNTAX_OK。
+- CSS 花括号配平：551 / 551，balanced。
+- 静态核对：modalReturnScrollY 记录/恢复链路、computeCardFlipTransform 双重定位（data-group-id + version-pill 兜底）、modal-anim-in/out 类、reduced-motion 分支均就位；确认卡片渲染处已加 data-group-id。
+- 本地 http server：index.html / app.js 均 200。
+- **浏览器联调缺口**：本机无 Chrome，未做真机验证。需浏览器实测：① 点卡片是否从卡片位置放大铺满、顺不顺 ② 返回是否回到点击前位置、视线不跳 ③ 返回键是否醒目好点 ④ 横向滚动行里的卡片点击定位是否正确 ⑤ 手机端 ⑥ reduced-motion 降级。
+
+### Notes
+- `app.js`：新增全局 `modalReturnScrollY` 与 `computeCardFlipTransform(id)`；重写 openRecipeModal（记录滚动位置 + 设 FLIP 起始 transform + rAF 过渡铺满）与 closeRecipeModal（缩小淡出 + transitionend/超时兜底关闭 + 恢复滚动位置）；createRecipeCard 给卡片加 `card.dataset.groupId`。
+- `styles.css`：.recipe-modal 由 modalFade 动画改为 transform+opacity 过渡驱动，新增 .modal-anim-in（铺满态）/.modal-anim-out（缩小淡出）；reduced-motion 段关闭 .recipe-modal 过渡；.recipe-modal-back 改番茄红填充醒目样式 + active 反馈。
+- 回滚方式：`git checkout 208ab34 -- app.js styles.css`，或 `git revert` 本轮提交。
