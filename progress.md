@@ -821,3 +821,25 @@
 - `app.js`：新增全局 `modalReturnScrollY` 与 `computeCardFlipTransform(id)`；重写 openRecipeModal（记录滚动位置 + 设 FLIP 起始 transform + rAF 过渡铺满）与 closeRecipeModal（缩小淡出 + transitionend/超时兜底关闭 + 恢复滚动位置）；createRecipeCard 给卡片加 `card.dataset.groupId`。
 - `styles.css`：.recipe-modal 由 modalFade 动画改为 transform+opacity 过渡驱动，新增 .modal-anim-in（铺满态）/.modal-anim-out（缩小淡出）；reduced-motion 段关闭 .recipe-modal 过渡；.recipe-modal-back 改番茄红填充醒目样式 + active 反馈。
 - 回滚方式：`git checkout 208ab34 -- app.js styles.css`，或 `git revert` 本轮提交。
+
+## 2026-07-09 - Task: 修复详情页跳转 bug + 重做入场动画（稳健版）
+
+### What was done
+- **修复上一提交(24882c8)引入的严重 bug**：用户反馈"除编辑菜谱外其他都无法跳转，且手机/电脑现象不同"。定位根因是上次给 openRecipeModal 加的 FLIP 入场动画实现脆弱——JS 给 fixed 全屏详情层设内联 `transform: scale(极小)+translate` 与 `opacity:0` 起步，靠 requestAnimationFrame 清空恢复；一旦 rAF 时机/transition 触发不顺，详情层就卡在"缩小+透明"的中间态，看起来像没打开/无反应。transform 作用在 fixed 层改变包含块 + will-change，跨设备表现不一致，正是手机电脑现象不同的原因。
+- **换成纯 CSS keyframes 动画（零风险）**：核心原则改为"JS 只切 class 和 hidden，绝不设内联 transform/opacity"。入场加 .modal-opening（modalZoomIn：92% 缩放 + 轻微上移 淡入放大到铺满），退场加 .modal-closing（modalZoomOut 缩小淡出）。keyframes + animation-fill-mode:both 保证动画结束一定停在正常全屏态，绝不卡中间；即使动画被禁/失败，modal 也是干净的 hidden=false 全屏显示，跳转永远可靠。
+- **退场收尾改用 animationend**（keyframes 必触发，比 transitionend 稳）+ 380ms setTimeout 兜底双保险。
+- **保留**：返回滚动位置修复（modalReturnScrollY 记录/恢复）、番茄红醒目返回键样式。
+- **清理脆弱代码**：删除 computeCardFlipTransform 函数、createRecipeCard 的 card.dataset.groupId、旧的 .modal-anim-in/.modal-anim-out/modalFade（已 grep 确认无其它引用）。放弃"从卡片精确位置放大"的 FLIP（脆弱、跨设备不一致），改从屏幕中心缩放放大（观感接近、稳定）。
+
+### Testing
+- `node --check app.js`：SYNTAX_OK。
+- CSS 花括号配平：556 / 556，balanced。
+- 旧符号残留核查全为 0：computeCardFlipTransform / modal-anim-in / modal-anim-out / modalFade / dataset.groupId / data-group-id。
+- 新符号在位：modal-opening / modal-closing / modalZoomIn / modalZoomOut。
+- 核心保证核对：open/close 函数内确认无任何 style.transform / style.opacity 内联赋值（bug 根源已根除）；animationend + 380ms 兜底在位。
+- **浏览器联调缺口**：本机无 Chrome/浏览器，未做真机验证。需在**手机和电脑各实测**：① 点卡片/今天吃什么/配一桌菜能否正常打开详情页（核心，之前坏的就是这个）② 返回是否回到点击前位置 ③ 放大入场/缩小退场动画是否顺 ④ reduced-motion 降级。
+
+### Notes
+- `app.js`：openRecipeModal 去掉全部 FLIP 内联样式与 computeCardFlipTransform 调用，改为 remove(closing/opening)→offsetWidth 重排→add(modal-opening)；closeRecipeModal 改用 animationend + 380ms 兜底，保留 window.scrollTo 恢复位置；删除 computeCardFlipTransform 函数与 createRecipeCard 的 dataset.groupId。
+- `styles.css`：.recipe-modal 去掉 transition/will-change；新增 @keyframes modalZoomIn/modalZoomOut 与 .modal-opening/.modal-closing；reduced-motion 下 animation:none；删除旧 .modal-anim-in/out 与 modalFade。返回键样式不动。
+- 回滚方式：`git checkout 24882c8 -- app.js styles.css`，或 `git revert` 本轮提交。

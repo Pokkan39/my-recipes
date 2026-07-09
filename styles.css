@@ -960,30 +960,38 @@ h3 {
   background: var(--bg);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  /* FLIP 放大入场/退场用 transform+opacity 过渡驱动（JS 设置内联起始态）*/
-  transition: transform 0.42s var(--ease), opacity 0.42s var(--ease);
-  will-change: transform, opacity;
 }
 
 .recipe-modal[hidden] {
   display: none;
 }
 
-/* 入场铺满态：JS 加 modal-anim-in 并清掉内联 transform，过渡到全屏 */
-.recipe-modal.modal-anim-in {
-  transform: none;
-  opacity: 1;
+/* 入场：从 92% 缩放 + 轻微上移 放大淡入到铺满全屏。
+   纯 keyframes 驱动 + fill-mode:both，动画结束一定停在正常态，绝不卡中间。 */
+@keyframes modalZoomIn {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to   { opacity: 1; transform: none; }
 }
 
-/* 退场：缩小淡出（稳妥，不精准缩回原卡片）*/
-.recipe-modal.modal-anim-out {
-  transform: scale(0.92);
-  opacity: 0;
+/* 退场：缩小淡出 */
+@keyframes modalZoomOut {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: scale(0.96) translateY(6px); }
 }
 
-@keyframes modalFade {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.recipe-modal.modal-opening {
+  animation: modalZoomIn 0.34s var(--ease) both;
+}
+
+.recipe-modal.modal-closing {
+  animation: modalZoomOut 0.26s var(--ease) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recipe-modal.modal-opening,
+  .recipe-modal.modal-closing {
+    animation: none;
+  }
 }
 
 .recipe-modal-bar {

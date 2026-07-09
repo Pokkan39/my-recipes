@@ -1864,8 +1864,6 @@ function createRecipeCard(group) {
     ? `<img src="${escapeAttr(coverRecipe.image)}" alt="${escapeAttr(group.name)}">`
     : `<span class="recipe-thumb-placeholder">🍲</span>`;
   card.className = `recipe-group-card${isActiveGroup ? " is-active" : ""}`;
-  // 卡片封面点击会用第一个版本的 id 打开详情；标记它便于 FLIP 放大动画定位到这张卡
-  card.dataset.groupId = group.recipes[0].id;
   card.innerHTML = `
     <button class="recipe-group-main" type="button">
       <span class="recipe-thumb">${coverMarkup}</span>
@@ -2108,43 +2106,12 @@ function renderDetail(target = recipeDetail) {
 
 let modalReturnScrollY = 0; // 记录进入详情前的首页滚动位置，返回时恢复
 
-// 计算被点卡片相对视口的起始 transform（用于 FLIP 放大入场：从卡片位置放大铺满）
-function computeCardFlipTransform(id) {
-  // 找到当前视口里对应这道菜的卡片 DOM：
-  // 1) 卡片封面点击传的是分组首个版本 id，对应卡片的 data-group-id；
-  // 2) 若是点某个版本 pill 进来的，用 pill 的 data-id 往上找它所在的卡片。
-  let card = document.querySelector(`.recipe-group-card[data-group-id="${id}"]`);
-  if (!card) {
-    const pill = document.querySelector(`.recipe-group-card .version-pill[data-id="${id}"]`);
-    card = pill ? pill.closest(".recipe-group-card") : null;
-  }
-  if (!card) return null;
-  const rect = card.getBoundingClientRect();
-  if (rect.width === 0 || rect.height === 0) return null;
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  // 详情层是全屏 fixed(inset:0)。让它从"卡片的位置和大小"起步：
-  // 缩放比例取卡片相对视口的尺寸，平移到卡片中心。
-  const scaleX = rect.width / vw;
-  const scaleY = rect.height / vh;
-  const scale = Math.max(scaleX, scaleY); // 用较大比例，视觉上更像卡片放大
-  const cardCenterX = rect.left + rect.width / 2;
-  const cardCenterY = rect.top + rect.height / 2;
-  const translateX = cardCenterX - vw / 2;
-  const translateY = cardCenterY - vh / 2;
-  return `translate(${translateX.toFixed(1)}px, ${translateY.toFixed(1)}px) scale(${scale.toFixed(4)})`;
-}
-
 function openRecipeModal(id) {
   const recipe = recipes.find((item) => item.id === id);
   if (!recipe) return;
 
   // 记录进入前首页滚动位置（返回时恢复，避免"要往上滑"）
   modalReturnScrollY = window.scrollY || window.pageYOffset || 0;
-
-  // 先算 FLIP 起始 transform（要在 renderList 前，趁被点卡片还在原位）
-  const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const startTransform = prefersReduced ? null : computeCardFlipTransform(id);
 
   selectedId = id;
   renderList();
@@ -2155,57 +2122,40 @@ function openRecipeModal(id) {
   recipeModal.scrollTop = 0;
   recipeModalBody.scrollTop = 0;
 
-  // FLIP 放大入场：从卡片位置起步 → 放大铺满全屏
-  recipeModal.classList.remove("modal-anim-in");
-  if (startTransform) {
-    recipeModal.style.transformOrigin = "center center";
-    recipeModal.style.transform = startTransform;
-    recipeModal.style.opacity = "0";
-    // 强制回流后下一帧过渡到铺满态
-    void recipeModal.offsetWidth;
-    requestAnimationFrame(() => {
-      recipeModal.classList.add("modal-anim-in");
-      recipeModal.style.transform = "";
-      recipeModal.style.opacity = "";
-    });
-  } else {
-    // 降级：清掉内联 transform，走 CSS 的 modalFade 纯淡入
-    recipeModal.style.transform = "";
-    recipeModal.style.opacity = "";
-  }
+  // 入场动画：纯 CSS keyframes 驱动（JS 不设内联 transform/opacity，
+  // 动画结束由 fill-mode 停在正常全屏态，绝不会卡在中间态）。
+  recipeModal.classList.remove("modal-closing", "modal-opening");
+  void recipeModal.offsetWidth; // 强制重排，确保动画可重播
+  recipeModal.classList.add("modal-opening");
 }
 
 function closeRecipeModal() {
-  const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
   const finish = () => {
     recipeModal.hidden = true;
-    recipeModal.classList.remove("modal-anim-in", "modal-anim-out");
-    recipeModal.style.transform = "";
-    recipeModal.style.opacity = "";
+    recipeModal.classList.remove("modal-opening", "modal-closing");
     document.body.style.overflow = "";
     // 恢复首页到点击前的位置（instant，不要滚动过程）
     window.scrollTo(0, modalReturnScrollY);
   };
 
+  const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (prefersReduced) {
     finish();
     return;
   }
 
-  // 退场：稳妥的缩小淡出（不强求精准缩回原卡片，避免翻车）
-  recipeModal.classList.remove("modal-anim-in");
-  recipeModal.classList.add("modal-anim-out");
+  // 退场动画：缩小淡出，animationend 后收尾（keyframes 一定触发，比 transitionend 稳）
+  recipeModal.classList.remove("modal-opening");
+  recipeModal.classList.add("modal-closing");
   let done = false;
   const onEnd = () => {
     if (done) return;
     done = true;
-    recipeModal.removeEventListener("transitionend", onEnd);
+    recipeModal.removeEventListener("animationend", onEnd);
     finish();
   };
-  recipeModal.addEventListener("transitionend", onEnd);
-  // 兜底：过渡未触发时也要关闭
-  setTimeout(onEnd, 400);
+  recipeModal.addEventListener("animationend", onEnd);
+  setTimeout(onEnd, 380); // 兜底：动画未触发时也要关闭
 }
 
 function openNewEditor() {
