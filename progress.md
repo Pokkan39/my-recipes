@@ -843,3 +843,117 @@
 - `app.js`：openRecipeModal 去掉全部 FLIP 内联样式与 computeCardFlipTransform 调用，改为 remove(closing/opening)→offsetWidth 重排→add(modal-opening)；closeRecipeModal 改用 animationend + 380ms 兜底，保留 window.scrollTo 恢复位置；删除 computeCardFlipTransform 函数与 createRecipeCard 的 dataset.groupId。
 - `styles.css`：.recipe-modal 去掉 transition/will-change；新增 @keyframes modalZoomIn/modalZoomOut 与 .modal-opening/.modal-closing；reduced-motion 下 animation:none；删除旧 .modal-anim-in/out 与 modalFade。返回键样式不动。
 - 回滚方式：`git checkout 24882c8 -- app.js styles.css`，或 `git revert` 本轮提交。
+
+## 2026-07-09 - Task: 建立统一全屏视图导航、返回与浏览器历史
+
+### What was done
+- 将今天吃什么、配一桌菜、按食材查菜、厨具筛选、购物清单、外观调整、操作日志和菜谱编辑统一纳入全屏站内视图。
+- 所有站内视图自动生成一致的顶部返回栏；原入口和关闭按钮继续沿用原有 DOM 钩子与业务处理函数。
+- 建立统一历史状态：首页、功能视图和菜谱详情均写入浏览器历史；页面返回键、浏览器后退和手机系统返回走同一套关闭链路。
+- 进入全屏视图时锁定首页滚动并记录位置，返回首页后恢复；从功能视图进入菜谱详情时保留底层视图和滚动状态。
+- 保留详情页纯 CSS keyframes 入退场方案，没有重新引入内联 transform/opacity 起步逻辑。
+
+### Testing
+- `node --check app.js`：通过，JavaScript 无语法错误。
+- `git diff --check`：通过，无空白错误；仅出现仓库既有的 LF/CRLF 提示。
+- 静态核对：8 个主要功能区均包含 `.app-view[data-view]`；统一返回键、`pushState/replaceState/popstate/history.back` 链路均已接入。
+- 本地 `python -m http.server 4173` 已启动，静态服务可运行。
+- 浏览器自动化验证未执行：当前环境缺少 Chrome/Chromium。仍需在桌面和手机实测入口打开、顶部返回、浏览器后退、手机系统返回及“功能视图 → 菜谱详情 → 返回”的历史层级。
+
+### Notes
+- `index.html`：为 8 个主要功能面板补充统一视图标记，保留原 id/class 钩子。
+- `app.js`：新增统一视图注册、打开、关闭、返回和历史状态管理；各功能入口及详情页接入统一导航。
+- `styles.css`：新增全屏视图、粘性返回栏、移动端与 reduced-motion 降级样式。
+- `progress.md`：追加本轮实现与验证记录。
+- 回滚方式：恢复本轮修改前的 `index.html`、`app.js`、`styles.css` 与 `progress.md`；若按提交回滚，可在提交后执行 `git revert <本轮提交>`。
+
+## 2026-07-09 - Task: 替换 Hero 为本地浮世绘 SVG 并强化竞争力文案
+
+### What was done
+- 将首屏内联装饰图替换为独立本地 SVG，不再依赖外部图片；插画以旭日、富士山、海浪和“家传食谱”卷册表达产品定位。
+- 重写首屏标题与说明，明确“视频成谱、食材厨具反查、选菜到采购闭环”三项差异化能力。
+- 新增三条可快速扫读的竞争力证据，并保留原有 AI 生成、新增菜谱和工具入口。
+- 同步更新默认外观文案，确保首次访问与恢复默认外观后仍显示新版定位。
+- 补充桌面、平板和手机尺寸适配，浮世绘主视觉在各断点均保留展示。
+
+### Testing
+- `node --check app.js`：通过，JavaScript 无语法错误。
+- `git diff --check`：通过，无空白错误；仅出现仓库既有的 LF/CRLF 提示。
+- 静态核对：`index.html` 已引用 `assets/ukiyo-recipe-hero.svg`，本地 SVG 含 title/desc，Hero 新文案与三项优势标记均存在。
+- 浏览器视觉联调未执行：当前环境缺少 Chrome/Chromium；仍需人工确认不同屏宽下插画比例、文案换行和按钮首屏占用。
+
+### Notes
+- `assets/ukiyo-recipe-hero.svg`：新增本地浮世绘 Hero 插画。
+- `index.html`：替换首屏插画引用，重写定位文案并新增三项竞争力证据。
+- `app.js`：更新默认外观标题、小标签和说明文案。
+- `styles.css`：新增竞争力证据与本地插画的桌面、平板、手机样式。
+- `progress.md`：追加本轮实现与验证记录。
+- 回滚方式：恢复本轮修改前的 `index.html`、`app.js`、`styles.css`、`progress.md`，并删除 `assets/ukiyo-recipe-hero.svg`；若按提交回滚，可在提交后执行 `git revert <本轮提交>`。
+
+## 2026-07-09 - Task: 全站换成日系和纸、藏青、朱红、宋体主题
+
+### What was done
+- 将全站基础色从浅灰苹果风改为和纸米白，正文使用墨色，结构与链接使用藏青，主要操作使用朱红。
+- 为页面加入纯 CSS 和纸纤维纹理和青海波分隔带，不依赖图片资源。
+- 标题、眉题和关键菜名统一采用宋体/明朝体字体栈，正文继续使用易读黑体字体栈。
+- 将圆润胶囊式控件整体收敛为版画式小圆角硬边，并给主要面板加入藏青顶边，强化视觉层级。
+- 将全站残留的苹果灰输入区、卡片底和毛玻璃顶栏替换为和纸色阶；同步更新外观设置的默认主色、背景色和面板圆角。
+
+### Testing
+- `node --check app.js`：通过，JavaScript 无语法错误。
+- `git diff --check`：通过，无空白错误；仅出现仓库既有的 LF/CRLF 提示。
+- 静态核对：主题变量已切换为 `#f4ede0` 和纸、`#1b3a5b` 藏青、`#c1440e` 朱红；宋体字体栈、青海波分隔带和藏青面板顶边均存在。
+- 残留核对：旧苹果灰 `#f5f5f7/#ececf0/#e6e6ea`、SF Pro 字体和苹果风注释已清除。
+- 浏览器视觉联调未执行：当前环境缺少 Chrome/Chromium；仍需人工确认长表单、弹层、手机端控件及用户已有自定义外观数据下的整体协调性。
+
+### Notes
+- `styles.css`：重构全站主题变量、字体、和纸纹理、青海波纹样、按钮圆角、面板边框及各类浅色控件背景。
+- `app.js`：更新默认主色、背景色和面板圆角，使恢复默认外观与新主题一致。
+- `progress.md`：追加本轮实现与验证记录。
+- 回滚方式：恢复本轮修改前的 `styles.css`、`app.js` 与 `progress.md`；若按提交回滚，可在提交后执行 `git revert <本轮提交>`。
+
+## 2026-07-09 - Task: 增强卡片与页面转场动画并修复移动端观察器
+
+### What was done
+- 将菜谱卡片入场改为轻微上移淡入，并为手机端动态卡片加入最多六级的短暂错峰，使列表出现更有层次且不过度拖延。
+- 修复手机端观察器只处理初始化卡片的问题：列表每次动态重绘后都会收集并观察新卡片，桌面与手机断点切换时也会同步处理。
+- 增加旧版媒体查询监听兼容路径；不支持 IntersectionObserver 时直接显示卡片，避免内容停留在入场前状态。
+- 将详情页缩放转场收敛为轻微纵向滑入/滑出，减少和纸版画主题下不协调的弹性缩放感。
+- 将卡片桌面与手机圆角统一为 3px，并将手机阴影调整为墨色与藏青色阶，保持新主题一致。
+
+### Testing
+- `node --check app.js`：通过，JavaScript 无语法错误。
+- `git diff --check`：通过，无空白错误；仅出现仓库既有的 LF/CRLF 提示。
+- 静态核对：动态列表 MutationObserver 会在每次重绘后调用卡片收集与手机观察同步；新增卡片使用 `data-mobile-observed` 防止重复观察。
+- 静态核对：移动端错峰变量 `--card-enter-delay` 已接入动画，断点切换同时兼容 `addEventListener` 与旧版 `addListener`。
+- 浏览器视觉联调未执行：当前环境缺少 Chrome/Chromium；仍需真机确认快速筛选重绘、横向卡片行、桌面与手机旋转切换时的动画观感。
+
+### Notes
+- `app.js`：修复动态卡片的移动端观察逻辑、断点切换清理与旧浏览器监听兼容。
+- `styles.css`：调整卡片入场、错峰延迟、详情页转场、圆角和手机阴影。
+- `progress.md`：追加本轮实现与验证记录。
+- 回滚方式：恢复本轮修改前的 `app.js`、`styles.css` 与 `progress.md`；若按提交回滚，可在提交后执行 `git revert <本轮提交>`。
+
+## 2026-07-09 - Task: 验证语法、结构、响应式静态约束并更新记录
+
+### What was done
+- 对本轮统一导航、浮世绘 Hero、和纸主题及动效改造执行最终静态验收。
+- 核对 JavaScript 语法、CSS 结构、HTML 标签闭合与 id 唯一性，确认关键业务 DOM 钩子和八个统一全屏视图均保留。
+- 核对手机、超小屏和平板断点，以及减弱动效规则和本地 Hero 资源引用均存在。
+- 检查工作区差异与遗留主题关键字；正式页面文件未发现旧苹果灰或 SF Pro 残留，命中项仅位于未参与本轮改造的独立 Apple 样板页。
+
+### Testing
+- `node --check app.js`：通过，JavaScript 无语法错误。
+- `git diff --check`：通过，无空白错误；仅出现仓库既有的 LF/CRLF 提示。
+- CSS 花括号核对：582 个左花括号 / 582 个右花括号，结构配平。
+- HTML 静态解析：171 个 id，无重复 id、无标签闭合错误、无未闭合标签。
+- 关键钩子核对：菜谱列表、详情、编辑器、AI 面板、世界与场景标签、表单及主要功能面板均存在。
+- 统一视图核对：今天吃什么、配一桌菜、食材反查、厨具筛选、购物清单、外观调整、操作日志和编辑器八个 `data-view` 均存在。
+- 响应式核对：375px、600px、768px、1024px 相关规则以及 `prefers-reduced-motion` 降级规则均存在；本地浮世绘 SVG 文件与引用均存在。
+- 浏览器端到端验证未执行：当前环境缺少 Chrome/Chromium；返回历史栈、真机断点布局和动画观感仍需人工浏览器验收。
+
+### Notes
+- `progress.md`：追加最终静态验收范围、结果与浏览器验证缺口。
+- 本轮验证未修改业务代码、页面结构或样式。
+- 工作区另有未跟踪的 `showcase-japanese.html`，本轮未创建、未修改、未纳入验收结论；`showcase-apple.html` 中的旧主题关键字属于独立样板页，不影响正式站点。
+- 回滚方式：删除 `progress.md` 末尾本条验收记录；本轮无其他文件需要回滚。

@@ -10,9 +10,14 @@
   <header class="hero food-hero">
     <div class="hero-glow" aria-hidden="true"></div>
     <div class="hero-copy">
-      <p id="siteEyebrow" class="eyebrow">Personal Recipe Book</p>
-      <h1 id="siteTitle">今天想吃点什么？</h1>
-      <p id="siteDescription" class="hero-text">把家常菜、朋友拿手菜和刷到的视频灵感收进来。粘贴做菜视频，AI 帮你整理；大家一起补菜谱，慢慢做成自己的美食库。</p>
+      <p id="siteEyebrow" class="eyebrow">一卷会自己长大的家庭食谱</p>
+      <h1 id="siteTitle">从一道灵感，到今晚开饭。</h1>
+      <p id="siteDescription" class="hero-text">把视频教程一键整理成菜谱，再按现有食材与厨具反查能做什么；从随机选菜、配一桌菜到生成购物清单，一站完成全家的开饭决策。</p>
+      <ul class="hero-proof" aria-label="核心优势">
+        <li><strong>省录入</strong><span>视频与字幕直接成谱</span></li>
+        <li><strong>会决策</strong><span>食材、厨具双向反查</span></li>
+        <li><strong>能闭环</strong><span>选菜、配餐、采购一次完成</span></li>
+      </ul>
       <div class="hero-actions">
         <div class="action-group action-group--primary">
           <button id="videoHelperButton" class="primary-button hero-main-action" type="button">✨ AI 生成菜谱</button>
@@ -44,30 +49,22 @@
       <p id="syncStatus" class="sync-status sync-status--checking">正在检查云端同步状态…</p>
     </div>
 
-    <div class="hero-plate" aria-hidden="true">
-      <div class="plate-card plate-card-main">
-        <span class="plate-emoji">🍳</span>
-        <strong>视频变菜谱</strong>
-        <small>粘贴字幕或链接，让 AI 先整理一版</small>
-      </div>
-      <div class="plate-card plate-card-side">
-        <span>🥘 今日灵感</span>
-        <strong>家常快手菜</strong>
-        <small>15-30 分钟上桌</small>
-      </div>
-      <div class="steam steam-one"></div>
-      <div class="steam steam-two"></div>
-    </div>
+    <figure class="hero-plate">
+      <img class="ukiyo-hero-art" src="assets/ukiyo-recipe-hero.svg" alt="朱红旭日、富士山和海浪环绕一卷家庭食谱的浮世绘插画">
+      <figcaption>一卷收下灵感，也替你安排今晚的饭。</figcaption>
+    </figure>
   </header>
 
-  <section class="feature-strip" aria-label="网站功能亮点">
-    <article data-reveal><span>🎬</span><strong>视频生成菜谱</strong><small>看到好吃的，先让 AI 帮忙整理</small></article>
-    <article data-reveal class="d1"><span>👨‍👩‍👧‍👦</span><strong>朋友共同填写</strong><small>家常菜和拿手菜一起补进去</small></article>
-    <article data-reveal class="d2"><span>🍽️</span><strong>今天吃什么</strong><small>按时间、场景随机推荐</small></article>
-    <article data-reveal class="d3"><span>🛒</span><strong>自动购物清单</strong><small>选好菜，一键汇总食材</small></article>
+  <div class="seigaiha-band" aria-hidden="true"></div>
+
+  <section class="feature-strip" aria-label="网站核心能力">
+    <article data-reveal><span>映</span><strong>视频一键成谱</strong><small>链接、字幕和教程文字直接整理成结构化菜谱</small></article>
+    <article data-reveal class="d1"><span>具</span><strong>食材与厨具双反查</strong><small>不只看冰箱里有什么，也判断手边工具能不能做</small></article>
+    <article data-reveal class="d2"><span>膳</span><strong>从选菜到采购闭环</strong><small>随机决定、配一桌菜，再自动汇总购物清单</small></article>
+    <article data-reveal class="d3"><span>卷</span><strong>五个世界家庭共编</strong><small>现实、二次元、幻想与异国做法一起收进家传食谱</small></article>
   </section>
 
-  <section id="whatToEatPanel" class="panel what-to-eat-panel" aria-labelledby="whatToEatTitle">
+  <section id="whatToEatPanel" class="panel app-view what-to-eat-panel" data-view="what-to-eat" aria-labelledby="whatToEatTitle">
     <div class="panel-heading">
       <div>
         <p class="eyebrow">What to Eat</p>
@@ -93,7 +90,7 @@
     <div id="whatToEatResult" class="what-to-eat-result"></div>
   </section>
 
-  <section id="mealPlanPanel" class="panel meal-plan-panel" aria-labelledby="mealPlanTitle">
+  <section id="mealPlanPanel" class="panel app-view meal-plan-panel" data-view="meal-plan" aria-labelledby="mealPlanTitle">
     <div class="panel-heading">
       <div>
         <p class="eyebrow">Meal Plan</p>
@@ -113,7 +110,7 @@
     <div id="mealPlanResult" class="meal-plan-result"></div>
   </section>
 
-  <section id="byIngredientPanel" class="panel by-ingredient-panel" aria-labelledby="byIngredientTitle">
+  <section id="byIngredientPanel" class="panel app-view by-ingredient-panel" data-view="by-ingredient" aria-labelledby="byIngredientTitle">
     <div class="panel-heading">
       <div>
         <p class="eyebrow">By Ingredient</p>
@@ -129,7 +126,7 @@
     <div id="byIngredientResult" class="by-ingredient-result"></div>
   </section>
 
-  <section id="myToolsPanel" class="panel my-tools-panel" aria-labelledby="myToolsTitle">
+  <section id="myToolsPanel" class="panel app-view my-tools-panel" data-view="my-tools" aria-labelledby="myToolsTitle">
     <div class="panel-heading">
       <div>
         <p class="eyebrow">My Tools</p>
@@ -146,7 +143,7 @@
     <div id="myToolsResult" class="my-tools-result"></div>
   </section>
 
-  <section id="shoppingListPanel" class="panel shopping-panel" aria-labelledby="shoppingListTitle">
+  <section id="shoppingListPanel" class="panel app-view shopping-panel" data-view="shopping" aria-labelledby="shoppingListTitle">
     <div class="panel-heading">
       <div>
         <p class="eyebrow">Shopping List</p>
@@ -162,7 +159,7 @@
     </div>
   </section>
 
-  <section id="customizePanel" class="panel customize-panel" aria-labelledby="customizeTitle">
+  <section id="customizePanel" class="panel app-view customize-panel" data-view="customize" aria-labelledby="customizeTitle">
     <div class="panel-heading">
       <div>
         <p class="eyebrow">Customize</p>
@@ -227,7 +224,7 @@
     </form>
   </section>
 
-  <section id="activityLogPanel" class="panel activity-log-panel" aria-labelledby="activityLogTitle" style="display:none">
+  <section id="activityLogPanel" class="panel app-view activity-log-panel" data-view="activity-log" aria-labelledby="activityLogTitle">
     <div class="panel-heading">
       <div>
         <p class="eyebrow">Activity Log</p>
@@ -257,7 +254,7 @@
       <div id="recipeDetail" class="recipe-detail"></div>
     </section>
 
-    <section id="editorPanel" class="panel editor-panel" aria-labelledby="editorTitle">
+    <section id="editorPanel" class="panel app-view editor-panel" data-view="editor" aria-labelledby="editorTitle">
       <div class="panel-heading">
         <div>
           <p class="eyebrow">Edit</p>

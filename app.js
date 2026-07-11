@@ -15,12 +15,12 @@ let isSavingToCloud = false;
 let lastCloudSignature = "";
 
 const DEFAULT_APPEARANCE = {
-  title: "今天想吃点什么？",
-  eyebrow: "Personal Recipe Book",
-  description: "把家常菜、朋友拿手菜和刷到的视频灵感收进来。粘贴做菜视频，AI 帮你整理；大家一起补菜谱，慢慢做成自己的美食库。",
-  brandColor: "#d95f28",
-  backgroundColor: "#fff8ef",
-  panelRadius: 28,
+  title: "从一道灵感，到今晚开饭。",
+  eyebrow: "一卷会自己长大的家庭食谱",
+  description: "把视频教程一键整理成菜谱，再按现有食材与厨具反查能做什么；从随机选菜、配一桌菜到生成购物清单，一站完成全家的开饭决策。",
+  brandColor: "#c1440e",
+  backgroundColor: "#f4ede0",
+  panelRadius: 6,
   imageHeight: 280,
   listWidth: 360
 };
@@ -120,6 +120,81 @@ let selectedDishIds = new Set();
 let activeOccasionFilters = new Set();
 let activeTimeFilters = new Set();
 let activeCategoryTab = "全部";
+
+const APP_VIEW_HOME = "home";
+const appViews = new Map();
+let currentAppView = APP_VIEW_HOME;
+let appViewReturnScrollY = 0;
+
+function registerAppViews() {
+  document.querySelectorAll(".app-view[data-view]").forEach((view) => {
+    appViews.set(view.dataset.view, view);
+    if (!view.querySelector(":scope > .app-view-bar")) {
+      const bar = document.createElement("div");
+      bar.className = "app-view-bar";
+      bar.innerHTML = '<button class="app-view-back" type="button">← 返回</button>';
+      view.prepend(bar);
+      bar.querySelector("button").addEventListener("click", navigateBack);
+    }
+  });
+}
+
+function setAppView(viewName, options = {}) {
+  const nextView = appViews.get(viewName);
+  if (!nextView && viewName !== APP_VIEW_HOME) return;
+  const opening = viewName !== APP_VIEW_HOME;
+
+  appViews.forEach((view, name) => {
+    const isActive = name === viewName;
+    view.classList.toggle("is-open", isActive);
+    view.setAttribute("aria-hidden", String(!isActive));
+    if (view.id === "activityLogPanel") view.style.display = "";
+  });
+
+  if (opening && currentAppView === APP_VIEW_HOME) {
+    appViewReturnScrollY = window.scrollY || window.pageYOffset || 0;
+  }
+  currentAppView = viewName;
+  document.body.classList.toggle("has-app-view", opening);
+  document.body.style.overflow = opening ? "hidden" : "";
+  if (nextView) nextView.scrollTop = 0;
+  if (!opening) window.scrollTo(0, appViewReturnScrollY);
+
+  if (!options.fromHistory) {
+    const state = opening ? { appView: viewName } : { appView: APP_VIEW_HOME };
+    if (options.replace) history.replaceState(state, "");
+    else history.pushState(state, "");
+  }
+}
+
+function openAppView(viewName) {
+  if (currentAppView === viewName) return;
+  setAppView(viewName);
+}
+
+function closeAppView() {
+  if (currentAppView === APP_VIEW_HOME) return;
+  if (history.state?.appView === currentAppView) history.back();
+  else setAppView(APP_VIEW_HOME, { replace: true });
+}
+
+function navigateBack() {
+  if (!recipeModal.hidden) {
+    closeRecipeModal();
+    return;
+  }
+  closeAppView();
+}
+
+function handleAppPopState(event) {
+  const state = event.state || {};
+  if (!recipeModal.hidden && !state.recipeId) closeRecipeModal({ fromHistory: true });
+  if (state.recipeId) {
+    openRecipeModal(state.recipeId, { fromHistory: true });
+  } else {
+    setAppView(state.appView || APP_VIEW_HOME, { fromHistory: true });
+  }
+}
 
 const WORLD_CATEGORY_KEY = "my-recipe-world-categories";
 const DEFAULT_WORLD_CATEGORIES = ["现实中的饭", "二次元中的饭", "黑暗料理", "存在于幻想中的饭", "外国菜"];
@@ -389,6 +464,9 @@ async function refreshFromCloud() {
 }
 
 function bindEvents() {
+  registerAppViews();
+  history.replaceState({ appView: APP_VIEW_HOME }, "");
+  window.addEventListener("popstate", handleAppPopState);
   document.querySelector("#customizeButton").addEventListener("click", toggleCustomizePanel);
   document.querySelector("#closeCustomizeButton").addEventListener("click", toggleCustomizePanel);
   document.querySelector("#resetAppearanceButton").addEventListener("click", resetAppearance);
@@ -747,8 +825,11 @@ function aiFillForm() {
 }
 
 function toggleWhatToEatPanel() {
-  const isOpen = whatToEatPanel.classList.toggle("is-open");
-  if (isOpen) { renderWhatToEatPanel(); scrollPanelIntoView(whatToEatPanel); }
+  if (currentAppView === "what-to-eat") closeAppView();
+  else {
+    renderWhatToEatPanel();
+    openAppView("what-to-eat");
+  }
 }
 
 // 打开面板后直接跳到它（瞬间定位，不做滑动过程）
@@ -833,7 +914,6 @@ function renderWhatToEatResult() {
   `;
   whatToEatResult.querySelectorAll(".what-to-eat-card").forEach((btn) => {
     btn.addEventListener("click", () => {
-      whatToEatPanel.classList.remove("is-open");
       openRecipeModal(btn.dataset.id);
     });
   });
@@ -860,7 +940,6 @@ function randomPickRecipe() {
     </div>
   `;
   document.querySelector("#goToPickedButton").addEventListener("click", () => {
-    whatToEatPanel.classList.remove("is-open");
     openRecipeModal(picked.id);
   });
   document.querySelector("#rerollButton").addEventListener("click", randomPickRecipe);
@@ -874,8 +953,8 @@ function clearWhatToEatFilters() {
 
 // ===== 配一桌菜 =====
 function toggleMealPlanPanel() {
-  const isOpen = mealPlanPanel.classList.toggle("is-open");
-  if (isOpen) scrollPanelIntoView(mealPlanPanel);
+  if (currentAppView === "meal-plan") closeAppView();
+  else openAppView("meal-plan");
 }
 
 const MEAL_STAPLE_KEYWORDS = ["主食", "面", "饭", "饺", "包", "馒头", "粥", "汤", "饼", "粉", "馄饨", "米线"];
@@ -971,7 +1050,6 @@ function generateMealPlan() {
 
   mealPlanResult.querySelectorAll(".meal-plan-card").forEach((btn) => {
     btn.addEventListener("click", () => {
-      mealPlanPanel.classList.remove("is-open");
       openRecipeModal(btn.dataset.id);
     });
   });
@@ -980,8 +1058,8 @@ function generateMealPlan() {
 
 // ===== 我有什么食材 =====
 function toggleByIngredientPanel() {
-  const isOpen = byIngredientPanel.classList.toggle("is-open");
-  if (isOpen) scrollPanelIntoView(byIngredientPanel);
+  if (currentAppView === "by-ingredient") closeAppView();
+  else openAppView("by-ingredient");
 }
 
 function searchByIngredient() {
@@ -1052,16 +1130,17 @@ function searchByIngredient() {
 
   byIngredientResult.querySelectorAll(".by-ingredient-card").forEach((btn) => {
     btn.addEventListener("click", () => {
-      byIngredientPanel.classList.remove("is-open");
       openRecipeModal(btn.dataset.id);
     });
   });
 }
 
 function toggleMyToolsPanel() {
-  const panel = document.querySelector("#myToolsPanel");
-  const isOpen = panel.classList.toggle("is-open");
-  if (isOpen) { renderMyToolsChips(); scrollPanelIntoView(panel); }
+  if (currentAppView === "my-tools") closeAppView();
+  else {
+    renderMyToolsChips();
+    openAppView("my-tools");
+  }
 }
 
 function renderMyToolsChips() {
@@ -1149,7 +1228,6 @@ function renderMyToolsResult() {
   `;
 
   const goDetail = (id) => {
-    document.querySelector("#myToolsPanel").classList.remove("is-open");
     openRecipeModal(id);
   };
 
@@ -1203,8 +1281,11 @@ function askToolAlternative(recipeName, missingTools) {
 }
 
 function toggleShoppingListPanel() {
-  const isOpen = shoppingListPanel.classList.toggle("is-open");
-  if (isOpen) { renderShoppingListPanel(); scrollPanelIntoView(shoppingListPanel); }
+  if (currentAppView === "shopping") closeAppView();
+  else {
+    renderShoppingListPanel();
+    openAppView("shopping");
+  }
 }
 
 function renderShoppingListPanel() {
@@ -1346,8 +1427,8 @@ async function copyShoppingList() {
 }
 
 function toggleCustomizePanel() {
-  const isOpen = customizePanel.classList.toggle("is-open");
-  if (isOpen) scrollPanelIntoView(customizePanel);
+  if (currentAppView === "customize") closeAppView();
+  else openAppView("customize");
 }
 
 function toggleParseArea() {
@@ -1430,7 +1511,7 @@ function renderIngredientRows() {
 
 function openVideoHelper() {
   populateWorldSelect();
-  editorPanel.classList.add("is-open");
+  openAppView("editor");
   editorTitle.textContent = "新增菜谱";
   deleteRecipeButton.style.display = "none";
   document.querySelector("#videoHelperTitle").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1714,7 +1795,7 @@ function fillDraftToForm() {
   fields.time.value = helperDraft.time;
   fields.video.value = helperDraft.video;
   fields.steps.value = helperDraft.steps.join("\n");
-  editorPanel.classList.add("is-open");
+  openAppView("editor");
   fields.name.focus();
 }
 
@@ -2074,7 +2155,10 @@ function renderDetail(target = recipeDetail) {
 
   const inModal = target === recipeModalBody;
   target.querySelector("#editRecipeButton").addEventListener("click", () => {
-    if (inModal) closeRecipeModal();
+    if (inModal) {
+      closeRecipeModal({ fromHistory: true });
+      history.replaceState({ appView: "editor" }, "");
+    }
     openEditEditor(recipe.id);
   });
   target.querySelectorAll(".version-card").forEach((button) => {
@@ -2106,7 +2190,7 @@ function renderDetail(target = recipeDetail) {
 
 let modalReturnScrollY = 0; // 记录进入详情前的首页滚动位置，返回时恢复
 
-function openRecipeModal(id) {
+function openRecipeModal(id, options = {}) {
   const recipe = recipes.find((item) => item.id === id);
   if (!recipe) return;
 
@@ -2127,15 +2211,20 @@ function openRecipeModal(id) {
   recipeModal.classList.remove("modal-closing", "modal-opening");
   void recipeModal.offsetWidth; // 强制重排，确保动画可重播
   recipeModal.classList.add("modal-opening");
+  if (!options.fromHistory) history.pushState({ appView: currentAppView, recipeId: id }, "");
 }
 
-function closeRecipeModal() {
+function closeRecipeModal(options = {}) {
+  if (!options.fromHistory && history.state?.recipeId) {
+    history.back();
+    return;
+  }
   const finish = () => {
     recipeModal.hidden = true;
     recipeModal.classList.remove("modal-opening", "modal-closing");
-    document.body.style.overflow = "";
-    // 恢复首页到点击前的位置（instant，不要滚动过程）
-    window.scrollTo(0, modalReturnScrollY);
+    document.body.style.overflow = currentAppView === APP_VIEW_HOME ? "" : "hidden";
+    // 仅返回首页时恢复进入详情前的位置；站内视图保持自身滚动位置
+    if (currentAppView === APP_VIEW_HOME) window.scrollTo(0, modalReturnScrollY);
   };
 
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -2164,7 +2253,7 @@ function openNewEditor() {
   fields.id.value = "";
   editorTitle.textContent = "新增菜谱";
   deleteRecipeButton.style.display = "none";
-  editorPanel.classList.add("is-open");
+  openAppView("editor");
   populateWorldSelect();
   const worldSel = document.querySelector("#recipeWorld");
   if (worldSel) worldSel.value = activeWorld !== "全部" ? activeWorld : "现实中的饭";
@@ -2172,7 +2261,6 @@ function openNewEditor() {
   if (t) t.value = "";
   resetIngredientEditor([]);
   renderImagePreview();
-  scrollPanelIntoView(editorPanel);
   fields.name.focus();
   render();
 }
@@ -2205,12 +2293,12 @@ function openEditEditor(id) {
 
   editorTitle.textContent = "编辑菜谱";
   deleteRecipeButton.style.display = "inline-flex";
-  editorPanel.classList.add("is-open");
+  openAppView("editor");
   fields.name.focus();
 }
 
 function closeEditor() {
-  editorPanel.classList.remove("is-open");
+  closeAppView();
 }
 
 // ===== 本地图片上传（方案 A：前端压缩转 Base64）=====
@@ -2787,12 +2875,10 @@ async function deleteCurrentRecipe() {
 }
 
 function toggleLogPanel() {
-  const panel = document.querySelector("#activityLogPanel");
-  const isHidden = panel.style.display === "none" || !panel.style.display;
-  panel.style.display = isHidden ? "block" : "none";
-  if (isHidden) {
+  if (currentAppView === "activity-log") closeAppView();
+  else {
     renderLogPanel();
-    scrollPanelIntoView(panel);
+    openAppView("activity-log");
   }
 }
 
@@ -3851,10 +3937,9 @@ function floatAiFillToForm() {
 }
 
 /* =========================================================================
-   滚动联动动效（深色 Apple 风）
-   —— 纯视觉增强，独立 IIFE，零侵入上面的任何业务函数。
-   通过 MutationObserver 监听动态渲染的列表与全屏做法页，
-   因此不需要修改 renderList / openRecipeModal 就能对动态元素生效。
+   滚动联动动效（日系版画主题）
+   —— 纯视觉增强，独立 IIFE，零侵入上面的业务函数。
+   通过 MutationObserver 监听动态渲染的列表与全屏做法页。
    ========================================================================= */
 (function initScrollFx() {
   var prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -3902,11 +3987,37 @@ function floatAiFillToForm() {
   var heroEl = document.querySelector(".hero");
   var recipeListEl = document.getElementById("recipeList");
   var cards = [];
+  var mobileCardObserver = null;
+
+  function ensureMobileCardObserver() {
+    if (mobileCardObserver || !("IntersectionObserver" in window)) return;
+    mobileCardObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("card-animate-in");
+          mobileCardObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -20px 0px" });
+  }
+
+  function syncMobileCards() {
+    if (!mqMobile.matches) return;
+    ensureMobileCardObserver();
+    cards.forEach(function (card, index) {
+      if (card.dataset.mobileObserved === "true") return;
+      card.dataset.mobileObserved = "true";
+      card.style.setProperty("--card-enter-delay", Math.min(index, 5) * 45 + "ms");
+      if (mobileCardObserver) mobileCardObserver.observe(card);
+      else card.classList.add("card-animate-in");
+    });
+  }
 
   function collectCards() {
     cards = recipeListEl
       ? Array.prototype.slice.call(recipeListEl.querySelectorAll(".recipe-group-card"))
       : [];
+    syncMobileCards();
   }
   collectCards();
 
@@ -3970,29 +4081,19 @@ function floatAiFillToForm() {
   window.addEventListener("resize", onScroll, { passive: true });
 
   // 桌面/手机切换时清理卡片内联样式，避免残留态
-  if (mqMobile.addEventListener) {
-    mqMobile.addEventListener("change", function () {
-      if (mqMobile.matches) {
-        cards.forEach(function (c) {
-          c.style.transform = "";
-          c.style.opacity = "";
-        });
-      }
-      onScroll();
+  function handleViewportChange() {
+    cards.forEach(function (card) {
+      card.style.transform = "";
+      card.style.opacity = "";
     });
+    syncMobileCards();
+    onScroll();
   }
 
-  // 手机端：用 IntersectionObserver 给卡片加入场动画
-  if (isMobile && "IntersectionObserver" in window) {
-    var mobileCardObserver = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("card-animate-in");
-          mobileCardObserver.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.12, rootMargin: "0px 0px -20px 0px" });
-    cards.forEach(function (c) { mobileCardObserver.observe(c); });
+  if (mqMobile.addEventListener) {
+    mqMobile.addEventListener("change", handleViewportChange);
+  } else if (mqMobile.addListener) {
+    mqMobile.addListener(handleViewportChange);
   }
 
   update();

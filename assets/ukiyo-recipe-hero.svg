@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 560" role="img" aria-labelledby="title desc">
+  <title id="title">浮世绘风格的富士山与海浪</title>
+  <desc id="desc">朱红旭日映照富士山，藏青海浪围绕一卷家庭食谱。</desc>
+  <defs>
+    <clipPath id="disc"><circle cx="372" cy="264" r="230"/></clipPath>
+    <pattern id="paper" width="22" height="22" patternUnits="userSpaceOnUse">
+      <path d="M0 5h22M0 16h22" stroke="#2f2922" stroke-opacity=".045" stroke-width="1"/>
+      <path d="M4 0v22M17 0v22" stroke="#a4947e" stroke-opacity=".035" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <circle cx="372" cy="264" r="239" fill="#eadcc3" stroke="#172f4d" stroke-width="7"/>
+  <circle cx="372" cy="264" r="228" fill="#f4ead7"/>
+  <g clip-path="url(#disc)">
+    <rect x="120" y="20" width="510" height="500" fill="url(#paper)"/>
+    <circle cx="490" cy="145" r="67" fill="#bb3e32"/>
+    <path d="M95 390 315 126 367 209 418 161 670 420Z" fill="#315777" stroke="#172f4d" stroke-width="6" stroke-linejoin="round"/>
+    <path d="m315 126 53 83-30-14-23 31-25-29-37 18Z" fill="#f8f0df" stroke="#172f4d" stroke-width="4" stroke-linejoin="round"/>
+    <g fill="none" stroke="#172f4d" stroke-width="8" stroke-linecap="round">
+      <path d="M44 386q72-89 144 0t144 0 144 0 144 0 144 0"/>
+      <path d="M16 430q61-76 122 0t122 0 122 0 122 0 122 0 122 0"/>
+      <path d="M-4 480q79-95 158 0t158 0 158 0 158 0 158 0"/>
+    </g>
+    <g fill="none" stroke="#6889a0" stroke-width="4" stroke-linecap="round">
+      <path d="M35 402q72-67 144 0t144 0 144 0 144 0 144 0"/>
+      <path d="M5 450q61-55 122 0t122 0 122 0 122 0 122 0 122 0"/>
+    </g>
+    <g fill="#f4ead7" stroke="#172f4d" stroke-width="3">
+      <circle cx="142" cy="350" r="13"/><circle cx="169" cy="331" r="8"/><circle cx="194" cy="354" r="11"/>
+      <circle cx="421" cy="365" r="12"/><circle cx="447" cy="341" r="8"/><circle cx="474" cy="364" r="14"/>
+    </g>
+    <path d="M178 150c46-30 96-17 116 16 37-26 89-14 104 24-67 16-151 15-220 1Z" fill="#f4ead7" stroke="#172f4d" stroke-width="4"/>
+  </g>
+  <g transform="translate(429 350) rotate(-5)">
+    <rect width="178" height="126" rx="7" fill="#e8d5b3" stroke="#172f4d" stroke-width="6"/>
+    <path d="M89 4v118M25 29h46M25 53h46M107 29h45M107 53h45" stroke="#8b7962" stroke-width="3"/>
+    <text x="89" y="98" text-anchor="middle" fill="#172f4d" font-family="serif" font-size="25" font-weight="700">家传食谱</text>
+  </g>
+  <rect x="580" y="76" width="68" height="68" rx="4" fill="#bb3e32"/>
+  <text x="614" y="121" text-anchor="middle" fill="#f4ead7" font-family="serif" font-size="37" font-weight="700">膳</text>
+</svg>
