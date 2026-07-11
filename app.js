@@ -114,7 +114,6 @@ const DEFAULT_RECIPES = [
 let recipes = [];
 let selectedId = "";
 let appearance = loadAppearance();
-let helperDraft = null;
 let editingIngredients = [];
 let selectedDishIds = new Set();
 let activeOccasionFilters = new Set();
@@ -157,6 +156,7 @@ function setAppView(viewName, options = {}) {
   currentAppView = viewName;
   document.body.classList.toggle("has-app-view", opening);
   document.body.style.overflow = opening ? "hidden" : "";
+  updateMobileDock(viewName);
   if (nextView) nextView.scrollTop = 0;
   if (!opening) window.scrollTo(0, appViewReturnScrollY);
 
@@ -165,6 +165,37 @@ function setAppView(viewName, options = {}) {
     if (options.replace) history.replaceState(state, "");
     else history.pushState(state, "");
   }
+}
+
+function handleMobileDock(event) {
+  const button = event.target.closest("[data-mobile-action]");
+  if (!button) return;
+  const action = button.dataset.mobileAction;
+  if (action === "home") {
+    if (currentAppView !== APP_VIEW_HOME) closeAppView();
+    else window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (action === "recipes") {
+    if (currentAppView !== APP_VIEW_HOME) setAppView(APP_VIEW_HOME);
+    requestAnimationFrame(() => document.querySelector("#recipeLibrary").scrollIntoView({ behavior: "smooth", block: "start" }));
+  } else if (action === "ai") {
+    openVideoHelper();
+  } else if (action === "tools") {
+    if (currentAppView !== APP_VIEW_HOME) setAppView(APP_VIEW_HOME);
+    requestAnimationFrame(() => document.querySelector("#quickTools").scrollIntoView({ behavior: "smooth", block: "center" }));
+  } else if (action === "mine") {
+    if (currentAppView !== APP_VIEW_HOME) setAppView(APP_VIEW_HOME);
+    requestAnimationFrame(() => {
+      const settings = document.querySelector(".action-group--settings");
+      settings.open = true;
+      settings.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
+}
+
+function updateMobileDock(viewName) {
+  document.querySelectorAll("[data-mobile-action]").forEach((button) => button.classList.remove("is-active"));
+  const action = viewName === "editor" ? "ai" : viewName === APP_VIEW_HOME ? "home" : ["what-to-eat", "meal-plan", "by-ingredient", "my-tools", "shopping"].includes(viewName) ? "tools" : "mine";
+  document.querySelector(`[data-mobile-action="${action}"]`)?.classList.add("is-active");
 }
 
 function openAppView(viewName) {
@@ -253,8 +284,6 @@ const appearanceForm = document.querySelector("#appearanceForm");
 const siteTitle = document.querySelector("#siteTitle");
 const siteEyebrow = document.querySelector("#siteEyebrow");
 const siteDescription = document.querySelector("#siteDescription");
-const draftPreview = document.querySelector("#draftPreview");
-const aiPromptOutput = document.querySelector("#aiPromptOutput");
 const shoppingListPanel = document.querySelector("#shoppingListPanel");
 const shoppingDishPicker = document.querySelector("#shoppingDishPicker");
 const shoppingIngredients = document.querySelector("#shoppingIngredients");
@@ -272,8 +301,10 @@ const byIngredientResult = document.querySelector("#byIngredientResult");
 const ingredientQueryInput = document.querySelector("#ingredientQueryInput");
 const aiChatSection = document.querySelector("#aiChatSection");
 const aiChatMessages = document.querySelector("#aiChatMessages");
-const aiChatInput = document.querySelector("#aiChatInput");
 const aiFillFormButton = document.querySelector("#aiFillFormButton");
+const aiResultCard = document.querySelector("#aiResultCard");
+const aiVideoStatus = document.querySelector("#aiVideoStatus");
+const aiTranscriptHint = document.querySelector("#aiTranscriptHint");
 
 const helperFields = {
   videoUrl: document.querySelector("#helperVideoUrl"),
@@ -475,10 +506,9 @@ function bindEvents() {
   document.querySelector("#customizeButton").addEventListener("click", toggleCustomizePanel);
   document.querySelector("#closeCustomizeButton").addEventListener("click", toggleCustomizePanel);
   document.querySelector("#resetAppearanceButton").addEventListener("click", resetAppearance);
-  document.querySelector("#generateDraftButton").addEventListener("click", generateDraftFromHelper);
-  document.querySelector("#fillDraftButton").addEventListener("click", fillDraftToForm);
-  document.querySelector("#copyPromptButton").addEventListener("click", copyAiPrompt);
   document.querySelector("#videoHelperButton").addEventListener("click", openVideoHelper);
+  document.querySelector("#desktopAiButton").addEventListener("click", openVideoHelper);
+  document.querySelector(".mobile-dock").addEventListener("click", handleMobileDock);
   document.querySelector("#newRecipeButton").addEventListener("click", openNewEditor);
   document.querySelector("#cancelEditButton").addEventListener("click", closeEditor);
   document.querySelector("#toggleEditorModeButton").addEventListener("click", () => setEditorMode(editorMode === "guided" ? "advanced" : "guided"));
@@ -520,14 +550,11 @@ function bindEvents() {
   document.querySelector("#parseIngredientsButton").addEventListener("click", toggleParseArea);
   document.querySelector("#confirmParseButton").addEventListener("click", confirmParseIngredients);
   document.querySelector("#aiAssistButton").addEventListener("click", toggleAiChat);
-  document.querySelector("#closeAiChatButton").addEventListener("click", toggleAiChat);
+  document.querySelector("#fetchVideoInfoButton").addEventListener("click", fetchVideoForWorkbench);
   document.querySelector("#saveAiConfigButton").addEventListener("click", saveAiConfig);
   document.querySelector("#aiStartButton").addEventListener("click", aiStartConversation);
   document.querySelector("#aiSendButton").addEventListener("click", aiSendMessage);
   document.querySelector("#aiFillFormButton").addEventListener("click", aiFillForm);
-  document.querySelector("#aiChatInput").addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); aiSendMessage(); }
-  });
   appearanceForm.addEventListener("input", updateAppearanceFromForm);
   appearanceForm.addEventListener("submit", (event) => event.preventDefault());
   searchInput.addEventListener("input", renderList);
@@ -693,111 +720,96 @@ function fillAiConfigForm() {
 }
 
 function toggleAiChat() {
-  const isHidden = aiChatSection.style.display === "none";
-  aiChatSection.style.display = isHidden ? "block" : "none";
-  if (isHidden) {
-    fillAiConfigForm();
-    if (aiChatHistory.length === 0) aiStartConversation();
-    aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
-  }
+  const tools = aiChatSection.closest("details");
+  if (tools) tools.open = true;
+  fillAiConfigForm();
+  if (aiChatHistory.length === 0) aiStartConversation();
+  aiChatSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  helperFields.videoUrl.focus();
+}
+
+function setAiWorkbenchStatus(state, text) {
+  aiVideoStatus.dataset.state = state;
+  aiVideoStatus.textContent = text;
+  const step = state === "ready" ? 3 : state === "loading" || state === "partial" ? 2 : 1;
+  document.querySelectorAll(".ai-flow-steps span").forEach((item, index) => {
+    item.classList.toggle("is-active", index + 1 <= step);
+  });
 }
 
 function aiStartConversation() {
   aiChatHistory = [];
   aiDraft = null;
   aiFillFormButton.style.display = "none";
+  aiResultCard.hidden = true;
+  aiResultCard.innerHTML = "";
   aiChatMessages.innerHTML = "";
-  aiAppendMessage("assistant", "你好！我来帮你记录菜谱。\n\n先告诉我：这道菜叫什么名字？或者直接把视频字幕 / 菜谱文字粘贴过来，我帮你整理。");
+  helperFields.videoUrl.value = "";
+  helperFields.videoTitle.value = "";
+  helperFields.source.value = "";
+  helperFields.variant.value = "";
+  helperFields.transcript.value = "";
+  setAiWorkbenchStatus("idle", "粘贴链接后点击获取；只有公开视频存在公开字幕时才能自动总结。");
 }
 
-function aiAppendMessage(role, content) {
-  const div = document.createElement("div");
-  div.className = `ai-message ai-message-${role}`;
-
-  // 检测 JSON 代码块并高亮
-  const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
-  if (jsonMatch) {
-    try {
-      const parsed = JSON.parse(jsonMatch[1]);
-      aiDraft = parsed;
-      aiFillFormButton.style.display = "inline-flex";
-    } catch { /* JSON 解析失败则忽略 */ }
-  }
-
-  // 简单 Markdown：换行、粗体、代码块
-  div.innerHTML = escapeHtml(content)
-    .replace(/```json\n([\s\S]*?)\n```/g, '<pre class="ai-code-block">$1</pre>')
-    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\n/g, "<br>");
-
-  aiChatMessages.appendChild(div);
-  aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
-
-  if (role !== "assistant") return;
-  aiChatHistory.push({ role, content });
+function renderAiResult(draft) {
+  const ingredients = Array.isArray(draft.ingredients) ? draft.ingredients.filter((item) => item?.name) : [];
+  const steps = Array.isArray(draft.steps) ? draft.steps : String(draft.steps || "").split("\n").filter(Boolean);
+  aiResultCard.innerHTML = `<div class="ai-result-heading"><div><span>AI 已整理完成</span><h4>${escapeHtml(draft.name || "未命名菜谱")}</h4></div><b>${ingredients.length} 项食材 · ${steps.length} 个步骤</b></div><dl><dt>来源</dt><dd>${escapeHtml(draft.source || "未填写")}</dd><dt>特点</dt><dd>${escapeHtml(draft.variant || "未填写")}</dd><dt>耗时</dt><dd>${escapeHtml(draft.time || "待确认")}</dd></dl><p>${escapeHtml(draft.description || "AI 未生成介绍，请填入表单后补充。")}</p><small>请在保存前核对食材用量、火候和时间，AI 可能理解有误。</small>`;
+  aiResultCard.hidden = false;
+  aiFillFormButton.style.display = "inline-flex";
+  setAiWorkbenchStatus("ready", "菜谱已整理好。请先查看摘要，再一键填入表单核对。");
 }
 
 async function aiSendMessage() {
-  const text = aiChatInput.value.trim();
-  if (!text) return;
-
-  const cfg = loadAiConfig();
-  if (!cfg.key) {
-    alert("请先填写 API Key 并保存配置。");
+  const transcript = helperFields.transcript.value.trim();
+  const title = helperFields.videoTitle.value.trim();
+  if (!transcript && !title) {
+    setAiWorkbenchStatus("error", "还没有可整理的内容。请先获取 B 站字幕，或粘贴字幕、简介和教程文字。");
+    helperFields.transcript.focus();
     return;
   }
 
-  aiChatInput.value = "";
-  aiAppendMessage("user", text);
-  aiChatHistory.push({ role: "user", content: text });
+  const cfg = loadAiConfig();
+  if (!cfg.key || !cfg.model) {
+    document.querySelector("#aiApiConfig").open = true;
+    setAiWorkbenchStatus("error", "请先在“模型设置”中填写 API Key、兼容接口地址和模型名称。");
+    return;
+  }
 
+  const prompt = buildAiPrompt();
+  aiChatHistory = [{ role: "user", content: prompt }];
   const sendBtn = document.querySelector("#aiSendButton");
   sendBtn.disabled = true;
-  sendBtn.textContent = "发送中…";
-
-  const thinkingDiv = document.createElement("div");
-  thinkingDiv.className = "ai-message ai-message-assistant ai-thinking";
-  thinkingDiv.textContent = "AI 正在思考…";
-  aiChatMessages.appendChild(thinkingDiv);
-  aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+  sendBtn.textContent = "AI 正在整理…";
+  aiChatMessages.innerHTML = '<div class="ai-message ai-message-assistant ai-thinking">正在理解食材、用量、火候和步骤，请稍等…</div>';
+  setAiWorkbenchStatus("loading", `正在调用 ${cfg.model} 整理菜谱…`);
 
   try {
     const baseUrl = (cfg.baseUrl || "https://api.openai.com/v1").replace(/\/$/, "");
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${cfg.key}`
-      },
-      body: JSON.stringify({
-        model: cfg.model || "gpt-4o",
-        messages: [
-          { role: "system", content: AI_SYSTEM_PROMPT },
-          ...aiChatHistory
-        ],
-        temperature: 0.4
-      })
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${cfg.key}` },
+      body: JSON.stringify({ model: cfg.model, messages: [{ role: "system", content: AI_SYSTEM_PROMPT }, ...aiChatHistory], temperature: 0.3 })
     });
-
-    thinkingDiv.remove();
-
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      const msg = err?.error?.message || `HTTP ${response.status}`;
-      aiAppendMessage("assistant", `⚠️ 请求失败：${msg}\n\n请检查 API Key 和接口地址是否正确。`);
-      return;
+      throw new Error(err?.error?.message || `HTTP ${response.status}`);
     }
-
     const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content || "（AI 无回复）";
-    aiAppendMessage("assistant", reply);
-
+    const reply = data.choices?.[0]?.message?.content || "";
+    const jsonMatch = reply.match(/```json\s*([\s\S]*?)```/) || reply.match(/(\{[\s\S]*\})/);
+    if (!jsonMatch) throw new Error("模型没有返回可识别的菜谱 JSON，请重试或补充更完整的字幕。");
+    aiDraft = JSON.parse(jsonMatch[1]);
+    if (!aiDraft.video) aiDraft.video = helperFields.videoUrl.value.trim();
+    aiChatMessages.innerHTML = "";
+    renderAiResult(aiDraft);
   } catch (error) {
-    thinkingDiv.remove();
-    aiAppendMessage("assistant", `⚠️ 网络错误：${error.message}\n\n请检查接口地址是否可访问。`);
+    aiChatMessages.innerHTML = "";
+    setAiWorkbenchStatus("error", `整理失败：${error.message} 已保留当前字幕，可检查模型设置后重试。`);
   } finally {
     sendBtn.disabled = false;
-    sendBtn.textContent = "发送";
+    sendBtn.textContent = "✦ 让 AI 整理成菜谱";
   }
 }
 
@@ -831,9 +843,11 @@ function aiFillForm() {
   );
 
   renderImagePreview();
-  aiChatSection.style.display = "none";
+  updateEditorSummary();
+  editorDirty = true;
+  aiResultCard.hidden = true;
   fields.name.focus();
-  alert("AI 整理的菜谱已填入表单，检查一下再保存。");
+  alert("AI 整理的菜谱已填入表单，请核对食材用量、火候和时间后再保存。");
 }
 
 function toggleWhatToEatPanel() {
@@ -1532,7 +1546,10 @@ function openVideoHelper() {
   openAppView("editor");
   editorTitle.textContent = "新增菜谱";
   deleteRecipeButton.style.display = "none";
-  document.querySelector("#videoHelperTitle").scrollIntoView({ behavior: "smooth", block: "start" });
+  const tools = aiChatSection.closest("details");
+  if (tools) tools.open = true;
+  fillAiConfigForm();
+  aiChatSection.scrollIntoView({ behavior: "smooth", block: "start" });
   helperFields.videoUrl.focus();
 }
 
@@ -1747,144 +1764,10 @@ function populateWorldSelect() {
     .join("");
 }
 
-function generateDraftFromHelper() {
-  const transcript = helperFields.transcript.value.trim();
-  const title = helperFields.videoTitle.value.trim();
-
-  if (!transcript && !title) {
-    alert("请先粘贴视频标题或视频文案/字幕。");
-    return;
-  }
-
-  const steps = extractSteps(transcript);
-  helperDraft = {
-    name: guessRecipeName(title, transcript),
-    source: helperFields.source.value.trim() || "视频教学",
-    variant: helperFields.variant.value.trim() || "视频总结版",
-    image: "",
-    description: guessDescription(title, transcript),
-    cost: guessCost(transcript),
-    occasion: guessOccasion(transcript),
-    time: guessTime(transcript),
-    video: helperFields.videoUrl.value.trim(),
-    steps
-  };
-
-  renderDraftPreview();
-}
-
-function renderDraftPreview() {
-  if (!helperDraft) {
-    draftPreview.textContent = "还没有生成草稿。粘贴文字后点击“生成菜谱草稿”。";
-    return;
-  }
-
-  draftPreview.innerHTML = `
-    <h4>菜谱草稿预览</h4>
-    <dl>
-      <dt>菜名</dt><dd>${escapeHtml(helperDraft.name)}</dd>
-      <dt>厨师/来源</dt><dd>${escapeHtml(helperDraft.source)}</dd>
-      <dt>做法版本</dt><dd>${escapeHtml(helperDraft.variant)}</dd>
-      <dt>大概成本</dt><dd>${escapeHtml(helperDraft.cost)}</dd>
-      <dt>适合时间</dt><dd>${escapeHtml(helperDraft.occasion)}</dd>
-      <dt>大概耗时</dt><dd>${escapeHtml(helperDraft.time)}</dd>
-      <dt>做法步骤</dt><dd>${helperDraft.steps.map((step) => escapeHtml(step)).join("<br>")}</dd>
-    </dl>
-    <p>这是本地整理出的草稿，保存前建议你按实际情况再检查成本、耗时和步骤。</p>
-  `;
-}
-
-function fillDraftToForm() {
-  if (!helperDraft) {
-    generateDraftFromHelper();
-  }
-  if (!helperDraft) return;
-
-  fields.id.value = "";
-  editorTitle.textContent = "新增菜谱";
-  deleteRecipeButton.style.display = "none";
-  fields.name.value = helperDraft.name;
-  fields.source.value = helperDraft.source;
-  fields.variant.value = helperDraft.variant;
-  fields.image.value = helperDraft.image;
-  fields.description.value = helperDraft.description;
-  fields.cost.value = helperDraft.cost;
-  fields.occasion.value = helperDraft.occasion;
-  fields.time.value = helperDraft.time;
-  fields.video.value = helperDraft.video;
-  fields.steps.value = helperDraft.steps.join("\n");
-  openAppView("editor");
-  fields.name.focus();
-}
-
-async function copyAiPrompt() {
-  const prompt = buildAiPrompt();
-  aiPromptOutput.value = prompt;
-
-  try {
-    await navigator.clipboard.writeText(prompt);
-    alert("AI 提示词已复制。你可以粘贴给 ChatGPT 或其他 AI 继续精修。");
-  } catch (error) {
-    aiPromptOutput.focus();
-    aiPromptOutput.select();
-    alert("当前浏览器不允许自动复制，已把提示词放到下方文本框，请手动复制。");
-  }
-}
-
 function buildAiPrompt() {
-  return `请把下面的教学视频信息整理成一个适合自用食谱网站保存的菜谱版本。\n\n要求：\n1. 输出菜名、厨师/来源、做法版本/特点、菜品介绍、大概成本、适合什么时候吃、大概耗时、具体做法步骤。\n2. 成本和耗时无法确定时，请给保守估计并标注“约”。\n3. 步骤要适合新手照着做，不要遗漏关键火候和顺序。\n4. 不要编造视频里没有出现的特殊食材。\n\n教学视频链接：${helperFields.videoUrl.value.trim() || "未填写"}\n视频标题：${helperFields.videoTitle.value.trim() || "未填写"}\n厨师/来源：${helperFields.source.value.trim() || "未填写"}\n做法版本/特点：${helperFields.variant.value.trim() || "未填写"}\n\n视频文案/字幕/教程文字：\n${helperFields.transcript.value.trim() || "未填写"}`;
-}
-
-function guessRecipeName(title, transcript) {
-  const text = title || transcript.split(/[。！？\n]/)[0] || "未命名菜谱";
-  return text
-    .replace(/这样做|怎么做|教程|做法|家常|真的|太香了|好吃|下饭/g, "")
-    .replace(/[，。！？!?,、]/g, " ")
-    .trim()
-    .slice(0, 18) || "未命名菜谱";
-}
-
-function guessDescription(title, transcript) {
-  const summary = (title || transcript).replace(/\s+/g, " ").trim();
-  if (!summary) return "根据视频文案整理出的菜谱草稿，保存前建议再按实际口味调整。";
-  return `${summary.slice(0, 80)}${summary.length > 80 ? "……" : ""}`;
-}
-
-function guessCost(text) {
-  const match = text.match(/(?:成本|花费|大概|约)?\s*(\d+(?:\.\d+)?)\s*(?:-|到|~|—)?\s*(\d+(?:\.\d+)?)?\s*元/);
-  if (!match) return "约 10-30 元";
-  return match[2] ? `约 ${match[1]}-${match[2]} 元` : `约 ${match[1]} 元`;
-}
-
-function guessTime(text) {
-  const match = text.match(/(\d+)\s*(分钟|小时)/);
-  if (!match) return "约 20-40 分钟";
-  return `约 ${match[1]} ${match[2]}`;
-}
-
-function guessOccasion(text) {
-  if (/早餐|早上|早饭/.test(text)) return "早餐";
-  if (/宵夜|夜宵|晚上饿/.test(text)) return "宵夜";
-  if (/减脂|健身|低脂|少油/.test(text)) return "减脂餐 / 健身餐";
-  if (/下饭|米饭|晚餐|晚饭/.test(text)) return "工作日晚餐 / 米饭配菜";
-  if (/聚餐|朋友|宴客/.test(text)) return "周末聚餐 / 宴客菜";
-  return "日常正餐";
-}
-
-function extractSteps(text) {
-  const cleanedText = text.trim();
-  if (!cleanedText) return ["请根据视频文案补充具体做法。"];
-
-  const rawParts = cleanedText.includes("\n")
-    ? cleanedText.split("\n")
-    : cleanedText.split(/[。；;]/);
-
-  const steps = rawParts
-    .map((part) => part.replace(/^\s*\d+[.、，)]?\s*/, "").trim())
-    .filter((part) => part.length >= 4)
-    .slice(0, 12);
-
-  return steps.length ? steps : [cleanedText.slice(0, 120)];
+  const transcript = helperFields.transcript.value.trim();
+  const limitedTranscript = transcript.length > 12000 ? `${transcript.slice(0, 12000)}\n…（内容过长，本次仅发送前 12000 个字符）` : transcript;
+  return `请根据下面的公开视频信息和字幕，整理一份适合新手实际操作的结构化菜谱。\n\n重要规则：\n1. 只根据提供的标题、简介和字幕提取信息，不要声称看过视频，不要编造未出现的特殊食材或精确用量。\n2. 字幕口语重复时要合并；步骤要按实际操作顺序写清火候、状态和时间。\n3. 无法确认的成本、耗时或用量可给保守估计并使用“约”“适量”，不要伪装成视频原话。\n4. 必须输出 AI 系统要求中的 JSON 代码块，ingredients 和 steps 必须是数组。\n\n视频链接：${helperFields.videoUrl.value.trim() || "未填写"}\n视频标题：${helperFields.videoTitle.value.trim() || "未填写"}\n厨师/来源：${helperFields.source.value.trim() || "未填写"}\n做法版本或用户补充：${helperFields.variant.value.trim() || "未填写"}\n\n公开视频字幕 / 简介 / 教程文字：\n${limitedTranscript || "未填写"}`;
 }
 
 function getRecipeGroups(sourceRecipes) {
@@ -3873,6 +3756,75 @@ async function saveBatchSelected(wrap) {
   // 清理批量状态与预览区
   batchDraftList = [];
   container.remove();
+}
+
+/** 从用户输入中识别 B站链接，返回第一个匹配的 URL 或 null */
+async function fetchVideoForWorkbench() {
+  const url = helperFields.videoUrl.value.trim();
+  if (!floatAiDetectBiliUrl(url)) {
+    setAiWorkbenchStatus("error", "目前自动获取仅支持 B 站视频链接。其他平台请把字幕、简介或教程文字粘贴到下方。");
+    return;
+  }
+
+  const button = document.querySelector("#fetchVideoInfoButton");
+  button.disabled = true;
+  button.textContent = "正在获取…";
+  setAiWorkbenchStatus("loading", "正在识别链接并读取 B 站公开视频信息…");
+
+  try {
+    let resolvedUrl = url;
+    if (/b23\.tv/i.test(url)) {
+      setAiWorkbenchStatus("loading", "正在解析 B 站短链接…");
+      const shortRes = await fetchBiliPublicResource(url);
+      resolvedUrl = shortRes.url || url;
+      helperFields.videoUrl.value = resolvedUrl;
+    }
+    const id = floatAiParseBiliId(resolvedUrl);
+    if (!id) throw new Error("没有从链接中识别到 BV 或 AV 号，请粘贴完整视频地址。");
+    const infoUrl = id.type === "bvid" ? `https://api.bilibili.com/x/web-interface/view?bvid=${id.value}` : `https://api.bilibili.com/x/web-interface/view?aid=${id.value}`;
+    const infoJson = await (await fetchBiliPublicResource(infoUrl)).json();
+    if (infoJson.code !== 0) throw new Error(infoJson.message || "视频信息获取失败");
+    const video = infoJson.data;
+    helperFields.videoTitle.value = video.title || "";
+    helperFields.source.value = video.owner?.name || "";
+    setAiWorkbenchStatus("loading", "视频信息已获取，正在查找公开字幕…");
+    const subtitleJson = await (await fetchBiliPublicResource(`https://api.bilibili.com/x/player/v2?cid=${video.cid}&bvid=${video.bvid}`)).json();
+    const subtitles = subtitleJson?.data?.subtitle?.subtitles || [];
+    const preferred = subtitles.find((item) => /zh|cn|ai/i.test(item.lan)) || subtitles[0];
+    if (!preferred?.subtitle_url) {
+      helperFields.transcript.value = video.desc || "";
+      setAiWorkbenchStatus("partial", "已获取标题、UP 主和简介，但该视频没有公开字幕。请在下方补充字幕或教程文字后再让 AI 整理。");
+      aiTranscriptHint.textContent = "未发现公开字幕，已填入视频简介；补充越完整，菜谱越可靠。";
+      return;
+    }
+    let subtitleUrl = preferred.subtitle_url;
+    if (subtitleUrl.startsWith("//")) subtitleUrl = `https:${subtitleUrl}`;
+    const subtitleJsonBody = await (await fetchBiliPublicResource(subtitleUrl)).json();
+    const transcript = (subtitleJsonBody.body || []).map((item) => item.content || "").filter(Boolean).join("\n");
+    if (!transcript) throw new Error("字幕文件为空，请手动粘贴字幕或教程文字。");
+    helperFields.transcript.value = transcript;
+    const lines = transcript.split("\n").length;
+    aiTranscriptHint.textContent = `已获取 ${lines} 行公开字幕，可以先修改或补充，再交给 AI 整理。`;
+    setAiWorkbenchStatus("partial", `字幕已就绪（${lines} 行）。下一步请确认模型设置，然后让 AI 整理成菜谱。`);
+  } catch (error) {
+    setAiWorkbenchStatus("error", `自动获取失败：${error.message} 请保留链接并手动粘贴字幕、简介或教程文字。`);
+  } finally {
+    button.disabled = false;
+    button.textContent = "获取视频信息与字幕";
+  }
+}
+
+async function fetchBiliPublicResource(targetUrl) {
+  const urls = [targetUrl, `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`];
+  let lastError = null;
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, { credentials: "omit" });
+      if (response.ok) return response;
+      lastError = new Error(`HTTP ${response.status}`);
+    } catch (error) { lastError = error; }
+  }
+  throw lastError || new Error("公开视频接口暂时不可用");
 }
 
 /** 从用户输入中识别 B站链接，返回第一个匹配的 URL 或 null */

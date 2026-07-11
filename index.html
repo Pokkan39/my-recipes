@@ -7,7 +7,15 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="hero food-hero">
+  <nav class="site-nav" aria-label="主导航">
+    <a class="site-brand" href="#top" aria-label="返回首页"><span>食</span><strong>我的自用食谱</strong></a>
+    <div class="site-nav-links">
+      <a href="#recipeLibrary">菜谱库</a>
+      <a href="#quickTools">实用工具</a>
+      <button id="desktopAiButton" type="button">AI 成谱</button>
+    </div>
+  </nav>
+  <header id="top" class="hero food-hero">
     <div class="hero-glow" aria-hidden="true"></div>
     <div class="hero-copy">
       <p id="siteEyebrow" class="eyebrow">一卷会自己长大的家庭食谱</p>
@@ -23,22 +31,31 @@
           <button id="videoHelperButton" class="primary-button hero-main-action" type="button">✨ AI 生成菜谱</button>
           <button id="newRecipeButton" class="secondary-button" type="button">＋ 新增菜谱</button>
         </div>
-        <div class="action-group action-group--tools">
+        <div class="action-group action-group--tools" id="quickTools">
+          <p class="action-group-label">今晚怎么吃</p>
           <button id="whatToEatButton" class="tool-button" type="button">🎲 今天吃什么</button>
           <button id="mealPlanButton" class="tool-button" type="button">🍽️ 配一桌菜</button>
-          <button id="byIngredientButton" class="tool-button" type="button">🥕 我有什么食材</button>
-          <button id="myToolsButton" class="tool-button" type="button">🔪 我有什么工具</button>
-          <button id="shoppingListButton" class="tool-button" type="button">🛒 购物清单</button>
+          <button id="byIngredientButton" class="tool-button" type="button">🥕 按食材找菜</button>
+          <details class="more-tools">
+            <summary>更多实用工具</summary>
+            <div class="more-tools-menu">
+              <button id="myToolsButton" class="tool-button" type="button">🔪 按厨具筛选</button>
+              <button id="shoppingListButton" class="tool-button" type="button">🛒 购物清单</button>
+            </div>
+          </details>
         </div>
-        <div class="action-group action-group--settings">
-          <button id="customizeButton" class="text-button" type="button">调整网站</button>
-          <button id="exportButton" class="text-button" type="button">导出备份</button>
-          <label class="text-button file-button">导入备份<input id="importInput" type="file" accept="application/json,.json"></label>
-          <button id="cloudBackupButton" class="text-button" type="button">☁ 云端备份</button>
-          <label class="text-button file-button">☁ 云端恢复<input id="cloudRestoreInput" type="file" accept="application/json,.json"></label>
-          <button id="nicknameButton" class="text-button" type="button">我的昵称</button>
-          <button id="activityLogButton" class="text-button" type="button">📋 日志</button>
-        </div>
+        <details class="action-group action-group--settings">
+          <summary>我的设置与数据</summary>
+          <div class="settings-menu">
+            <button id="customizeButton" class="text-button" type="button">调整网站</button>
+            <button id="exportButton" class="text-button" type="button">导出备份</button>
+            <label class="text-button file-button">导入备份<input id="importInput" type="file" accept="application/json,.json"></label>
+            <button id="cloudBackupButton" class="text-button" type="button">☁ 云端备份</button>
+            <label class="text-button file-button">☁ 云端恢复<input id="cloudRestoreInput" type="file" accept="application/json,.json"></label>
+            <button id="nicknameButton" class="text-button" type="button">我的昵称</button>
+            <button id="activityLogButton" class="text-button" type="button">📋 日志</button>
+          </div>
+        </details>
       </div>
 
       <div id="nicknamePanel" class="nickname-panel" style="display:none">
@@ -236,7 +253,7 @@
     <div id="activityLogList" class="activity-log-list"></div>
   </section>
 
-  <main class="layout">
+  <main id="recipeLibrary" class="layout">
     <section class="panel list-panel" aria-labelledby="recipeListTitle" data-reveal>
       <div class="panel-heading">
         <div>
@@ -282,103 +299,55 @@
       </nav>
 
       <details class="editor-import-tools">
-        <summary>已有文字或视频？使用快捷导入</summary>
-
-      <!-- AI 对话助手 -->
-      <section id="aiChatSection" class="ai-chat-section" style="display:none" aria-labelledby="aiChatTitle">
-        <div class="ai-chat-heading">
-          <div>
-            <p class="eyebrow">AI Assistant</p>
-            <h3 id="aiChatTitle">AI 辅助填写</h3>
-            <p>AI 会逐步问你几个问题，帮你填好菜谱。也可以直接粘贴视频字幕让 AI 总结。</p>
-          </div>
-          <button id="closeAiChatButton" class="text-button" type="button">收起</button>
-        </div>
-
-        <div id="aiApiConfig" class="ai-api-config">
-          <div class="form-grid two-columns">
-            <label>
-              API Key
-              <input id="aiApiKey" type="password" placeholder="sk-...">
-            </label>
-            <label>
-              接口地址（中转站填这里）
-              <input id="aiBaseUrl" type="url" placeholder="https://api.openai.com/v1">
-            </label>
-          </div>
-          <div class="form-grid two-columns">
-            <label>
-              模型
-              <input id="aiModel" type="text" placeholder="gpt-4o" value="gpt-4o">
-            </label>
-            <div style="display:flex;align-items:flex-end;padding-bottom:2px">
-              <button id="saveAiConfigButton" class="secondary-button" type="button">保存配置</button>
+        <summary>已有视频或文字？交给 AI 智能填写</summary>
+        <section id="aiChatSection" class="ai-workbench" aria-labelledby="aiChatTitle">
+          <div class="ai-workbench-hero">
+            <div>
+              <p class="eyebrow">AI Recipe Studio</p>
+              <h3 id="aiChatTitle">AI 视频成谱工作台</h3>
+              <p>粘贴 B 站链接，自动尝试获取标题、简介和公开字幕，再由你配置的 AI 整理成可检查的菜谱。</p>
             </div>
+            <div class="ai-capability-tags"><span>B站公开字幕</span><span>DeepSeek 兼容</span><span>一键填表</span></div>
           </div>
-          <p class="ai-config-note">API Key 只存在你的浏览器里，不会上传到任何服务器。</p>
-        </div>
 
-        <div id="aiChatMessages" class="ai-chat-messages"></div>
-
-        <div class="ai-chat-input-row">
-          <textarea id="aiChatInput" class="ai-chat-input" rows="2" placeholder="回复 AI 的问题，或直接粘贴视频字幕/菜谱描述…"></textarea>
-          <button id="aiSendButton" class="primary-button" type="button">发送</button>
-        </div>
-        <div class="ai-chat-actions">
-          <button id="aiStartButton" class="secondary-button" type="button">重新开始问答</button>
-          <button id="aiFillFormButton" class="secondary-button" type="button" style="display:none">一键填入表单</button>
-        </div>
-      </section>
-
-      <section class="video-helper" aria-labelledby="videoHelperTitle">
-        <div class="video-helper-heading">
-          <div>
-            <p class="eyebrow">Video Helper</p>
-            <h3 id="videoHelperTitle">视频总结助手</h3>
-            <p>位置提示：点击页面顶部“视频总结”会直接跳到这里。先粘贴视频链接和文案/字幕，生成菜谱草稿后可一键填入下方表单。</p>
+          <div class="ai-flow-steps" aria-label="AI 成谱进度">
+            <span class="is-active"><b>1</b>提供内容</span><span><b>2</b>获取字幕</span><span><b>3</b>AI 整理</span>
           </div>
-        </div>
 
-        <div class="video-helper-form">
-          <div class="form-grid two-columns">
-            <label>
-              教学视频链接
-              <input id="helperVideoUrl" type="url" placeholder="粘贴 B 站、抖音或 HelloTik 下载来源链接">
+          <div class="ai-source-card">
+            <label>视频链接 <span class="optional-label">（首期支持 B 站公开视频）</span>
+              <div class="ai-url-row"><input id="helperVideoUrl" type="url" placeholder="粘贴 bilibili.com 或 b23.tv 链接"><button id="fetchVideoInfoButton" class="secondary-button" type="button">获取视频信息与字幕</button></div>
             </label>
-
-            <label>
-              视频标题
-              <input id="helperVideoTitle" type="text" placeholder="例如：番茄炒蛋这样做更下饭">
+            <div id="aiVideoStatus" class="ai-video-status" data-state="idle" aria-live="polite">粘贴链接后点击获取；只有公开视频存在公开字幕时才能自动总结。</div>
+            <div class="form-grid two-columns ai-video-meta">
+              <label>视频标题<input id="helperVideoTitle" type="text" placeholder="获取成功后自动填写，也可手动输入"></label>
+              <label>厨师 / 来源<input id="helperSource" type="text" placeholder="例如：王刚 / 小高姐"></label>
+            </div>
+            <label>字幕、文案或教程文字
+              <textarea id="helperTranscript" rows="8" placeholder="自动获取到的公开字幕会出现在这里。若视频没有字幕，请粘贴简介、评论区教程或自己的听写内容。"></textarea>
+              <small id="aiTranscriptHint" class="field-help">内容可以修改；AI 只会根据这里的文字整理，不会直接观看视频。</small>
             </label>
+            <label class="ai-variant-field">做法版本 / 你的补充 <span class="optional-label">（选填）</span><input id="helperVariant" type="text" placeholder="例如：家常快手版；希望步骤更适合新手"></label>
           </div>
 
-          <div class="form-grid two-columns">
-            <label>
-              厨师/来源
-              <input id="helperSource" type="text" placeholder="例如：王刚 / 小高姐 / 抖音某博主">
-            </label>
+          <details id="aiApiConfig" class="ai-model-settings">
+            <summary><span>模型设置</span><small id="aiModelSummary">支持 DeepSeek 等 OpenAI 兼容接口</small></summary>
+            <div class="ai-api-config">
+              <div class="form-grid two-columns"><label>API Key<input id="aiApiKey" type="password" placeholder="sk-..."></label><label>兼容接口地址<input id="aiBaseUrl" type="url" placeholder="例如：https://api.deepseek.com/v1"></label></div>
+              <div class="form-grid two-columns"><label>模型名称<input id="aiModel" type="text" placeholder="填写服务商提供的模型 ID"></label><div class="ai-config-action"><button id="saveAiConfigButton" class="secondary-button" type="button">保存模型配置</button></div></div>
+              <p class="ai-config-note">API Key 只保存在当前浏览器，并直接发送到你填写的接口；请使用服务商实际提供的模型 ID。</p>
+            </div>
+          </details>
 
-            <label>
-              做法版本/特点
-              <input id="helperVariant" type="text" placeholder="例如：饭店版 / 家常快手版 / 少油版">
-            </label>
+          <div class="ai-primary-actions">
+            <button id="aiSendButton" class="primary-button" type="button">✦ 让 AI 整理成菜谱</button>
+            <button id="aiStartButton" class="text-button" type="button">清空重新开始</button>
           </div>
-
-          <label>
-            视频文案 / 字幕 / 教程文字
-            <textarea id="helperTranscript" rows="7" placeholder="把视频字幕、简介、评论区教程或你自己听写的做法粘贴到这里。\n例如：先把鸡蛋打散，番茄切块，锅里放油……"></textarea>
-          </label>
-
-          <div class="form-actions">
-            <button id="generateDraftButton" class="primary-button" type="button">生成菜谱草稿</button>
-            <button id="fillDraftButton" class="secondary-button" type="button">一键填入表单</button>
-            <button id="copyPromptButton" class="secondary-button" type="button">复制 AI 提示词</button>
-          </div>
-
-          <div id="draftPreview" class="draft-preview">还没有生成草稿。粘贴文字后点击“生成菜谱草稿”。</div>
-          <textarea id="aiPromptOutput" class="prompt-output" rows="6" readonly placeholder="复制 AI 提示词后，这里会显示可发给 ChatGPT 的内容。"></textarea>
-        </div>
-      </section>
+          <textarea id="aiChatInput" hidden></textarea>
+          <div id="aiChatMessages" class="ai-chat-messages" aria-live="polite"></div>
+          <div id="aiResultCard" class="ai-result-card" hidden></div>
+          <button id="aiFillFormButton" class="primary-button ai-fill-button" type="button" style="display:none">一键填入菜谱表单</button>
+        </section>
       </details>
 
       <form id="recipeForm" class="recipe-form recipe-form--guided">
@@ -564,6 +533,14 @@
       </div>
     </div>
   </div>
+
+  <nav class="mobile-dock" aria-label="手机快捷导航">
+    <button type="button" data-mobile-action="home"><span>⌂</span>首页</button>
+    <button type="button" data-mobile-action="recipes"><span>卷</span>菜谱</button>
+    <button class="mobile-dock-primary" type="button" data-mobile-action="ai"><span>✦</span>AI 成谱</button>
+    <button type="button" data-mobile-action="tools"><span>具</span>工具</button>
+    <button type="button" data-mobile-action="mine"><span>我</span>我的</button>
+  </nav>
 
   <script src="app.js"></script>
 </body>
