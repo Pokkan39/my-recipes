@@ -230,6 +230,11 @@ function appendLog(action, recipeName) {
 
 let aiChatHistory = [];
 let aiDraft = null;
+const EDITOR_DRAFT_KEY = "my-recipe-editor-draft";
+let editorMode = "guided";
+let editorStep = 1;
+let editorDirty = false;
+let editorInitializing = false;
 
 const recipeList = document.querySelector("#recipeList");
 const recipeDetail = document.querySelector("#recipeDetail");
@@ -476,6 +481,13 @@ function bindEvents() {
   document.querySelector("#videoHelperButton").addEventListener("click", openVideoHelper);
   document.querySelector("#newRecipeButton").addEventListener("click", openNewEditor);
   document.querySelector("#cancelEditButton").addEventListener("click", closeEditor);
+  document.querySelector("#toggleEditorModeButton").addEventListener("click", () => setEditorMode(editorMode === "guided" ? "advanced" : "guided"));
+  document.querySelectorAll("[data-editor-step]").forEach((button) => button.addEventListener("click", () => goToEditorStep(Number(button.dataset.editorStep))));
+  document.querySelector("#editorPrevButton").addEventListener("click", () => goToEditorStep(editorStep - 1));
+  document.querySelector("#editorNextButton").addEventListener("click", () => { if (validateEditorStep(editorStep)) goToEditorStep(editorStep + 1); });
+  document.querySelector("#saveDraftButton").addEventListener("click", saveEditorDraft);
+  recipeForm.addEventListener("input", handleEditorInput);
+  recipeForm.addEventListener("change", handleEditorInput);
   document.querySelector("#exportButton").addEventListener("click", exportRecipes);
   document.querySelector("#cloudBackupButton").addEventListener("click", cloudBackup);
   document.querySelector("#cloudRestoreInput").addEventListener("change", cloudRestore);
@@ -1445,6 +1457,8 @@ function confirmParseIngredients() {
   ingredientPasteInput.value = "";
   ingredientParseArea.style.display = "none";
   renderIngredientRows();
+  editorDirty = true;
+  updateEditorSummary();
 }
 
 function parseIngredientsText(text) {
@@ -1476,6 +1490,8 @@ function addIngredientRow(ingredient) {
     : { name: "", amount: "", category: "主料", note: "" };
   editingIngredients.push(ing);
   renderIngredientRows();
+  editorDirty = true;
+  updateEditorSummary();
 }
 
 function renderIngredientRows() {
@@ -1497,13 +1513,15 @@ function renderIngredientRows() {
       <input class="ing-note" type="text" placeholder="小白备注（选填）" value="${escapeAttr(ing.note)}">
       <button class="ing-remove text-button" type="button" data-index="${index}" aria-label="删除">✕</button>
     `;
-    row.querySelector(".ing-name").addEventListener("input", (e) => { editingIngredients[index].name = e.target.value; });
-    row.querySelector(".ing-amount").addEventListener("input", (e) => { editingIngredients[index].amount = e.target.value; });
-    row.querySelector(".ing-category").addEventListener("change", (e) => { editingIngredients[index].category = e.target.value; });
-    row.querySelector(".ing-note").addEventListener("input", (e) => { editingIngredients[index].note = e.target.value; });
+    row.querySelector(".ing-name").addEventListener("input", (e) => { editingIngredients[index].name = e.target.value; editorDirty = true; updateEditorSummary(); });
+    row.querySelector(".ing-amount").addEventListener("input", (e) => { editingIngredients[index].amount = e.target.value; editorDirty = true; });
+    row.querySelector(".ing-category").addEventListener("change", (e) => { editingIngredients[index].category = e.target.value; editorDirty = true; });
+    row.querySelector(".ing-note").addEventListener("input", (e) => { editingIngredients[index].note = e.target.value; editorDirty = true; });
     row.querySelector(".ing-remove").addEventListener("click", () => {
       editingIngredients.splice(index, 1);
+      editorDirty = true;
       renderIngredientRows();
+      updateEditorSummary();
     });
     ingredientRows.appendChild(row);
   });
@@ -2247,6 +2265,118 @@ function closeRecipeModal(options = {}) {
   setTimeout(onEnd, 380); // 兜底：动画未触发时也要关闭
 }
 
+function collectEditorDraft() {
+  return {
+    id: fields.id.value, name: fields.name.value, image: fields.image.value,
+    source: fields.source.value, variant: fields.variant.value, description: fields.description.value,
+    cost: fields.cost.value, occasion: fields.occasion.value, time: fields.time.value,
+    video: fields.video.value, steps: fields.steps.value,
+    world: document.querySelector("#recipeWorld")?.value || "现实中的饭",
+    tools: document.querySelector("#recipeTools")?.value || "",
+    ingredients: editingIngredients.map((item) => ({ ...item }))
+  };
+}
+
+function applyEditorDraft(draft) {
+  if (!draft) return;
+  editorInitializing = true;
+  Object.keys(fields).forEach((key) => { if (key !== "id" && fields[key]) fields[key].value = draft[key] || ""; });
+  fields.id.value = draft.id || "";
+  populateWorldSelect();
+  const world = document.querySelector("#recipeWorld"); if (world) world.value = draft.world || "现实中的饭";
+  const tools = document.querySelector("#recipeTools"); if (tools) tools.value = draft.tools || "";
+  resetIngredientEditor(draft.ingredients || []);
+  renderImagePreview();
+  updateEditorSummary();
+  editorInitializing = false;
+}
+
+function handleEditorInput() {
+  if (editorInitializing) return;
+  editorDirty = true;
+  updateEditorSummary();
+}
+
+function setEditorMode(mode) {
+  editorMode = mode;
+  const guided = mode === "guided";
+  recipeForm.classList.toggle("recipe-form--guided", guided);
+  recipeForm.classList.toggle("recipe-form--advanced", !guided);
+  document.querySelector("#editorSteps").hidden = !guided;
+  document.querySelector("#editorModeTitle").textContent = guided ? "小白引导模式" : "完整编辑模式";
+  document.querySelector("#editorModeHint").textContent = guided ? "跟着 4 步填写，不确定的内容可以先跳过。" : "全部字段一次展开，适合熟悉菜谱结构的用户。";
+  document.querySelector("#toggleEditorModeButton").textContent = guided ? "切换到完整编辑" : "返回小白引导";
+  renderEditorStep();
+}
+
+function goToEditorStep(step) {
+  editorStep = Math.max(1, Math.min(4, step));
+  renderEditorStep();
+  editorPanel.scrollTo({ top: 0, behavior: "smooth" });
+  if (editorStep === 4) updateEditorSummary();
+}
+
+function renderEditorStep() {
+  document.querySelectorAll("[data-step-panel]").forEach((panel) => {
+    panel.classList.toggle("is-active", editorMode === "advanced" || Number(panel.dataset.stepPanel) === editorStep);
+  });
+  document.querySelectorAll("[data-editor-step]").forEach((button) => {
+    const step = Number(button.dataset.editorStep);
+    button.classList.toggle("is-active", step === editorStep);
+    button.classList.toggle("is-complete", step < editorStep);
+  });
+  const guided = editorMode === "guided";
+  document.querySelector("#editorPrevButton").style.display = guided && editorStep > 1 ? "inline-flex" : "none";
+  document.querySelector("#editorNextButton").style.display = guided && editorStep < 4 ? "inline-flex" : "none";
+  document.querySelector("#saveRecipeButton").style.display = !guided || editorStep === 4 ? "inline-flex" : "none";
+}
+
+function validateEditorStep(step) {
+  if (step === 1 && !fields.name.value.trim()) {
+    fields.name.classList.add("field-error");
+    fields.name.focus();
+    alert("先填写菜名，再进入下一步。");
+    return false;
+  }
+  fields.name.classList.remove("field-error");
+  if (step === 3 && !fields.steps.value.trim() && !safeUrl(fields.video.value.trim())) {
+    fields.steps.classList.add("field-error");
+    fields.steps.focus();
+    alert("请写至少一个做法步骤，或者填写教学视频链接。");
+    return false;
+  }
+  fields.steps.classList.remove("field-error");
+  return true;
+}
+
+function updateEditorSummary() {
+  const count = editingIngredients.filter((item) => item.name.trim()).length;
+  const steps = fields.steps.value.split("\n").map((item) => item.trim()).filter(Boolean);
+  const ingredientHint = document.querySelector("#ingredientCountHint");
+  const stepHint = document.querySelector("#stepCountHint");
+  if (ingredientHint) ingredientHint.textContent = `${count} 项`;
+  if (stepHint) stepHint.textContent = `当前识别为 ${steps.length} 个步骤`;
+  const review = document.querySelector("#editorReview");
+  if (!review) return;
+  const missing = [];
+  if (!fields.name.value.trim()) missing.push("菜名");
+  if (!steps.length && !safeUrl(fields.video.value.trim())) missing.push("做法步骤或视频链接");
+  review.innerHTML = `<h4>${escapeHtml(fields.name.value.trim() || "还没有填写菜名")}</h4><ul><li>食材：${count ? `${count} 项` : "暂未填写（仍可保存）"}</li><li>做法：${steps.length ? `${steps.length} 步` : fields.video.value.trim() ? "使用教学视频" : "暂未填写"}</li><li>配图：${fields.image.value.trim() ? "已添加" : "未添加（可跳过）"}</li></ul>${missing.length ? `<p class="editor-review-warning">保存前还需要：${missing.join("、")}</p>` : '<p class="editor-review-ready">信息已满足保存条件。</p>'}`;
+}
+
+function saveEditorDraft() {
+  localStorage.setItem(EDITOR_DRAFT_KEY, JSON.stringify(collectEditorDraft()));
+  editorDirty = false;
+  alert("草稿已保存在当前浏览器，下次新增菜谱时可以继续填写。");
+}
+
+function prepareEditor() {
+  editorStep = 1;
+  editorDirty = false;
+  setEditorMode("guided");
+  updateEditorSummary();
+}
+
 function openNewEditor() {
   selectedId = "";
   recipeForm.reset();
@@ -2261,6 +2391,13 @@ function openNewEditor() {
   if (t) t.value = "";
   resetIngredientEditor([]);
   renderImagePreview();
+  prepareEditor();
+  const storedDraft = localStorage.getItem(EDITOR_DRAFT_KEY);
+  if (storedDraft && confirm("发现一份未完成的菜谱草稿，要继续填写吗？\n\n选择“取消”会放弃旧草稿并新建。")) {
+    try { applyEditorDraft(JSON.parse(storedDraft)); } catch (_) { localStorage.removeItem(EDITOR_DRAFT_KEY); }
+  } else if (storedDraft) {
+    localStorage.removeItem(EDITOR_DRAFT_KEY);
+  }
   fields.name.focus();
   render();
 }
@@ -2294,10 +2431,13 @@ function openEditEditor(id) {
   editorTitle.textContent = "编辑菜谱";
   deleteRecipeButton.style.display = "inline-flex";
   openAppView("editor");
+  prepareEditor();
   fields.name.focus();
 }
 
 function closeEditor() {
+  if (editorDirty && !confirm("还有没有保存的修改，确定离开吗？")) return;
+  editorDirty = false;
   closeAppView();
 }
 
@@ -2814,7 +2954,15 @@ async function saveRecipe(event) {
   const stepsRaw = fields.steps.value.split("\n").map((step) => step.trim()).filter(Boolean);
   const hasVideo = safeUrl(fields.video.value.trim());
 
+  if (!fields.name.value.trim()) {
+    goToEditorStep(1);
+    fields.name.focus();
+    alert("请先填写菜名。");
+    return;
+  }
+
   if (stepsRaw.length === 0 && !hasVideo) {
+    goToEditorStep(3);
     alert("请至少填写一个做法步骤，或填写教学视频链接。");
     return;
   }
@@ -2849,6 +2997,8 @@ async function saveRecipe(event) {
 
   selectedId = recipe.id;
   const saveResult = await saveToLocalStorage();
+  editorDirty = false;
+  localStorage.removeItem(EDITOR_DRAFT_KEY);
   closeEditor();
   render();
   if (!saveResult.ok) {

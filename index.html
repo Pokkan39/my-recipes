@@ -266,6 +266,24 @@
         </div>
       </div>
 
+      <div class="editor-mode-bar" aria-label="编辑模式">
+        <div>
+          <strong id="editorModeTitle">小白引导模式</strong>
+          <p id="editorModeHint">跟着 4 步填写，不确定的内容可以先跳过。</p>
+        </div>
+        <button id="toggleEditorModeButton" class="secondary-button" type="button">切换到完整编辑</button>
+      </div>
+
+      <nav id="editorSteps" class="editor-steps" aria-label="菜谱填写进度">
+        <button type="button" data-editor-step="1"><span>1</span>基本信息</button>
+        <button type="button" data-editor-step="2"><span>2</span>食材</button>
+        <button type="button" data-editor-step="3"><span>3</span>做法</button>
+        <button type="button" data-editor-step="4"><span>4</span>确认</button>
+      </nav>
+
+      <details class="editor-import-tools">
+        <summary>已有文字或视频？使用快捷导入</summary>
+
       <!-- AI 对话助手 -->
       <section id="aiChatSection" class="ai-chat-section" style="display:none" aria-labelledby="aiChatTitle">
         <div class="ai-chat-heading">
@@ -361,13 +379,17 @@
           <textarea id="aiPromptOutput" class="prompt-output" rows="6" readonly placeholder="复制 AI 提示词后，这里会显示可发给 ChatGPT 的内容。"></textarea>
         </div>
       </section>
+      </details>
 
-      <form id="recipeForm" class="recipe-form">
+      <form id="recipeForm" class="recipe-form recipe-form--guided">
         <input id="recipeId" type="hidden">
 
+        <section class="editor-step-panel" data-step-panel="1">
+          <div class="editor-step-heading"><span>第 1 步，共 4 步</span><h3>先记下这道菜是什么</h3><p>菜名是唯一必填项，其余不确定的可以先留空。</p></div>
         <label>
-          菜名
-          <input id="recipeName" type="text" required placeholder="例如：番茄炒蛋">
+          菜名 <span class="required-mark">必填</span>
+          <input id="recipeName" type="text" required placeholder="例如：番茄炒蛋" aria-describedby="recipeNameHelp">
+          <small id="recipeNameHelp" class="field-help">写大家最容易认出的名字，不用加“做法”两个字。</small>
         </label>
 
         <label>
@@ -375,93 +397,51 @@
           <select id="recipeWorld"></select>
         </label>
 
-        <div class="form-grid two-columns">
-          <label>
-            厨师/来源
-            <input id="recipeSource" type="text" placeholder="例如：王刚 / 小高姐 / 妈妈做法">
-          </label>
-
-          <label>
-            做法版本/特点
-            <input id="recipeVariant" type="text" placeholder="例如：家常快手版 / 少油版 / 饭店版">
-          </label>
+        <div class="form-grid two-columns advanced-field">
+          <label>厨师/来源<input id="recipeSource" type="text" placeholder="例如：王刚 / 小高姐 / 妈妈做法"></label>
+          <label>做法版本/特点<input id="recipeVariant" type="text" placeholder="例如：家常快手版 / 少油版 / 饭店版"></label>
         </div>
 
         <label>
-          配图链接
-          <input id="recipeImage" type="url" placeholder="填写图片 URL；也可以先留空">
+          菜品介绍 <span class="optional-label">（选填）</span>
+          <textarea id="recipeDescription" rows="3" placeholder="例如：酸甜开胃，拌米饭很好吃。"></textarea>
         </label>
-
-        <div class="image-upload-block">
-          <div class="image-action-row">
-            <button type="button" id="recipeImageFileButton" class="image-upload-btn">📷 从本地选图（自动压缩）</button>
-            <button type="button" id="recipeImageStockButton" class="image-stock-btn">🔍 从图库找图</button>
-            <button type="button" id="recipeImageGenButton" class="image-gen-btn">🎨 AI 生成配图</button>
-          </div>
-          <input id="recipeImageFile" type="file" accept="image/*" hidden>
-          <input id="recipeImageGenPrompt" type="text" class="image-gen-prompt" placeholder="可选：补充画面描述，如「色泽金黄、摆盘精致」">
-          <p class="image-upload-hint">本地选图会压缩后直接存进菜谱数据，适合少量配图；图片较多时建议后续升级为云端上传。AI 配图会按菜名与所属世界生成，无需真实照片。</p>
-          <div id="recipeImagePreview" class="image-preview" hidden>
-            <img id="recipeImagePreviewImg" alt="配图预览">
-            <button type="button" id="recipeImageRemove" class="image-preview-remove">移除图片</button>
-          </div>
+        <div class="form-grid advanced-field">
+          <label>大概成本<input id="recipeCost" type="text" placeholder="约 12 元"></label>
+          <label>适合什么时候吃<input id="recipeOccasion" type="text" placeholder="工作日晚餐 / 早餐 / 宵夜"></label>
+          <label>大概耗时<input id="recipeTime" type="text" placeholder="约 20 分钟"></label>
         </div>
+        </section>
 
-        <label>
-          菜品介绍
-          <textarea id="recipeDescription" rows="3" required placeholder="简单说明这道菜的口味、特点或适合人群"></textarea>
-        </label>
-
-        <div class="form-grid">
-          <label>
-            大概成本
-            <input id="recipeCost" type="text" required placeholder="约 12 元">
-          </label>
-
-          <label>
-            适合什么时候吃
-            <input id="recipeOccasion" type="text" required placeholder="工作日晚餐 / 早餐 / 宵夜">
-          </label>
-
-          <label>
-            大概耗时
-            <input id="recipeTime" type="text" required placeholder="约 20 分钟">
-          </label>
-        </div>
-
-        <label>
-          教学视频链接
-          <input id="recipeVideo" type="url" placeholder="B 站、抖音、YouTube 等视频链接">
-        </label>
-
-        <div class="ingredients-editor" id="ingredientsEditor">
-          <div class="ingredients-editor-heading">
-            <span>食材清单</span>
-            <div class="ingredients-editor-actions">
-              <button id="parseIngredientsButton" class="text-button" type="button">粘贴解析</button>
-              <button id="addIngredientButton" class="text-button" type="button">＋ 逐条添加</button>
-            </div>
+        <section class="editor-step-panel" data-step-panel="2">
+          <div class="editor-step-heading"><span>第 2 步，共 4 步</span><h3>需要准备什么食材</h3><p>可以逐条添加，也可以整段粘贴，系统会帮你拆开。</p></div>
+          <div class="ingredients-editor" id="ingredientsEditor">
+            <div class="ingredients-editor-heading"><span>食材清单 <small id="ingredientCountHint">0 项</small></span><div class="ingredients-editor-actions"><button id="parseIngredientsButton" class="text-button" type="button">粘贴一整段</button><button id="addIngredientButton" class="text-button" type="button">＋ 添加食材</button></div></div>
+            <div id="ingredientParseArea" class="ingredient-parse-area" style="display:none"><textarea id="ingredientPasteInput" rows="4" placeholder="例如：&#10;番茄 2个&#10;鸡蛋 3个&#10;盐少许"></textarea><button id="confirmParseButton" class="secondary-button" type="button">解析并填入</button></div>
+            <div id="ingredientRows" class="ingredient-rows"></div>
           </div>
-          <div id="ingredientParseArea" class="ingredient-parse-area" style="display:none">
-            <textarea id="ingredientPasteInput" rows="4" placeholder="粘贴食材文字，例如：&#10;番茄 2个&#10;鸡蛋 3个、盐少许、白糖少许（中和酸味）"></textarea>
-            <button id="confirmParseButton" class="secondary-button" type="button">解析并填入</button>
-          </div>
-          <div id="ingredientRows" class="ingredient-rows"></div>
-        </div>
+        </section>
 
-        <label>
-          具体做法 <span class="optional-label">（选填，有视频时可留空）</span>
-          <textarea id="recipeSteps" rows="7" placeholder="每行写一个步骤，例如：&#10;1. 鸡蛋打散加少许盐。&#10;2. 番茄切块。"></textarea>
-        </label>
+        <section class="editor-step-panel" data-step-panel="3">
+          <div class="editor-step-heading"><span>第 3 步，共 4 步</span><h3>按顺序写下做法</h3><p>每行写一步，像告诉第一次下厨的朋友一样说明火候和时间。</p></div>
+          <label>具体做法 <span class="optional-label">（与视频链接至少填一项）</span><textarea id="recipeSteps" rows="9" placeholder="每行写一步，例如：&#10;鸡蛋打散，加少许盐。&#10;番茄切块。&#10;热锅放油，先炒鸡蛋至凝固后盛出。"></textarea><small id="stepCountHint" class="field-help">当前识别为 0 个步骤</small></label>
+          <label>教学视频链接 <span class="optional-label">（有视频时，步骤可以留空）</span><input id="recipeVideo" type="url" placeholder="B 站、抖音、YouTube 等视频链接"></label>
+          <label class="advanced-field">所需工具 <span class="optional-label">（选填，空格分隔）</span><input id="recipeTools" type="text" placeholder="炒锅 汤锅 烤箱…"></label>
+        </section>
 
-        <label>
-          所需工具 <span class="optional-label">（选填，空格分隔，如：炒锅 烤箱）</span>
-          <input id="recipeTools" type="text" placeholder="炒锅 汤锅 烤箱…">
-        </label>
+        <section class="editor-step-panel" data-step-panel="4">
+          <div class="editor-step-heading"><span>第 4 步，共 4 步</span><h3>最后检查一下</h3><p>图片可以跳过。确认菜名和做法后就能保存。</p></div>
+          <div id="editorReview" class="editor-review" aria-live="polite"></div>
+          <label class="advanced-field">配图链接<input id="recipeImage" type="url" placeholder="填写图片 URL；也可以先留空"></label>
+          <div class="image-upload-block"><div class="image-action-row"><button type="button" id="recipeImageFileButton" class="image-upload-btn">📷 从本地选图</button><button type="button" id="recipeImageStockButton" class="image-stock-btn">🔍 从图库找图</button><button type="button" id="recipeImageGenButton" class="image-gen-btn">🎨 AI 生成配图</button></div><input id="recipeImageFile" type="file" accept="image/*" hidden><input id="recipeImageGenPrompt" type="text" class="image-gen-prompt" placeholder="可选：补充画面描述"><p class="image-upload-hint">没有图片也可以保存，以后随时能回来补充。</p><div id="recipeImagePreview" class="image-preview" hidden><img id="recipeImagePreviewImg" alt="配图预览"><button type="button" id="recipeImageRemove" class="image-preview-remove">移除图片</button></div></div>
+        </section>
 
-        <div class="form-actions">
-          <button class="primary-button" type="submit">保存菜谱</button>
-          <button id="deleteRecipeButton" class="danger-button" type="button">删除当前菜谱</button>
+        <div class="editor-action-bar">
+          <button id="editorPrevButton" class="secondary-button" type="button">上一步</button>
+          <button id="saveDraftButton" class="text-button" type="button">暂存草稿</button>
+          <button id="editorNextButton" class="primary-button" type="button">下一步</button>
+          <button id="saveRecipeButton" class="primary-button" type="submit">保存菜谱</button>
+          <button id="deleteRecipeButton" class="danger-button advanced-field" type="button">删除当前菜谱</button>
         </div>
       </form>
     </section>
