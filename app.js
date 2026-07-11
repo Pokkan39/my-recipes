@@ -4200,3 +4200,53 @@ function floatAiFillToForm() {
 
   update();
 })();
+
+/* 统一微交互：桌面指针光影与按钮点击反馈，不介入业务状态。 */
+(function initMicroInteractions() {
+  var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  var finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+  var surfaceSelector = ".recipe-group-card, .feature-strip article, .what-to-eat-card, .meal-plan-card, .by-ingredient-card, .mt-card--ready, .ai-source-card, .ai-result-card";
+  var rippleSelector = ".primary-button, .secondary-button, .danger-button, .text-button, .tool-button, .editor-steps button, .mobile-dock button, .world-tab-btn, .category-tab-btn";
+  var pointerFrame = 0;
+  var pendingSurface = null;
+  var pendingEvent = null;
+
+  function paintPointer() {
+    pointerFrame = 0;
+    if (!pendingSurface || !pendingEvent) return;
+    var rect = pendingSurface.getBoundingClientRect();
+    pendingSurface.style.setProperty("--pointer-x", (pendingEvent.clientX - rect.left).toFixed(1) + "px");
+    pendingSurface.style.setProperty("--pointer-y", (pendingEvent.clientY - rect.top).toFixed(1) + "px");
+  }
+
+  document.addEventListener("pointermove", function (event) {
+    if (reducedMotion.matches || !finePointer.matches) return;
+    var surface = event.target.closest(surfaceSelector);
+    if (!surface) return;
+    if (pendingSurface && pendingSurface !== surface) pendingSurface.classList.remove("is-pointer-active");
+    pendingSurface = surface;
+    pendingEvent = event;
+    surface.classList.add("interactive-surface", "is-pointer-active");
+    if (!pointerFrame) pointerFrame = requestAnimationFrame(paintPointer);
+  }, { passive: true });
+
+  document.addEventListener("pointerout", function (event) {
+    var surface = event.target.closest(surfaceSelector);
+    if (!surface || surface.contains(event.relatedTarget)) return;
+    surface.classList.remove("is-pointer-active");
+    if (pendingSurface === surface) pendingSurface = null;
+  }, { passive: true });
+
+  document.addEventListener("pointerdown", function (event) {
+    if (reducedMotion.matches || event.button !== 0) return;
+    var control = event.target.closest(rippleSelector);
+    if (!control || control.disabled) return;
+    var rect = control.getBoundingClientRect();
+    var ripple = document.createElement("span");
+    ripple.className = "ui-ripple";
+    ripple.style.left = (event.clientX - rect.left) + "px";
+    ripple.style.top = (event.clientY - rect.top) + "px";
+    control.appendChild(ripple);
+    ripple.addEventListener("animationend", function () { ripple.remove(); }, { once: true });
+  });
+})();

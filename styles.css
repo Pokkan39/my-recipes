@@ -33,6 +33,11 @@
   /* 页面主缓动 */
   --ease: cubic-bezier(0.28, 0.11, 0.32, 1);
   --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-fast: 160ms;
+  --motion-base: 280ms;
+  --motion-slow: 520ms;
+  --lift-shadow: 0 18px 42px rgba(43, 38, 32, 0.15);
 
   /* ---- 会被 app.js 覆盖的变量：给浅色友好默认值做兜底 ---- */
   --brand: #c1440e;
@@ -188,8 +193,32 @@ h3 {
   font-weight: 600;
   color: var(--text);
   background: transparent;
-  transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease),
-    background 0.35s var(--ease-soft), border-color 0.35s, color 0.35s, opacity 0.2s;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform var(--motion-base) var(--ease-out), box-shadow var(--motion-base) var(--ease-out),
+    background var(--motion-base) var(--ease-soft), border-color var(--motion-base), color var(--motion-fast), opacity var(--motion-fast);
+}
+
+.primary-button::after,
+.secondary-button::after,
+.danger-button::after,
+.tool-button::after {
+  content: "";
+  position: absolute;
+  inset: -120% -45%;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 38%, rgba(255,255,255,.24) 50%, transparent 62%);
+  transform: translateX(-60%) rotate(8deg);
+  transition: transform var(--motion-slow) var(--ease-out);
+  pointer-events: none;
+}
+
+.primary-button:hover::after,
+.secondary-button:hover::after,
+.danger-button:hover::after,
+.tool-button:hover::after {
+  transform: translateX(60%) rotate(8deg);
 }
 
 .primary-button {
@@ -3819,7 +3848,45 @@ body.has-app-view .float-ai-widget {
   }
 }
 
-/* ── 从图库找图（Pixabay）────────────────────────────────────── */
+/* 精致动态 UI：克制的光影、状态与指针反馈 */
+.site-nav { transition: box-shadow var(--motion-base) var(--ease-out), border-color var(--motion-base), background var(--motion-base); }
+.site-nav:hover { border-color:rgba(193,68,14,.2); box-shadow:0 10px 30px rgba(43,38,32,.07); }
+.site-nav-links a,.site-nav-links button { position:relative; transition:color var(--motion-fast), transform var(--motion-base) var(--ease-out); }
+.site-nav-links a::after,.site-nav-links button::after { content:""; position:absolute; right:12px; bottom:4px; left:12px; height:1px; background:var(--accent); transform:scaleX(0); transform-origin:right; transition:transform var(--motion-base) var(--ease-out); }
+.site-nav-links a:hover,.site-nav-links button:hover { transform:translateY(-1px); }
+.site-nav-links a:hover::after,.site-nav-links button:hover::after { transform:scaleX(1); transform-origin:left; }
+
+input,textarea,select { transition:border-color var(--motion-fast), box-shadow var(--motion-base) var(--ease-out), background var(--motion-base); }
+input:hover,textarea:hover,select:hover { border-color:var(--line-strong); }
+input:focus,textarea:focus,select:focus { border-color:var(--accent); box-shadow:0 0 0 4px rgba(193,68,14,.09), 0 8px 24px rgba(43,38,32,.06); }
+
+.more-tools-menu,.settings-menu { transform-origin:top right; animation:menuReveal var(--motion-base) var(--ease-out) both; }
+@keyframes menuReveal { from { opacity:0; transform:translateY(-6px) scale(.985); } to { opacity:1; transform:none; } }
+
+.recipe-group-card,.feature-strip article,.what-to-eat-card,.meal-plan-card,.by-ingredient-card,.mt-card--ready,.ai-source-card,.ai-result-card { position:relative; overflow:hidden; isolation:isolate; }
+.recipe-group-card::after,.feature-strip article::after,.what-to-eat-card::after,.meal-plan-card::after,.by-ingredient-card::after,.mt-card--ready::after,.ai-source-card::after,.ai-result-card::after { content:""; position:absolute; inset:0; z-index:-1; opacity:0; background:radial-gradient(360px circle at var(--pointer-x,50%) var(--pointer-y,50%), rgba(193,68,14,.13), transparent 48%); transition:opacity var(--motion-base); pointer-events:none; }
+.interactive-surface.is-pointer-active::after { opacity:1; }
+.recipe-thumb img,.stock-cell img { transition:transform var(--motion-slow) var(--ease-out), filter var(--motion-base); }
+.recipe-group-card:hover .recipe-thumb img,.stock-cell:hover img { transform:scale(1.045); filter:saturate(1.04) contrast(1.02); }
+.feature-strip article,.ai-source-card,.ai-result-card { transition:transform var(--motion-base) var(--ease-out), box-shadow var(--motion-base) var(--ease-out), border-color var(--motion-base); }
+.feature-strip article:hover,.ai-source-card:hover,.ai-result-card:hover { transform:translateY(-3px); border-color:var(--brand-line); box-shadow:var(--lift-shadow); }
+
+.ui-ripple { position:absolute; z-index:3; width:12px; height:12px; border-radius:50%; background:rgba(255,255,255,.42); transform:translate(-50%,-50%) scale(0); animation:uiRipple 560ms var(--ease-out) forwards; pointer-events:none; }
+.secondary-button .ui-ripple,.text-button .ui-ripple,.tool-button .ui-ripple { background:rgba(193,68,14,.16); }
+@keyframes uiRipple { 55% { opacity:.7; } to { opacity:0; transform:translate(-50%,-50%) scale(18); } }
+
+.editor-steps button,.mobile-dock button,.world-tab-btn,.category-tab-btn { transition:transform var(--motion-fast) var(--ease-out), color var(--motion-fast), background var(--motion-base), border-color var(--motion-base), box-shadow var(--motion-base); }
+.editor-steps button:hover,.world-tab-btn:hover,.category-tab-btn:hover { transform:translateY(-2px); }
+.mobile-dock button:active,.editor-steps button:active,.world-tab-btn:active,.category-tab-btn:active { transform:scale(.96); }
+.mobile-dock button span { transition:transform var(--motion-base) var(--ease-out), background var(--motion-base), color var(--motion-base); }
+.mobile-dock button.is-active span { transform:translateY(-2px) scale(1.08); }
+
+@media (prefers-reduced-motion: reduce) {
+  *,*::before,*::after { scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+  .ui-ripple { display:none !important; }
+  .interactive-surface::after { display:none; }
+}
+
 .image-stock-btn {
   display: inline-flex;
   align-items: center;
